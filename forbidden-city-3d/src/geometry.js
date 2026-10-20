@@ -45,7 +45,7 @@ export function createBalustradeGeometry({
   gapBack = 0,
 }) {
   const list = [];
-  const capGeo = new THREE.SphereGeometry(0.2, 8, 6);
+  const capGeo = new THREE.SphereGeometry(0.2, 6, 4);
   const run = (x1, z1, x2, z2) => {
     const len = Math.hypot(x2 - x1, z2 - z1);
     const n = Math.max(1, Math.round(len / spacing));
@@ -54,6 +54,8 @@ export function createBalustradeGeometry({
       const x = x1 + (x2 - x1) * t;
       const z = z1 + (z2 - z1) * t;
       addBox(list, 0.34, height, 0.34, x, height * 0.5, z);
+      addBox(list, 0.5, 0.16, 0.5, x, 0.08, z);
+      addBox(list, 0.28, 0.14, 0.28, x, height + 0.03, z);
       const cap = capGeo.clone();
       cap.translate(x, height + 0.12, z);
       list.push(cap);
@@ -103,7 +105,10 @@ export function createStairsGeometry({
   const stepH = height / steps;
   for (let i = 0; i < steps; i++) {
     const top = height - i * stepH;
-    addBox(list, width, top, stepD * 1.01, 0, top * 0.5, depth * 0.5 - (i + 0.5) * stepD);
+    const zc = depth * 0.5 - (i + 0.5) * stepD;
+    addBox(list, width, top, stepD * 1.01, 0, top * 0.5, zc);
+    addBox(list, width * 0.97, 0.1, 0.26, 0, top - 0.03, zc + stepD * 0.38);
+    addBox(list, width * 0.9, 0.035, stepD * 0.72, 0, top + 0.018, zc);
   }
   const angle = Math.atan2(height, depth);
   const slopeLen = Math.hypot(height, depth);
@@ -167,6 +172,11 @@ export function createTerrace({
   band.castShadow = true;
   band.receiveShadow = true;
   group.add(band);
+  const mold = [];
+  addBox(mold, w + 1.15, 0.24, d + 1.15, 0, 0.12, 0);
+  addBox(mold, w + 1.05, 0.18, d + 1.05, 0, h - 0.09, 0);
+  const moldMesh = mergedMesh(mold, mats.marbleShade, true, true);
+  if (moldMesh) group.add(moldMesh);
 
   if (railings) {
     const rail = createBalustrade({
@@ -201,6 +211,11 @@ export function createPlinth({ w, d, h, stairs = 3.2, railing = true }) {
   body.castShadow = true;
   body.receiveShadow = true;
   group.add(body);
+  const mold = [];
+  addBox(mold, w + 0.8, 0.2, d + 0.8, 0, 0.1, 0);
+  addBox(mold, w + 0.7, 0.16, d + 0.7, 0, h - 0.08, 0);
+  const moldMesh = mergedMesh(mold, mats.marbleShade, true, true);
+  if (moldMesh) group.add(moldMesh);
   if (railing) {
     const rail = createBalustrade({ w: w + 0.6, d: d + 0.6, gapFront: w * 0.34 });
     rail.position.y = h;
@@ -226,6 +241,10 @@ export function mergeStaticGroup(source) {
   const skipped = [];
   source.traverse((obj) => {
     if (!obj.isMesh) return;
+    if (obj.isInstancedMesh) {
+      skipped.push(obj);
+      return;
+    }
     const mat = obj.material;
     if (Array.isArray(mat) || mat.transparent || mat.isShaderMaterial || !obj.visible) {
       skipped.push(obj);

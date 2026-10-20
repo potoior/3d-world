@@ -289,6 +289,10 @@ export function createTerrain(material, size = 2600, segments = 240) {
   const cRock = new THREE.Color(0x8d9092);
   const cHigh = new THREE.Color(0xa9acae);
   const cAutumn = new THREE.Color(0xa17c58);
+  const cWarm = new THREE.Color(0xb19772);
+  const cStrata = new THREE.Color(0x89877a);
+  const cHollow = new THREE.Color(0x596b55);
+  const sunDir = new THREE.Vector3(0.78, 0.36, 0.51).normalize();
   const tmp = new THREE.Color();
 
   for (let i = 0; i < pos.count; i++) {
@@ -309,14 +313,21 @@ export function createTerrain(material, size = 2600, segments = 240) {
     const high = smoothstep(105, 245, y);
     const noise = fbm(x * 0.045 + 20, z * 0.045 - 14, 3);
     const dry = fbm(x * 0.014 - 3, z * 0.014 + 9, 2);
+    const band = Math.sin(y * 0.6 + noise * 7.4 + x * 0.016 - z * 0.011) * 0.5 + 0.5;
+    const nx = normals.getX(i);
+    const nz = normals.getZ(i);
+    const lit = Math.max(0, nx * sunDir.x + ny * sunDir.y + nz * sunDir.z);
 
     tmp.copy(cGrass).lerp(cDry, dry * 0.4 + noise * 0.18);
     tmp.lerp(cAutumn, Math.max(0, dry - 0.52) * 1.2 + (noise > 0.62 ? (noise - 0.62) * 1.6 : 0));
     tmp.lerp(cPine, (1 - steep) * 0.2 + (1 - high) * 0.11);
+    tmp.lerp(cHollow, Math.max(0, 0.5 - dry) * 0.34 * (1 - steep));
+    tmp.lerp(band > 0.55 ? cWarm : cStrata, (steep * 0.62 + high * 0.18) * (0.28 + Math.abs(band - 0.5) * 0.5));
     tmp.lerp(cRock, steep * 0.98);
     tmp.lerp(cHigh, high * 0.15 + steep * high * 0.24);
+    tmp.lerp(cWarm, lit * 0.08 * (1 - steep * 0.55));
 
-    const jitter = 0.92 + hash2(Math.floor(x * 0.45), Math.floor(z * 0.45)) * 0.16;
+    const jitter = 0.9 + hash2(Math.floor(x * 0.45), Math.floor(z * 0.45)) * 0.2;
     colors[i * 3] = tmp.r * jitter;
     colors[i * 3 + 1] = tmp.g * jitter;
     colors[i * 3 + 2] = tmp.b * jitter;

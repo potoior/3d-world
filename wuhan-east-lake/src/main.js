@@ -3,6 +3,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { buildEastLakeScene } from './layout.js';
 import { createFirstPerson } from './firstperson.js';
 import { updateLakeLife } from './lakeLife.js';
+import { mats } from './materials.js';
 
 const isCompact = window.innerWidth < 820 || /Mobi|Android/i.test(navigator.userAgent);
 const canvas = document.getElementById('scene');
@@ -11,7 +12,7 @@ const renderer = new THREE.WebGLRenderer({
   antialias: true,
   powerPreference: 'high-performance',
 });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, isCompact ? 1.4 : 1.75));
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, isCompact ? 1.25 : 1.6));
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -89,7 +90,7 @@ scene.add(hemi);
 const sun = new THREE.DirectionalLight(0xfff1da, 2.55);
 sun.position.set(380, 950, 620);
 sun.castShadow = true;
-sun.shadow.mapSize.set(isCompact ? 2048 : 4096, isCompact ? 2048 : 4096);
+sun.shadow.mapSize.set(isCompact ? 1024 : 2048, isCompact ? 1024 : 2048);
 sun.shadow.camera.left = -880;
 sun.shadow.camera.right = 880;
 sun.shadow.camera.top = 760;
@@ -113,6 +114,12 @@ scene.add(world.extras);
 const waterMaterial = world.waterMaterial;
 
 window.__eastlake = { scene, camera, renderer, controls, world };
+window.__eastlake.stats = () => ({
+  calls: renderer.info.render.calls,
+  triangles: renderer.info.render.triangles,
+  geometries: renderer.info.memory.geometries,
+  textures: renderer.info.memory.textures,
+});
 
 let fp = null;
 
@@ -288,6 +295,12 @@ function updateEnvironment(dt) {
   waterMaterial.uniforms.fogColor.value.copy(scene.fog.color);
   waterMaterial.uniforms.fogNear.value = scene.fog.near;
   waterMaterial.uniforms.fogFar.value = scene.fog.far;
+
+  mats.lantern.emissiveIntensity = 0.42 + envMix * 1.35;
+  mats.paper.emissiveIntensity = 0.4 + envMix * 1.15;
+  mats.paper.color.setHex(envMix > 0.45 ? 0xffc27a : 0xf1d7a2);
+  tmpColor.setHex(0xffd9a3);
+  skyUniforms.sunColor.value.lerp(tmpColor, envMix * 0.08);
 }
 
 function animate() {

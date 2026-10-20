@@ -1,17 +1,28 @@
 import * as THREE from 'three';
 import { mats } from './materials.js';
-import { addBox, addBar, mergedMesh } from './geometry.js';
+import { addBox, addBar, addCylinder, mergedMesh } from './geometry.js';
 import { createFanPavilion, createWillow } from './gardenDetails.js';
 import { createHexPavilion } from './gardenBuild.js';
 import { terrainHeight } from './terrain.js';
 import {
   addRailLine,
   addBench,
+  addLamp,
   addPlaque,
   addReeds,
   addShoreRocks,
   addLotusBed,
   addPetalCarpet,
+  addLatticePanel,
+  addPlankRun,
+  addBollard,
+  addColumnBase,
+  addLanternString,
+  addPerson,
+  addFisher,
+  addShrub,
+  addMarker,
+  hash,
 } from './detailKit.js';
 
 const Q = [
@@ -28,6 +39,10 @@ export function addTingtaoDetails(root) {
   const reed = [];
   const rock = [];
   const petal = [];
+  const deck = [];
+  const cap = [];
+  const paper = [];
+  const shrub = [];
   const R = Q.map(([x, z]) => [x + 1.05, z]);
 
   for (let i = 0; i < Q.length - 1; i++) {
@@ -57,6 +72,44 @@ export function addTingtaoDetails(root) {
   });
   root.add(p1);
 
+  const p1s = [];
+  const p1g = [];
+  const p1p = [];
+  for (let i = 0; i < 6; i++) {
+    const a = (i / 6) * Math.PI * 2 + Math.PI / 6;
+    addColumnBase(p1s, Math.cos(a) * 3.2, 0.8, Math.sin(a) * 3.2, 0.26);
+  }
+  for (let i = 1; i < 6; i++) {
+    const a0 = (i / 6) * Math.PI * 2 + Math.PI / 6;
+    const a1 = ((i + 1) / 6) * Math.PI * 2 + Math.PI / 6;
+    const x0 = Math.cos(a0) * 3.2;
+    const z0 = Math.sin(a0) * 3.2;
+    const x1 = Math.cos(a1) * 3.2;
+    const z1 = Math.sin(a1) * 3.2;
+    const len = Math.hypot(x1 - x0, z1 - z0);
+    for (let k = 1; k < 7; k++) {
+      const t = k / 7;
+      addBox(p1g, 0.045, 0.72, 0.045, x0 + (x1 - x0) * t, 1.28, z0 + (z1 - z0) * t);
+    }
+    addBox(p1g, 0.09, 0.09, len, (x0 + x1) / 2, 1.7, (z0 + z1) / 2, Math.atan2(x1 - x0, z1 - z0));
+  }
+  addLatticePanel(p1, 0, 2.0, 3.16, 3.6, 1.9, 0);
+  addLatticePanel(p1, -2.74, 2.0, -1.58, 3.2, 1.8, -Math.PI / 3);
+  addLatticePanel(p1, 2.74, 2.0, -1.58, 3.2, 1.8, Math.PI / 3);
+  for (const [lx, lz] of [[2.2, 2.2], [-2.2, 2.2], [3.0, 0], [-3.0, 0]]) {
+    addCylinder(p1g, 0.025, 0.025, 0.42, 4, lx, 3.16, lz);
+    const b = new THREE.SphereGeometry(0.16, 7, 5);
+    b.scale(0.9, 1.2, 0.9);
+    b.translate(lx, 2.9, lz);
+    p1p.push(b);
+  }
+  const p1sm = mergedMesh(p1s, mats.stone, true, true);
+  if (p1sm) p1.add(p1sm);
+  const p1gm = mergedMesh(p1g, mats.gold, true, true);
+  if (p1gm) p1.add(p1gm);
+  const p1pm = mergedMesh(p1p, mats.paper, true, false);
+  if (p1pm) p1.add(p1pm);
+
   const p2 = createFanPavilion({
     radius: 3.5, wallH: 2.8, roofH: 2.7, baseH: 0.55,
     name: '荷风亭', x: -343, z: 204, rot: -Math.PI / 2,
@@ -66,6 +119,27 @@ export function addTingtaoDetails(root) {
     if (o.isMesh && o.material === mats.roof) o.material = mats.roofGreen;
   });
   root.add(p2);
+
+  const p2g = [];
+  for (let i = 0; i <= 4; i++) {
+    const a = (i / 4) * Math.PI;
+    const px = Math.cos(a) * 3.8 - 343;
+    const pz = Math.sin(a) * 3.8 + 204;
+    addColumnBase(stone, px, Math.max(0.35, terrainHeight(px, pz)) + 0.55, pz, 0.26);
+  }
+  for (let i = 0; i < 4; i++) {
+    const a = (i / 4) * Math.PI;
+    const x = Math.cos(a) * 3.8 - 343;
+    const z = Math.sin(a) * 3.8 + 204;
+    addCylinder(p2g, 0.025, 0.025, 0.42, 4, x, terrainHeight(-343, 204) + 3.12, z);
+    const b = new THREE.SphereGeometry(0.16, 7, 5);
+    b.scale(0.9, 1.2, 0.9);
+    b.translate(x, terrainHeight(-343, 204) + 2.86, z);
+    lantern.push(b);
+  }
+  addPlaque(root, '荷风亭', 2.2, 0.62, -343, terrainHeight(-343, 204) + 2.9, 207.6, 0);
+  const p2gm = mergedMesh(p2g, mats.gold, true, true);
+  if (p2gm) root.add(p2gm);
 
   addBox(stone, 0.26, 2.4, 0.26, -344, Math.max(0.5, terrainHeight(-344, 94)) + 1.2, 94);
   addBox(stone, 0.26, 2.4, 0.26, -344, Math.max(0.5, terrainHeight(-344, 94)) + 1.2, 97.2);
@@ -99,6 +173,51 @@ export function addTingtaoDetails(root) {
   addPetalCarpet(petal, -340, 150, 18, 90, 4200, 'water');
   addPetalCarpet(petal, -345, 185, 15, 60, 4201, 'ground');
 
+  for (let i = 0; i < Q.length - 1; i++) {
+    const [x0, z0] = Q[i];
+    const [x1, z1] = Q[i + 1];
+    const len = Math.hypot(x1 - x0, z1 - z0);
+    const gy = Math.max(0.4, (terrainHeight(x0, z0) + terrainHeight(x1, z1)) / 2 + 0.74);
+    addPlankRun(deck, x0 + 1.05, z0, x1 + 1.05, z1, gy, 2.5, Math.max(5, Math.round(len / 0.95)), 0.08);
+    for (let k = 0; k < 2; k++) {
+      const t = k / 1;
+      const px = x0 + (x1 - x0) * t + 1.05;
+      const pz = z0 + (z1 - z0) * t;
+      const by = Math.max(0.4, terrainHeight(px, pz) + 0.5);
+      addBollard(deck, cap, px - 1.65, pz, by, 0.72);
+      addBollard(deck, cap, px + 1.65, pz, by, 0.72);
+    }
+    if (i % 2 === 0) {
+      addLamp(gold, lantern, x0 - 1.4, z0 + 3, Math.max(0.4, terrainHeight(x0 - 1.4, z0 + 3)), 0.78);
+    }
+  }
+  addLanternString(cap, paper, -351.9, 86, -338.9, 190, Math.max(0.5, terrainHeight(-345, 140)) + 4.4, 10, 0.55);
+  addLanternString(cap, paper, -338.9, 190, -349, 222, Math.max(0.5, terrainHeight(-344, 206)) + 4.2, 5, 0.45);
+
+  for (const [x, z, s] of [
+    [-331, 94, 3601], [-330, 130, 3602], [-329, 164, 3603], [-332, 198, 3604],
+    [-337, 226, 3605], [-344, 244, 3606], [-349, 74, 3607],
+  ]) {
+    addReeds(reed, x, z, s, 16, 1.9);
+    addShoreRocks(rock, x, z, s + 5, 5, 4.8, 1.0);
+  }
+  addLotusBed(root, -326, 100, 5.4, 22, 4301);
+  addLotusBed(root, -322, 142, 6.0, 24, 4302);
+  addLotusBed(root, -319, 176, 5.2, 20, 4303);
+  addLotusBed(root, -330, 214, 5.0, 18, 4304);
+  addMarker(root, -345, 80, '听涛', 0.1);
+  addMarker(root, -341, 232, '荷风', -0.2);
+  addPlaque(root, '碧潭观鱼', 2.0, 0.56, -338.8, Math.max(0.5, terrainHeight(-338, 152)) + 2.9, 152, -Math.PI / 2);
+  for (let i = 0; i < 12; i++) {
+    const z = 88 + i * 12;
+    addShrub(shrub, -349 + (i % 2) * 2, z, Math.max(0.35, terrainHeight(-348, z)), 4700 + i, 1.0, 4);
+  }
+  addFisher(root, -337, 112, Math.max(0.35, terrainHeight(-337, 112)) + 0.06, Math.PI / 2, 4801);
+  addFisher(root, -336, 174, Math.max(0.35, terrainHeight(-336, 174)) + 0.06, Math.PI / 2, 4802);
+  addPerson(root, -343, 116, Math.max(0.5, terrainHeight(-343, 116)), 0.1, 4803);
+  addPerson(root, -342, 160, Math.max(0.5, terrainHeight(-342, 160)), 3.0, 4804, [mats.blue, mats.white]);
+  addPerson(root, -346, 196, Math.max(0.5, terrainHeight(-346, 196)), -0.2, 4805, [mats.redLacquer, mats.teal]);
+
   const stones = mergedMesh(stone, mats.marbleShade, true, true);
   if (stones) root.add(stones);
   const rails = mergedMesh(rail, mats.wallDark, true, true);
@@ -115,4 +234,12 @@ export function addTingtaoDetails(root) {
   if (rocks) root.add(rocks);
   const petals = mergedMesh(petal, mats.cherryLight, false, true);
   if (petals) root.add(petals);
+  const decks = mergedMesh(deck, mats.plank, true, true);
+  if (decks) root.add(decks);
+  const caps = mergedMesh(cap, mats.gold, true, false);
+  if (caps) root.add(caps);
+  const papers = mergedMesh(paper, mats.paper, true, false);
+  if (papers) root.add(papers);
+  const shrubs = mergedMesh(shrub, mats.blade, true, true);
+  if (shrubs) root.add(shrubs);
 }

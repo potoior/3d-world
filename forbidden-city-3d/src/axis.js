@@ -3,7 +3,7 @@ import { mats } from './materials.js';
 import { createHall, createCorridor } from './buildings.js';
 import { createBridge } from './gates.js';
 import { addBox, mergedMesh, createBalustrade, createStairs } from './geometry.js';
-import { createLion, createVat, createIncenseBurner, createSundial, createLantern, createTree, createFlagpole } from './props.js';
+import { createLion, createVat, createIncenseBurner, createSundial, createLantern, createTree, createFlagpole, createCrane, createDrainGrate } from './props.js';
 
 function createRiverStrip({ x0, x1, z0, width, amplitude, frequency, segments = 70 }) {
   const positions = [];
@@ -74,10 +74,23 @@ function addCentralPath(group, z, length, w = 11) {
     addBox(gutter, 0.9, 0.16, 0.9, -(w / 2 + 0.6), 0.075, z + p);
     addBox(gutter, 0.9, 0.16, 0.9, w / 2 + 0.6, 0.075, z + p);
   }
+  for (let p = -length / 2 + 3; p < length / 2 - 1; p += 3.6) {
+    addBox(gutter, w * 0.9, 0.028, 0.09, 0, 0.086, z + p);
+  }
+  for (const sx of [-1, 1]) {
+    addBox(gutter, 0.08, 0.04, length - 1, sx * w * 0.32, 0.087, z);
+  }
   const bm = mergedMesh(bands, mats.marbleShade, false, true);
   if (bm) group.add(bm);
   const gm = mergedMesh(gutter, mats.stone, false, true);
   if (gm) group.add(gm);
+  for (let p = -length / 2 + 16; p < length / 2 - 10; p += 24) {
+    for (const sx of [-1, 1]) {
+      const grate = createDrainGrate(1.25, 0.78);
+      grate.position.set(sx * (w / 2 + 1.45), 0.01, z + p);
+      group.add(grate);
+    }
+  }
 }
 
 export function buildAxis(waterMaterial) {
@@ -174,6 +187,17 @@ export function buildAxis(waterMaterial) {
     });
     rail.position.set(0, t.y + t.h, 18);
     group.add(rail);
+    const joints = [];
+    for (let x = -t.w / 2 + 4; x <= t.w / 2 - 3; x += 5.4) {
+      addBox(joints, 0.1, 0.46, 0.1, x, t.y + t.h * 0.58, 18 + t.d / 2 + 0.42);
+      addBox(joints, 0.1, 0.46, 0.1, x, t.y + t.h * 0.58, 18 - t.d / 2 - 0.42);
+    }
+    for (let z = -t.d / 2 + 4; z <= t.d / 2 - 3; z += 5.4) {
+      addBox(joints, 0.1, 0.46, 0.1, t.w / 2 + 0.42, t.y + t.h * 0.58, 18 + z);
+      addBox(joints, 0.1, 0.46, 0.1, -t.w / 2 - 0.42, t.y + t.h * 0.58, 18 + z);
+    }
+    const jm = mergedMesh(joints, mats.marbleShade, false, true);
+    if (jm) group.add(jm);
   }
 
   const frontStairs = createStairs({ width: 38, depth: 18, height: 6.8, steps: 34, rampWidth: 9 });
@@ -265,6 +289,15 @@ export function buildAxis(waterMaterial) {
   for (const [obj, x, y, z] of props) {
     obj.position.set(x, y, z);
     group.add(obj);
+  }
+
+  for (const sx of [-1, 1]) {
+    for (const z of [64, 102]) {
+      const crane = createCrane(1.25);
+      crane.position.set(sx * 47, 6.8, z);
+      crane.rotation.y = sx > 0 ? -Math.PI / 2 : Math.PI / 2;
+      group.add(crane);
+    }
   }
 
   for (const sx of [-1, 1]) {

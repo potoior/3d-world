@@ -319,19 +319,18 @@ export function createFirstPerson({ camera, controls, canvas, onEnter, onExit })
   function update(dt) {
     if (!state.active) return;
     dt = Math.min(Math.max(dt, 0), 0.05);
-    const down = (...codes) => codes.some((code) => keys.has(code));
-    const jumpDown = down('Space');
+    const jumpDown = keys.has('Space');
     if (jumpDown && !state.jumpHeld) jump();
     state.jumpHeld = jumpDown;
-    const forward = (down('KeyW', 'ArrowUp') ? 1 : 0) - (down('KeyS', 'ArrowDown') ? 1 : 0);
-    const strafe = (down('KeyD', 'ArrowRight') ? 1 : 0) - (down('KeyA', 'ArrowLeft') ? 1 : 0);
+    const forward = (keys.has('KeyW') || keys.has('ArrowUp') ? 1 : 0) - (keys.has('KeyS') || keys.has('ArrowDown') ? 1 : 0);
+    const strafe = (keys.has('KeyD') || keys.has('ArrowRight') ? 1 : 0) - (keys.has('KeyA') || keys.has('ArrowLeft') ? 1 : 0);
     if (forward || strafe) {
       let dx = forward * -Math.sin(state.yaw) + strafe * Math.cos(state.yaw);
       let dz = forward * -Math.cos(state.yaw) - strafe * Math.sin(state.yaw);
       const length = Math.hypot(dx, dz);
       dx /= length;
       dz /= length;
-      const sprint = down('ShiftLeft', 'ShiftRight');
+      const sprint = keys.has('ShiftLeft') || keys.has('ShiftRight');
       const distance = (sprint ? 8.5 : 4.3) * dt;
       moveHorizontal(dx, dz, distance);
     }

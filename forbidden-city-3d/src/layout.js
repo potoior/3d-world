@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { mats, makeWaterMaterial } from './materials.js';
 import { createWall, createMeridianGate, createShenwuGate, createSideGate, createCornerTower } from './gates.js';
 import { buildAxis } from './axis.js';
@@ -52,10 +53,23 @@ export function buildForbiddenCity() {
   });
 
   const moatY = -1.15;
-  root.add(waterPlane(860, 42, 0, -507, waterMaterial, moatY));
-  root.add(waterPlane(860, 42, 0, 507, waterMaterial, moatY));
-  root.add(waterPlane(42, 1014, -403, 0, waterMaterial, moatY));
-  root.add(waterPlane(42, 1014, 403, 0, waterMaterial, moatY));
+  const moatGeos = [
+    [860, 42, 0, -507],
+    [860, 42, 0, 507],
+    [42, 1014, -403, 0],
+    [42, 1014, 403, 0],
+  ].map(([w, d, x, z]) => {
+    const g = new THREE.PlaneGeometry(w, d, Math.max(8, Math.round(w / 12)), Math.max(4, Math.round(d / 12)));
+    g.rotateX(-Math.PI / 2);
+    g.translate(x, 0, z);
+    return g;
+  });
+  const moatGeo = mergeGeometries(moatGeos, false);
+  moatGeos.forEach((g) => g.dispose());
+  const moat = new THREE.Mesh(moatGeo, waterMaterial);
+  moat.position.y = moatY;
+  moat.renderOrder = 1;
+  root.add(moat);
 
   for (const sz of [-1, 1]) {
     addBank(root, 860, 3, 0, sz * 486);

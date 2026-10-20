@@ -20,7 +20,7 @@ function smokeSystem() {
     [-16, 3.0, -378],
     [16, 3.0, -378],
   ];
-  const per = 14;
+  const per = 18;
   const count = emitters.length * per;
   const pos = new Float32Array(count * 3);
   const seed = new Float32Array(count);
@@ -115,7 +115,7 @@ function bannerSystem() {
 }
 
 function birdSystem() {
-  const count = 10;
+  const count = 16;
   const pos = new Float32Array(count * 3);
   const seed = new Float32Array(count);
   for (let i = 0; i < count; i++) {
@@ -134,8 +134,8 @@ function birdSystem() {
       varying float vAlpha;
       void main() {
         float a = uTime * 0.12 + aSeed * 6.28318;
-        float r = 145.0 + aSeed * 80.0;
-        vec3 p = vec3(cos(a) * r, 92.0 + sin(a * 2.0 + aSeed * 4.0) * 22.0, 55.0 + sin(a) * r * 0.62);
+        float r = 130.0 + aSeed * 110.0;
+        vec3 p = vec3(cos(a) * r, 78.0 + sin(a * 2.0 + aSeed * 4.0) * 30.0 + aSeed * 22.0, 55.0 + sin(a) * r * 0.62);
         vec4 mv = modelViewMatrix * vec4(p, 1.0);
         gl_Position = projectionMatrix * mv;
         gl_PointSize = clamp(26.0 * (220.0 / -mv.z), 2.0, 30.0);

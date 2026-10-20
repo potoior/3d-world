@@ -9,6 +9,7 @@ import {
   makeFriezeTexture,
   makePlaqueTexture,
   makeRampTexture,
+  makePlankTexture,
   makeWaterNormalTexture,
   makeGrassTexture,
   makeGroundTexture,
@@ -22,6 +23,7 @@ const dirtMap = makeDirtTexture();
 const latticeMap = makeLatticeTexture();
 const friezeMap = makeFriezeTexture();
 const rampMap = makeRampTexture();
+const plankMap = makePlankTexture();
 const waterNormalMap = makeWaterNormalTexture();
 const grassMap = makeGrassTexture();
 const groundMap = makeGroundTexture();
@@ -32,6 +34,7 @@ roofMap.repeat.set(1, 1);
 marbleMap.repeat.set(1, 1);
 pavingMap.repeat.set(160, 190);
 dirtMap.repeat.set(90, 100);
+plankMap.repeat.set(2, 2);
 
 const plaqueCache = new Map();
 
@@ -189,6 +192,17 @@ export const mats = {
     color: 0x3a2118,
     roughness: 0.78,
   }),
+  plank: new THREE.MeshStandardMaterial({
+    map: plankMap,
+    color: 0xbfa078,
+    roughness: 0.82,
+  }),
+  paper: new THREE.MeshStandardMaterial({
+    color: 0xf1d7a2,
+    roughness: 0.62,
+    emissive: 0xffb45a,
+    emissiveIntensity: 0.85,
+  }),
   lattice: new THREE.MeshStandardMaterial({
     map: latticeMap,
     roughness: 0.7,
@@ -333,4 +347,5 @@ export const sharedTextures = {
   latticeMap,
   friezeMap,
   waterNormalMap,
+  plankMap,
 };

@@ -21,7 +21,11 @@ import {
   createCornerPier,
   createRidgePair,
   createDougong,
+  getCoupletMaterial,
 } from './richArch.js';
+import { getPlaqueMaterial } from './gardenBuild.js';
+import { mats } from './materials.js';
+import { addBox, mergedMesh } from './geometry.js';
 
 export const RICH_COLLIDERS = [
   { type: 'box', x: 83, z: 70, w: 16.6, d: 1.1, name: '东园花窗墙' },
@@ -40,7 +44,41 @@ export const RICH_COLLIDERS = [
   { type: 'circle', x: -28, z: 70, r: 2.0, name: '太湖石' },
   { type: 'circle', x: 112, z: 40, r: 2.4, name: '太湖石' },
   { type: 'circle', x: -38, z: 55, r: 1.7, name: '太湖石' },
+  { type: 'circle', x: 76, z: 48, r: 1.6, name: '太湖石' },
+  { type: 'circle', x: 90, z: 44, r: 1.5, name: '太湖石' },
+  { type: 'circle', x: 112, z: 80, r: 1.7, name: '太湖石' },
+  { type: 'circle', x: -48, z: 68, r: 1.6, name: '太湖石' },
+  { type: 'circle', x: 14, z: 64, r: 1.4, name: '太湖石' },
 ];
+
+function addPlaque(group, text, x, y, z, w, ry = 0) {
+  if (!text) return;
+  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(w, w * 0.3125), getPlaqueMaterial(text));
+  mesh.position.set(x, y, z);
+  mesh.rotation.y = ry;
+  group.add(mesh);
+}
+
+function addCouplet(group, text, x, y, z, ry = 0, h = 1.6) {
+  if (!text) return;
+  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(0.34, h), getCoupletMaterial(text));
+  mesh.position.set(x, y, z);
+  mesh.rotation.y = ry;
+  group.add(mesh);
+}
+
+function addCoupletPair(group, a, b, x, y, z, ry, dx) {
+  addCouplet(group, a, x - dx, y, z, ry);
+  addCouplet(group, b, x + dx, y, z, ry);
+}
+
+function addPavingGrid(group, x, z, w, d, step = 1.25) {
+  const list = [];
+  for (let px = x - w / 2 + step; px < x + w / 2 - 0.1; px += step) addBox(list, 0.04, 0.014, d, px, 0.073, z);
+  for (let pz = z - d / 2 + step; pz < z + d / 2 - 0.1; pz += step) addBox(list, w, 0.014, 0.04, x, 0.073, pz);
+  const m = mergedMesh(list, mats.stone, false, true);
+  if (m) group.add(m);
+}
 
 export function createRichStatic() {
   const group = new THREE.Group();
@@ -230,6 +268,103 @@ export function createRichStatic() {
   add(createSteppingStones({ points: [[72, 50], [74, 48], [76, 46], [78, 44], [80, 42]] }));
   add(createSteppingStones({ points: [[-47, 57], [-45, 55], [-43, 53], [-41, 51]] }));
   add(createSteppingStones({ points: [[94, 52], [96, 50], [98, 48], [100, 46]] }));
+
+  addPlaque(group, '荷风四面亭', -27, 3.64, 43.86, 2.0);
+  addCouplet(group, '四面荷花三面柳', -28.7, 2.54, 42.86, -0.52, 1.5);
+  addCouplet(group, '一城山色半城湖', -25.3, 2.54, 42.86, 0.52, 1.5);
+  addPlaque(group, '小飞虹', -19.52, 3.02, 64, 1.7, Math.PI / 2);
+  addCoupletPair(group, '朱栏倒影横波卧', '画栋飞虹隔水看', -19.52, 2.42, 64, Math.PI / 2, 2.4);
+  addPlaque(group, '香洲', -1.0, 3.56, -2.02, 1.9, Math.PI);
+  addCoupletPair(group, '烟波画船摇碧水', '竹树晴窗纳远山', -1.0, 2.3, 2.04, 0, 3.1);
+  addCoupletPair(group, '荷风送香气', '竹露滴清响', -6, 2.3, 46.94, Math.PI, 3.5);
+  addCoupletPair(group, '一池荷叶衣无尽', '数亩松花食有余', -6, 2.34, 59.06, 0, 3.5);
+  addCoupletPair(group, '烟霞闲骨格', '泉石野生涯', -55, 2.15, 24.56, 0, 4.0);
+  addCoupletPair(group, '江山如有待', '花柳更无私', -55, 2.15, 15.44, Math.PI, 4.0);
+  addCoupletPair(group, '开轩邀鹤舞', '临水听琴声', -55, 8.25, 23.56, 0, 3.2);
+  addCoupletPair(group, '清风明月本无价', '近水远山皆有情', 98, 2.4, 82.42, 0, 4.0);
+  addCoupletPair(group, '一径竹阴云满地', '半帘花影月笼纱', 98, 2.4, 73.58, Math.PI, 4.0);
+  addPlaque(group, '天泉亭', 89, 3.42, 40.12, 1.8);
+  addCouplet(group, '石泉通竹径', 87.4, 2.4, 39.25, -0.52, 1.5);
+  addCouplet(group, '花雨落琴床', 90.6, 2.4, 39.25, 0.52, 1.5);
+  addPlaque(group, '芙蓉榭', 103.82, 3.28, 64, 1.8, -Math.PI / 2);
+  addCoupletPair(group, '芙蓉照水娟娟净', '杨柳牵风细细香', 103.8, 2.3, 64, -Math.PI / 2, 2.6);
+  addPlaque(group, '海棠春坞', 83, 2.92, 69.66, 1.8, Math.PI);
+  addPlaque(group, '通幽', 60, 2.82, 67.65, 1.5, Math.PI);
+  addPlaque(group, '入画', -79.66, 2.84, 42, 1.5, Math.PI / 2);
+
+  add(createDougong({ x: -6, y: 4.12, z: 46.9, rot: Math.PI, width: 20, bays: 8 }));
+  add(createDougong({ x: 5.62, y: 4.12, z: 53, rot: Math.PI / 2, width: 9, bays: 4 }));
+  add(createDougong({ x: -17.62, y: 4.12, z: 53, rot: -Math.PI / 2, width: 9, bays: 4 }));
+  add(createDougong({ x: -31, y: 3.96, z: 50.8, rot: Math.PI, width: 9, bays: 5 }));
+  add(createDougong({ x: -34.4, y: 3.96, z: 54, rot: -Math.PI / 2, width: 4.2, bays: 2 }));
+  add(createDougong({ x: -27.6, y: 3.96, z: 54, rot: Math.PI / 2, width: 4.2, bays: 2 }));
+  add(createDougong({ x: -55, y: 4.9, z: 13.6, rot: Math.PI, width: 11, bays: 5 }));
+  add(createDougong({ x: -48.38, y: 4.9, z: 20, rot: Math.PI / 2, width: 8, bays: 4 }));
+  add(createDougong({ x: -61.62, y: 4.9, z: 20, rot: -Math.PI / 2, width: 8, bays: 4 }));
+  add(createDougong({ x: -55, y: 8.18, z: 23.3, rot: 0, width: 9, bays: 4 }));
+  add(createDougong({ x: 98, y: 3.84, z: 72.4, rot: Math.PI, width: 10, bays: 5 }));
+  add(createDougong({ x: 104.05, y: 3.84, z: 78, rot: Math.PI / 2, width: 8, bays: 4 }));
+  add(createDougong({ x: 91.95, y: 3.84, z: 78, rot: -Math.PI / 2, width: 8, bays: 4 }));
+  add(createDougong({ x: 112.6, y: 3.46, z: 64, rot: Math.PI / 2, width: 8, bays: 4 }));
+
+  for (const [x, z] of [[-14, 62.6], [3, 62.6], [-35, 60], [-56, 24.6], [88, 62], [102, 74], [77, 64], [109, 55]]) {
+    add(createHangingLantern({ x, y: 3.5, z, scale: 0.9 }));
+  }
+  for (const [x, z, s] of [[-13, 63, 0.95], [4, 63, 0.95], [-44, 64, 0.9], [78, 70, 0.9], [98, 60, 0.9], [112, 76, 0.9], [70, 46, 0.9]]) {
+    add(createStoneLantern({ x, z, scale: s }));
+  }
+  for (const [x, z, rot, len] of [[-10, 62.4, 0, 2.4], [2, 62.4, 0, 2.4], [-40, 64, Math.PI / 2, 2.2], [86, 58, 0, 2.4], [100, 74, Math.PI / 2, 2.4], [74, 66, 0, 2.2]]) {
+    add(createBench({ x, z, rot, length: len }));
+  }
+
+  addPavingGrid(group, -6, 62, 24, 6, 1.2);
+  addPavingGrid(group, -31, 62, 16, 5, 1.1);
+  addPavingGrid(group, 83, 66, 19, 7, 1.15);
+  addPavingGrid(group, 99, 73, 24, 8, 1.25);
+  addPavingGrid(group, 90, 46, 16, 10, 1.2);
+  addPavingGrid(group, -55, 25, 16, 8, 1.2);
+
+  add(createTaihuRock({ x: 76, z: 48, scale: 1.15, seed: 301, cave: true, spread: 1.0 }));
+  add(createTaihuRock({ x: 90, z: 44, scale: 1.0, seed: 303, spread: 0.9 }));
+  add(createTaihuRock({ x: 112, z: 80, scale: 1.35, seed: 305, cave: true, spread: 1.15 }));
+  add(createTaihuRock({ x: -48, z: 68, scale: 1.2, seed: 307, spread: 1.0 }));
+  add(createTaihuRock({ x: 14, z: 64, scale: 0.95, seed: 309, spread: 0.85 }));
+
+  const newBamboo = [[104, 76], [68, 62], [86, 60], [34, 66]];
+  newBamboo.forEach(([x, z], i) => add(createBamboo({ height: 7.4 + (i % 2) * 0.6, radius: 2.2, seed: i + 311 })));
+  const newWillow = [[8, 62], [-40, 68], [100, 52], [44, 60]];
+  newWillow.forEach(([x, z], i) => {
+    const t = createWillow({ height: 7.4 + (i % 3) * 0.6, spread: 2.5, seed: i + 331 });
+    t.position.set(x, 0, z);
+    add(t);
+  });
+  const newPine = [[84, 66], [102, 54], [76, 56], [28, 68]];
+  newPine.forEach(([x, z], i) => {
+    const t = createTree({ height: 6.4 + (i % 3) * 0.8, spread: 2.5, kind: 'pine', seed: i + 341 });
+    t.position.set(x, 0, z);
+    add(t);
+  });
+  const newBanana = [[90, 48], [100, 72], [70, 60], [-36, 70], [18, 68]];
+  newBanana.forEach(([x, z], i) => {
+    const b = createBanana({ height: 3.2 + (i % 2) * 0.5, seed: i + 351 });
+    b.position.set(x, 0, z);
+    add(b);
+  });
+  const newShrubs = [[86, 64], [96, 56], [106, 72], [78, 62], [-44, 64], [4, 64], [-10, 58], [-20, 64], [92, 70]];
+  newShrubs.forEach(([x, z], i) => add(createFloweringShrub({ x, z, radius: 1.35 + (i % 3) * 0.3, height: 1.5 + (i % 2) * 0.35, seed: i + 361 })));
+  const newCovers = [[82, 60], [104, 60], [76, 52], [94, 48], [110, 74], [72, 56]];
+  newCovers.forEach(([x, z], i) => add(createGroundcover({ x, z, radius: 1.3 + (i % 3) * 0.35, count: 11 + (i % 4) * 2, seed: i + 371 })));
+  for (const [x, z, r, c, s] of [[86, 62, 3.2, 28, 381], [-8, 62, 4.2, 34, 383], [100, 70, 4.0, 30, 385], [-52, 26, 3.0, 24, 387]]) {
+    add(createFallenPetals({ x, z, radius: r, count: c, seed: s, leaves: true }));
+  }
+  add(createSteppingStones({ points: [[80, 58], [82, 56], [84, 54], [86, 52], [88, 50], [90, 48]] }));
+  add(createSteppingStones({ points: [[100, 58], [102, 60], [104, 62], [106, 64], [108, 66]] }));
+  add(createSteppingStones({ points: [[-18, 64], [-20, 66], [-22, 68], [-24, 70]] }));
+  for (const [x, z, s] of [[-58.4, 17.2, 0.78], [-51.6, 17.2, 0.78], [84, 72, 1.05], [94, 62, 0.95]]) {
+    const pot = createPottedPlant({ x, z, scale: s, seed: 401, pine: true });
+    if (x < -40) pot.position.y = 7.3;
+    add(pot);
+  }
 
   return group;
 }

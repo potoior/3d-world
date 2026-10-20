@@ -3,36 +3,10 @@ import { mats } from './materials.js';
 import { addBox, addCylinder, mergedMesh } from './geometry.js';
 import { createRoof } from './roof.js';
 import { getPlaqueMaterial } from './gardenBuild.js';
-
-const coupletCache = new Map();
+import { coupletMaterial } from './atlas.js';
 
 export function getCoupletMaterial(text) {
-  if (coupletCache.has(text)) return coupletCache.get(text);
-  const c = document.createElement('canvas');
-  c.width = 128;
-  c.height = 512;
-  const ctx = c.getContext('2d');
-  ctx.fillStyle = '#2a2119';
-  ctx.fillRect(0, 0, 128, 512);
-  ctx.strokeStyle = '#9c6b4d';
-  ctx.lineWidth = 7;
-  ctx.strokeRect(5, 5, 118, 502);
-  ctx.strokeStyle = 'rgba(201,171,123,0.42)';
-  ctx.lineWidth = 2;
-  ctx.strokeRect(16, 16, 96, 480);
-  ctx.fillStyle = '#e4d6b2';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.font = '56px "Noto Serif CJK SC", "Songti SC", "STSong", serif';
-  const chars = text.split('');
-  const gap = 430 / Math.max(1, chars.length);
-  chars.forEach((ch, i) => ctx.fillText(ch, 64, 52 + gap * (i + 0.5)));
-  const tex = new THREE.CanvasTexture(c);
-  tex.colorSpace = THREE.SRGBColorSpace;
-  tex.anisotropy = 8;
-  const mat = new THREE.MeshBasicMaterial({ map: tex, toneMapped: false });
-  coupletCache.set(text, mat);
-  return mat;
+  return coupletMaterial(text);
 }
 
 function holePath(feature, y) {
@@ -155,7 +129,25 @@ export function createFeatureWall({
   for (let i = 0; i < Math.floor(length / 0.7); i++) {
     const px = -length / 2 + 0.35 + i * 0.7;
     addBox(trims, 0.06, 0.1, thickness + 0.36, px, height + 0.11, 0);
+    addBox(trims, 0.16, 0.16, thickness + 0.24, px + 0.21, height - 0.18, 0);
   }
+  for (let i = 0; i <= Math.round(length / 1.6); i++) {
+    const px = -length / 2 + (i * length) / Math.round(length / 1.6);
+    for (const side of [-1, 1]) {
+      const c = new THREE.CylinderGeometry(0.065, 0.065, thickness + 0.28, 4, 1, true);
+      c.rotateX(Math.PI / 2);
+      c.translate(px, height + 0.29, side * 0.09);
+      trims.push(c);
+    }
+  }
+  const bands = [];
+  for (let i = 0; i < Math.floor(length / 0.9); i++) {
+    const px = -length / 2 + 0.45 + i * 0.9;
+    addBox(bands, 0.22, 0.22, thickness + 0.2, px, 0.32, 0);
+    addBox(bands, 0.1, 0.1, thickness + 0.24, px + 0.3, 0.72, 0);
+  }
+  const bm2 = mergedMesh(bands, mats.stone, false, true);
+  if (bm2) group.add(bm2);
   const tm = mergedMesh(trims, mats.trimDark, false, false);
   if (tm) group.add(tm);
 
@@ -180,6 +172,13 @@ export function createFeatureWall({
     const ring2 = new THREE.TorusGeometry(fr, 0.055, 5, 20);
     ring2.translate(f.u, y0, -(thickness / 2 + 0.035));
     rings.push(ring2);
+    const mid = new THREE.TorusGeometry(f.r * 0.7, 0.035, 4, 18);
+    mid.translate(f.u, y0, 0);
+    rings.push(mid);
+    for (let i = 0; i < 8; i++) {
+      const a = (i / 8) * Math.PI * 2;
+      addBox(bars, 0.04, f.r * 1.35, 0.04, f.u + Math.cos(a) * f.r * 0.82, y0 + Math.sin(a) * f.r * 0.82, 0);
+    }
   }
   const bm = mergedMesh(bars, mats.timber, false, false);
   if (bm) group.add(bm);

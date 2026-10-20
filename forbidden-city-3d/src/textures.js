@@ -107,6 +107,17 @@ export function makeWallTexture() {
     ctx.bezierCurveTo(x + rand() * 12 - 6, 80, x + rand() * 16 - 8, 170, x + rand() * 10 - 5, 256);
     ctx.stroke();
   }
+  const damp = ctx.createLinearGradient(0, 170, 0, 256);
+  damp.addColorStop(0, 'rgba(52,18,10,0)');
+  damp.addColorStop(1, 'rgba(42,16,10,0.32)');
+  ctx.fillStyle = damp;
+  ctx.fillRect(0, 170, 256, 86);
+  for (let i = 0; i < 28; i++) {
+    const x = rand() * 256;
+    ctx.fillStyle = `rgba(225,205,178,${0.03 + rand() * 0.06})`;
+    ctx.fillRect(x, 120 + rand() * 100, 1 + rand() * 2, 14 + rand() * 52);
+  }
+  speckle(ctx, 256, 256, 420, rand, ['#6b1a10', '#d18464', '#8a3324'], 0.14);
   return finish(c);
 }
 
@@ -140,13 +151,14 @@ export function makeMarbleTexture() {
 }
 
 export function makePavingTexture() {
-  const [c, ctx] = makeCanvas(512, 512);
+  const S = 256;
+  const [c, ctx] = makeCanvas(S, S);
   const rand = mulberry32(93);
   ctx.fillStyle = '#9c9a93';
-  ctx.fillRect(0, 0, 512, 512);
-  const size = 64;
-  for (let y = 0; y < 512; y += size) {
-    for (let x = 0; x < 512; x += size) {
+  ctx.fillRect(0, 0, S, S);
+  const size = 32;
+  for (let y = 0; y < S; y += size) {
+    for (let x = 0; x < S; x += size) {
       const v = 0.86 + rand() * 0.28;
       ctx.fillStyle = `rgb(${(160 * v) | 0},${(157 * v) | 0},${(148 * v) | 0})`;
       ctx.fillRect(x + 1, y + 1, size - 2, size - 2);
@@ -156,27 +168,114 @@ export function makePavingTexture() {
   }
   ctx.strokeStyle = 'rgba(92,84,72,0.55)';
   ctx.lineWidth = 1.2;
-  for (let i = 0; i <= 512; i += size) {
+  for (let i = 0; i <= S; i += size) {
     ctx.beginPath();
     ctx.moveTo(i + 0.5, 0);
-    ctx.lineTo(i + 0.5, 512);
+    ctx.lineTo(i + 0.5, S);
     ctx.stroke();
     ctx.beginPath();
     ctx.moveTo(0, i + 0.5);
-    ctx.lineTo(512, i + 0.5);
+    ctx.lineTo(S, i + 0.5);
     ctx.stroke();
   }
-  speckle(ctx, 512, 512, 2600, rand, ['#8e8b82', '#d4d0c7', '#a3a097'], 0.2);
+  speckle(ctx, S, S, 900, rand, ['#8e8b82', '#d4d0c7', '#a3a097'], 0.2);
   return finish(c);
 }
 
 export function makeDirtTexture() {
-  const [c, ctx] = makeCanvas(512, 512);
+  const S = 256;
+  const [c, ctx] = makeCanvas(S, S);
   const rand = mulberry32(5);
   ctx.fillStyle = '#938b7b';
-  ctx.fillRect(0, 0, 512, 512);
-  speckle(ctx, 512, 512, 7000, rand, ['#8b8169', '#a89c84', '#7f7862', '#b3a68c'], 0.28);
+  ctx.fillRect(0, 0, S, S);
+  speckle(ctx, S, S, 2200, rand, ['#8b8169', '#a89c84', '#7f7862', '#b3a68c'], 0.28);
   return finish(c);
+}
+
+function hash2(x, y, seed) {
+  const v = Math.sin(x * 127.1 + y * 311.7 + seed * 74.7) * 43758.5453;
+  return v - Math.floor(v);
+}
+
+function normalTexture(size, heightAt, strength = 2.4) {
+  const [c, ctx] = makeCanvas(size, size);
+  const img = ctx.createImageData(size, size);
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      const h = heightAt(x, y);
+      const hx = heightAt((x + 1) % size, y);
+      const hy = heightAt(x, (y + 1) % size);
+      const nx = (h - hx) * strength;
+      const ny = (h - hy) * strength;
+      const len = Math.hypot(nx, ny, 1) || 1;
+      const i = (y * size + x) * 4;
+      img.data[i] = ((nx / len) * 0.5 + 0.5) * 255;
+      img.data[i + 1] = ((ny / len) * 0.5 + 0.5) * 255;
+      img.data[i + 2] = ((1 / len) * 0.5 + 0.5) * 255;
+      img.data[i + 3] = 255;
+    }
+  }
+  ctx.putImageData(img, 0, 0);
+  return finish(c, { srgb: false });
+}
+
+export function makeRoofNormalTexture() {
+  return normalTexture(256, (x, y) => {
+    const col = ((x % 64) + 64) % 64;
+    const row = ((y % 26) + 26) % 26;
+    const crown = 1 - Math.abs(col - 32) / 32;
+    const rib = Math.max(0, 1 - Math.abs(row - 8) / 7);
+    return 0.34 + crown * 0.42 + rib * 0.13 + hash2(x, y, 2) * 0.09;
+  }, 2.6);
+}
+
+export function makeWallNormalTexture() {
+  return normalTexture(256, (x, y) => {
+    const streak = Math.sin(x * 0.19 + Math.sin(x * 0.043) * 2.1) * 0.5 + 0.5;
+    const grain = hash2(x >> 1, y, 8) * 0.5 + hash2(x, y >> 2, 4) * 0.5;
+    return 0.42 + streak * 0.08 + grain * 0.16;
+  }, 1.5);
+}
+
+export function makeMarbleNormalTexture() {
+  return normalTexture(256, (x, y) => {
+    const vein = Math.abs(Math.sin(x * 0.041 + y * 0.017 + Math.sin(y * 0.06) * 1.8));
+    return 0.47 + vein * 0.05 + hash2(x, y, 13) * 0.1;
+  }, 1.1);
+}
+
+export function makePavingNormalTexture() {
+  return normalTexture(256, (x, y) => {
+    const gx = Math.min(x % 32, 32 - (x % 32));
+    const gy = Math.min(y % 32, 32 - (y % 32));
+    const stone = Math.min(1, Math.min(gx, gy) / 2.2);
+    return 0.28 + stone * 0.44 + hash2(x >> 1, y >> 1, 21) * 0.11;
+  }, 1.8);
+}
+
+export function makeStoneNormalTexture() {
+  return normalTexture(256, (x, y) => {
+    return 0.34 + hash2(x >> 1, y >> 1, 31) * 0.3 + hash2(x, y, 37) * 0.15;
+  }, 1.4);
+}
+
+export function makeRoughnessTexture(seed = 5, base = 196, span = 40) {
+  const S = 256;
+  const [c, ctx] = makeCanvas(S, S);
+  const img = ctx.createImageData(S, S);
+  for (let y = 0; y < S; y++) {
+    for (let x = 0; x < S; x++) {
+      const blot = hash2(x >> 3, y >> 3, seed) * 0.55 + hash2(x >> 1, y >> 1, seed + 2) * 0.3;
+      const v = base + (blot - 0.42) * span;
+      const i = (y * S + x) * 4;
+      img.data[i] = v;
+      img.data[i + 1] = v;
+      img.data[i + 2] = v;
+      img.data[i + 3] = 255;
+    }
+  }
+  ctx.putImageData(img, 0, 0);
+  return finish(c, { srgb: false });
 }
 
 export function makeLatticeTexture() {
@@ -285,8 +384,10 @@ export function makeFriezeTexture() {
   return finish(c);
 }
 
-export function makePlaqueTexture(text) {
-  const [c, ctx] = makeCanvas(512, 192);
+export function drawPlaque(ctx, text, x, y, w, h) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(w / 512, h / 192);
   ctx.fillStyle = '#14294f';
   ctx.fillRect(0, 0, 512, 192);
   const g = ctx.createLinearGradient(0, 0, 0, 192);
@@ -311,6 +412,12 @@ export function makePlaqueTexture(text) {
   chars.forEach((ch, i) => {
     ctx.fillText(ch, 256 - total / 2 + size * (i + 0.5), 98);
   });
+  ctx.restore();
+}
+
+export function makePlaqueTexture(text) {
+  const [c, ctx] = makeCanvas(512, 192);
+  drawPlaque(ctx, text, 0, 0, 512, 192);
   return finish(c, { repeat: false });
 }
 

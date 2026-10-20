@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { mats, sharedTextures, makeMistMaterial } from './materials.js';
+import { mats, sharedTextures } from './materials.js';
 import { mainCurve, southCurve, heightAt, createTerrain, createDistantMountains } from './terrain.js';
 import { createWall } from './wall.js';
 import { createTowerAt } from './towers.js';
@@ -34,64 +34,122 @@ function addMist(sceneRoot) {
     };
   })();
 
-  const sheetMatA = makeMistMaterial(0.07, 0xe0e8f0);
-  const sheetMatB = makeMistMaterial(0.05, 0xe8eef4);
   const sheetDefs = [
-    { y: 44, z: 40, w: 2500, d: 1250, mat: sheetMatA, ry: 0.1 },
-    { y: 58, z: -300, w: 2800, d: 1500, mat: sheetMatB, ry: 0 },
-    { y: 86, z: -650, w: 3000, d: 1700, mat: sheetMatA, ry: 0 },
-    { y: 112, z: -1080, w: 3300, d: 1600, mat: sheetMatB, ry: 0 },
-    { y: 142, z: -1520, w: 3600, d: 1500, mat: sheetMatA, ry: 0 },
+    { y: 44, z: 40, w: 2500, d: 1250, color: 0xe0e8f0, ry: 0.1 },
+    { y: 58, z: -300, w: 2800, d: 1500, color: 0xe8eef4, ry: 0 },
+    { y: 86, z: -650, w: 3000, d: 1700, color: 0xe0e8f0, ry: 0 },
+    { y: 112, z: -1080, w: 3300, d: 1600, color: 0xe8eef4, ry: 0 },
+    { y: 142, z: -1520, w: 3600, d: 1500, color: 0xe0e8f0, ry: 0 },
   ];
-  const sheets = [];
-  for (const s of sheetDefs) {
-    const geo = new THREE.PlaneGeometry(s.w, s.d, 1, 1);
-    const mesh = new THREE.Mesh(geo, s.mat);
-    mesh.rotation.x = -Math.PI / 2;
-    mesh.rotation.z = s.ry;
-    mesh.position.set(0, s.y, s.z);
-    mesh.renderOrder = 2;
-    sceneRoot.add(mesh);
-    sheets.push(mesh);
-  }
-
-  const spriteMat = new THREE.SpriteMaterial({
+  const sheetGeo = new THREE.PlaneGeometry(1, 1, 1, 1);
+  sheetGeo.rotateX(-Math.PI / 2);
+  const sheetMat = new THREE.MeshBasicMaterial({
     map: sharedTextures.mistMap,
-    color: 0xe4ebf2,
+    color: 0xffffff,
     transparent: true,
-    opacity: 0.4,
+    opacity: 0.06,
     depthWrite: false,
-    fog: true,
+    side: THREE.DoubleSide,
+    fog: false,
     toneMapped: true,
   });
-  const sprites = [];
+  const sheetMesh = new THREE.InstancedMesh(sheetGeo, sheetMat, sheetDefs.length);
+  sheetMesh.name = 'mist-sheets';
+  sheetMesh.renderOrder = 2;
+  sheetMesh.frustumCulled = false;
+  const sheetData = [];
+  const dummy = new THREE.Object3D();
+  const color = new THREE.Color();
+  for (let i = 0; i < sheetDefs.length; i++) {
+    const s = sheetDefs[i];
+    dummy.position.set(0, s.y, s.z);
+    dummy.rotation.set(0, s.ry, 0);
+    dummy.scale.set(s.w, 1, s.d);
+    dummy.updateMatrix();
+    sheetMesh.setMatrixAt(i, dummy.matrix);
+    sheetMesh.setColorAt(i, color.set(s.color));
+    sheetData.push({ baseX: 0, x: 0, y: s.y, z: s.z, ry: s.ry, w: s.w, d: s.d, phase: i * 2.1 });
+  }
+  sheetMesh.instanceMatrix.needsUpdate = true;
+  sheetMesh.instanceColor.needsUpdate = true;
+  sceneRoot.add(sheetMesh);
+
+  const puffGeo = new THREE.PlaneGeometry(1, 1);
+  const puffMat = new THREE.ShaderMaterial({
+    uniforms: THREE.UniformsUtils.merge([
+      THREE.UniformsLib.fog,
+      {
+        map: { value: sharedTextures.mistMap },
+        color: { value: new THREE.Color(0xe4ebf2) },
+        opacity: { value: 0.38 },
+      },
+    ]),
+    transparent: true,
+    depthWrite: false,
+    side: THREE.DoubleSide,
+    fog: true,
+    toneMapped: true,
+    vertexShader: `
+      varying vec2 vUv;
+      #include <fog_pars_vertex>
+      void main() {
+        vUv = uv;
+        vec3 ipos = instanceMatrix[3].xyz;
+        vec2 iscale = vec2(length(instanceMatrix[0].xyz), length(instanceMatrix[1].xyz));
+        vec4 mvPosition = modelViewMatrix * vec4(ipos, 1.0);
+        mvPosition.xy += position.xy * iscale;
+        gl_Position = projectionMatrix * mvPosition;
+        #include <fog_vertex>
+      }
+    `,
+    fragmentShader: `
+      uniform sampler2D map;
+      uniform vec3 color;
+      uniform float opacity;
+      varying vec2 vUv;
+      #include <fog_pars_fragment>
+      void main() {
+        vec4 tex = texture2D(map, vUv);
+        gl_FragColor = vec4(color * tex.rgb, tex.a * opacity);
+        #include <fog_fragment>
+        #include <tonemapping_fragment>
+        #include <colorspace_fragment>
+      }
+    `,
+  });
+  const puffMesh = new THREE.InstancedMesh(puffGeo, puffMat, 24);
+  puffMesh.name = 'mist-puffs';
+  puffMesh.renderOrder = 3;
+  puffMesh.frustumCulled = false;
+  const puffData = [];
   for (let i = 0; i < 14; i++) {
-    const sprite = new THREE.Sprite(spriteMat);
     const x = -1050 + rand() * 2100;
     const z = -300 - rand() * 1280;
     const y = 78 + rand() * 138;
     const sx = 420 + rand() * 560;
     const sy = 92 + rand() * 96;
-    sprite.scale.set(sx, sy, 1);
-    sprite.position.set(x, y, z);
-    sprite.renderOrder = 3;
-    sceneRoot.add(sprite);
-    sprites.push(sprite);
+    puffData.push({ baseX: x, x, y, z, sx, sy, ry: rand() * Math.PI, phase: i * 1.7 });
   }
   for (let i = 0; i < 5; i++) {
-    const sprite = new THREE.Sprite(spriteMat);
     const x = -650 + rand() * 1300;
     const z = 280 + rand() * 620;
     const y = 42 + rand() * 34;
     const sx = 260 + rand() * 220;
     const sy = 40 + rand() * 32;
-    sprite.scale.set(sx, sy, 1);
-    sprite.position.set(x, y, z);
-    sprite.renderOrder = 3;
-    sceneRoot.add(sprite);
-    sprites.push(sprite);
+    puffData.push({ baseX: x, x, y, z, sx, sy, ry: rand() * Math.PI, phase: (14 + i) * 2.3 });
   }
-  return { sprites, sheets };
+  for (let i = 0; i < puffData.length; i++) {
+    const d = puffData[i];
+    dummy.position.set(d.x, d.y, d.z);
+    dummy.rotation.set(0, d.ry, 0);
+    dummy.scale.set(d.sx, d.sy, d.sx);
+    dummy.updateMatrix();
+    puffMesh.setMatrixAt(i, dummy.matrix);
+  }
+  puffMesh.instanceMatrix.needsUpdate = true;
+  sceneRoot.add(puffMesh);
+
+  return { sheetMesh, puffMesh, sheetData, puffData };
 }
 
 function makeView(x, y, z, tx, ty, tz) {
@@ -111,7 +169,7 @@ export function buildBadaling() {
   const root = new THREE.Group();
   root.name = 'badaling-world';
 
-  const terrain = createTerrain(mats.terrain, 2600, 300);
+  const terrain = createTerrain(mats.terrain, 2600, 280);
   root.add(terrain);
 
   const staticRoot = new THREE.Group();

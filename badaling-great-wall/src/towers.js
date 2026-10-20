@@ -43,14 +43,42 @@ function makeWallGeo(width, height, thickness, openings) {
   return geo;
 }
 
-function addLocalBox(group, material, w, h, d, x, y, z, ry = 0) {
+function addLocalBox(group, material, w, h, d, x, y, z, ry = 0, rz = 0, rx = 0) {
   const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), material);
   mesh.position.set(x, y, z);
-  mesh.rotation.y = ry;
+  mesh.rotation.set(rx, ry, rz);
   mesh.castShadow = true;
   mesh.receiveShadow = true;
   group.add(mesh);
   return mesh;
+}
+
+function addArchRing(group, material, cx, spring, halfW, yBase, z, count, depth = 0.26) {
+  const r = halfW + 0.17;
+  for (let i = 0; i < count; i++) {
+    const a = (Math.PI * (i + 0.5)) / count;
+    addLocalBox(group, material, 0.3, 0.42, depth,
+      cx + Math.cos(a) * r, yBase + spring + Math.sin(a) * r, z, 0, a - Math.PI * 0.5);
+    addLocalBox(group, material, 0.24, 0.4, depth,
+      cx + Math.cos(a) * (r - 0.03), yBase + spring + Math.sin(a) * (r - 0.03), z, 0, a - Math.PI * 0.5);
+  }
+  for (let y = yBase + 0.28; y < yBase + spring - 0.18; y += 0.52) {
+    addLocalBox(group, material, 0.24, 0.46, depth, cx - halfW - 0.16, y, z);
+    addLocalBox(group, material, 0.24, 0.46, depth, cx + halfW + 0.16, y, z);
+  }
+}
+
+function addSideArchRing(group, material, cz, spring, halfW, yBase, x, count, depth = 0.24) {
+  const r = halfW + 0.15;
+  for (let i = 0; i < count; i++) {
+    const a = (Math.PI * (i + 0.5)) / count;
+    addLocalBox(group, material, depth, 0.36, 0.28,
+      x, yBase + spring + Math.sin(a) * r, cz + Math.cos(a) * r, 0, 0, a - Math.PI * 0.5);
+  }
+  for (let y = yBase + 0.28; y < yBase + spring - 0.16; y += 0.54) {
+    addLocalBox(group, material, depth, 0.44, 0.24, x, y, cz - halfW - 0.14);
+    addLocalBox(group, material, depth, 0.44, 0.24, x, y, cz + halfW + 0.14);
+  }
 }
 
 function addTowerMerlons(group, width, depth, yTop) {
@@ -238,6 +266,50 @@ export function createTowerAt(curve, t, options = {}) {
   plaqueBack.rotation.y = Math.PI;
   group.add(plaqueBack);
 
+  for (const z of [D / 2 + 0.045, -D / 2 - 0.045]) {
+    addArchRing(group, mats.stone, 0, 2.28, 1.3, yUpper + 0.03, z, 9);
+    for (const sx of [-1, 1]) {
+      addArchRing(group, mats.stone, sx * 4.55, 2.16, 0.24, yUpper + 1.25, z, 5, 0.22);
+      addArchRing(group, mats.stone, sx * 3.35, 4.72, 0.4, yUpper + 4.1, z, 6, 0.22);
+      addLocalBox(group, mats.stoneDark, 1.0, 0.1, 0.34, sx * 4.55, yUpper + 1.2, z + Math.sign(z) * 0.02);
+      addLocalBox(group, mats.stoneDark, 1.12, 0.1, 0.34, sx * 3.35, yUpper + 4.05, z + Math.sign(z) * 0.02);
+    }
+    addLocalBox(group, mats.stoneDark, 3.0, 0.16, 0.4, 0, yUpper + 0.02, z + Math.sign(z) * 0.02);
+    addLocalBox(group, mats.stoneDark, 2.62, 0.14, 0.32, 0, yUpper + 4.11, z + Math.sign(z) * 0.04);
+    addLocalBox(group, mats.stoneDark, 2.62, 0.14, 0.32, 0, yUpper + 3.33, z + Math.sign(z) * 0.04);
+    for (const sx of [-1, 1]) {
+      addLocalBox(group, mats.stoneDark, 0.14, 0.92, 0.32, sx * 1.24, yUpper + 3.72, z + Math.sign(z) * 0.04);
+    }
+  }
+  for (const sx of [-1, 1]) {
+    const x = sx * (W / 2 + 0.045);
+    for (const sz of [-1, 1]) {
+      addSideArchRing(group, mats.stone, sz * 2.75, 2.16, 0.31, yUpper + 1.28, x, 5);
+      addSideArchRing(group, mats.stone, sz * 2.75, 4.72, 0.34, yUpper + 4.12, x, 6);
+    }
+    addLocalBox(group, mats.stoneDark, 0.32, 0.12, 6.6, x, yUpper + 3.88, 0);
+  }
+
+  for (const sx of [-1, 1]) {
+    for (const sz of [-1, 1]) {
+      const px = sx * (W / 2 - 0.18);
+      const pz = sz * (D / 2 - 0.18);
+      for (let k = 0; k < 4; k++) {
+        const py = yUpper + 1.1 + k * 1.34;
+        const w = 0.62 + (k % 2) * 0.16;
+        addLocalBox(group, k % 2 ? mats.stoneWarm : mats.stone, w, 0.42, w, px, py, pz);
+      }
+      addLocalBox(group, mats.stoneDark, 0.96, 0.2, 0.96, px, yUpper + 5.56, pz);
+    }
+  }
+
+  for (const bz of [-D / 2 + 2.1, D / 2 - 2.1]) {
+    addLocalBox(group, mats.wood, W - 2.4, 0.16, 0.2, 0, yUpper + 3.68, bz);
+    for (let bx = -2.4; bx <= 2.4; bx += 2.4) {
+      addLocalBox(group, mats.bronze, 0.16, 0.5, 0.16, bx, yUpper + 3.5, bz);
+    }
+  }
+
   if (roof) {
     const cone = new THREE.ConeGeometry(Math.max(W, D) * 0.6, 2.1, 4, 1, false);
     cone.rotateY(Math.PI / 4);
@@ -248,6 +320,20 @@ export function createTowerAt(curve, t, options = {}) {
     roofMesh.receiveShadow = true;
     group.add(roofMesh);
     addLocalBox(group, mats.stoneDark, 0.4, 0.36, 0.4, 0, capY + 0.34 + 2.18, 0);
+    addLocalBox(group, mats.bronze, 0.16, 0.5, 0.16, 0, capY + 0.34 + 2.46, 0);
+    for (let i = 0; i < 12; i++) {
+      const a = (i / 12) * Math.PI * 2;
+      const rx = Math.cos(a) * (W * 0.5 + 0.35);
+      const rz = Math.sin(a) * (D * 0.5 + 0.35);
+      addLocalBox(group, mats.wood, 0.18, 0.18, 1.35, rx, capY + 0.4, rz, a);
+      addLocalBox(group, mats.stoneDark, 0.26, 0.22, 0.26, rx * 1.18, capY + 0.44, rz * 1.18);
+    }
+    for (const sx of [-1, 1]) {
+      for (const sz of [-1, 1]) {
+        addLocalBox(group, mats.wood, 0.22, 0.22, 1.4, sx * (W * 0.5 - 0.4), capY + 0.5, sz * (D * 0.5 - 0.4), Math.atan2(sx, sz));
+        addLocalBox(group, mats.stoneDark, 0.34, 0.26, 0.34, sx * (W * 0.5 + 0.1), capY + 0.62, sz * (D * 0.5 + 0.1));
+      }
+    }
   }
 
   const flagAnchor = { x: 0, y: 0, z: 0 };
@@ -256,6 +342,9 @@ export function createTowerAt(curve, t, options = {}) {
     const fz = D / 2 - 1.5;
     addLocalBox(group, mats.wood, 0.2, 5.0, 0.2, fx, capY + 0.26 + 2.5, fz);
     addLocalBox(group, mats.bronze, 0.34, 0.16, 0.34, fx, capY + 5.34, fz);
+    addLocalBox(group, mats.bronze, 1.36, 0.11, 0.11, fx + 0.58, capY + 4.9, fz);
+    addLocalBox(group, mats.bronze, 0.16, 0.3, 0.16, fx, capY + 5.5, fz);
+    addLocalBox(group, mats.stoneDark, 0.5, 0.18, 0.5, fx, capY + 0.3, fz);
     flagAnchor.x = fx;
     flagAnchor.z = fz;
     flagAnchor.y = capY + 4.55;
@@ -265,13 +354,22 @@ export function createTowerAt(curve, t, options = {}) {
   if (beacon) {
     const bx = W / 2 - 2.15;
     const bz = D / 2 - 2.05;
-    addLocalBox(group, mats.stone, 1.5, 0.34, 1.5, bx, capY + 0.36, bz);
-    addLocalBox(group, mats.stoneDark, 1.1, 0.42, 1.1, bx, capY + 0.68, bz);
-    addLocalBox(group, mats.dark, 0.86, 0.2, 0.86, bx, capY + 0.94, bz);
-    addLocalBox(group, mats.wood, 1.0, 0.18, 0.18, bx, capY + 0.9, bz, 0.5);
-    addLocalBox(group, mats.wood, 0.18, 0.18, 1.0, bx, capY + 0.9, bz, 0.5);
-    addLocalBox(group, mats.ember, 0.7, 0.14, 0.7, bx, capY + 1.0, bz);
-    beaconAnchor = { x: bx, y: capY + 1.28, z: bz };
+    addLocalBox(group, mats.stone, 1.84, 0.22, 1.84, bx, capY + 0.3, bz);
+    addLocalBox(group, mats.stone, 1.5, 0.34, 1.5, bx, capY + 0.5, bz);
+    addLocalBox(group, mats.stoneDark, 1.1, 0.42, 1.1, bx, capY + 0.82, bz);
+    addLocalBox(group, mats.dark, 0.86, 0.2, 0.86, bx, capY + 1.08, bz);
+    for (const sx of [-1, 1]) {
+      for (const sz of [-1, 1]) {
+        addLocalBox(group, mats.iron, 0.09, 0.92, 0.09, bx + sx * 0.46, capY + 1.26, bz + sz * 0.46);
+      }
+      addLocalBox(group, mats.iron, 0.82, 0.07, 0.07, bx, capY + 1.7, bz + sx * 0.34);
+      addLocalBox(group, mats.iron, 0.07, 0.07, 0.82, bx + sx * 0.34, capY + 1.7, bz);
+    }
+    addLocalBox(group, mats.wood, 1.0, 0.18, 0.18, bx, capY + 1.12, bz, 0.5);
+    addLocalBox(group, mats.wood, 0.18, 0.18, 1.0, bx, capY + 1.12, bz, 0.5);
+    addLocalBox(group, mats.wood, 0.76, 0.16, 0.16, bx, capY + 1.36, bz, -0.6);
+    addLocalBox(group, mats.ember, 0.7, 0.14, 0.7, bx, capY + 1.2, bz);
+    beaconAnchor = { x: bx, y: capY + 1.48, z: bz };
   }
 
   const toWorld = (lx, ly, lz) => new THREE.Vector3(

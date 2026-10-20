@@ -41,8 +41,20 @@ function addArchTrim(group, x, spring, r, z, depthSign) {
   if (bm) group.add(bm);
   const keys = [];
   addBox(keys, 0.8, 0.5, 0.9, x, spring + r + 0.22, z);
+  const voussoirs = [];
+  for (let i = 0; i <= 10; i++) {
+    const a = Math.PI - (i / 10) * Math.PI;
+    const bx = x + (r + 0.34) * Math.cos(a);
+    const by = spring + (r + 0.34) * Math.sin(a);
+    const v = new THREE.BoxGeometry(0.3, 0.56, 0.82);
+    v.rotateZ(a - Math.PI / 2);
+    v.translate(bx, by, z);
+    voussoirs.push(v);
+  }
   const km = mergedMesh(keys, mats.gold, true, true);
   if (km) group.add(km);
+  const vm = mergedMesh(voussoirs, mats.marble, true, true);
+  if (vm) group.add(vm);
 }
 
 function createArchedBase({ w, h, d, openings }) {
@@ -95,6 +107,13 @@ function createArchedBase({ w, h, d, openings }) {
 
   const capList = [];
   addBox(capList, w + 0.8, 0.7, d + 0.8, 0, h + 0.05, 0);
+  addBox(capList, w + 1.2, 0.3, d + 1.2, 0, 0.15, 0);
+  addBox(capList, w + 0.5, 0.16, d + 0.5, 0, h * 0.34, 0);
+  addBox(capList, w + 0.5, 0.16, d + 0.5, 0, h * 0.68, 0);
+  for (let x = -w / 2 + 4; x <= w / 2 - 3; x += 5.2) {
+    addBox(capList, 0.12, h * 0.52, 0.12, x, h * 0.53, d / 2 + 0.3);
+    addBox(capList, 0.12, h * 0.52, 0.12, x, h * 0.53, -d / 2 - 0.3);
+  }
   const capMesh = mergedMesh(capList, mats.marbleShade, false, true);
   if (capMesh) group.add(capMesh);
 
@@ -261,6 +280,28 @@ export function createSideGate(name) {
   });
 }
 
+function addTowerBrackets(group, w, y) {
+  const teal = [];
+  const gold = [];
+  const step = 2.0;
+  for (let x = -w / 2 + 0.8; x <= w / 2 - 0.6; x += step) {
+    for (const sz of [-1, 1]) {
+      addBox(teal, 0.22, 0.32, 0.52, x, y, sz * (w / 2 + 0.18));
+      addBox(gold, 0.34, 0.1, 0.12, x, y + 0.19, sz * (w / 2 + 0.48));
+    }
+  }
+  for (let z = -w / 2 + 0.8; z <= w / 2 - 0.6; z += step) {
+    for (const sx of [-1, 1]) {
+      addBox(teal, 0.52, 0.32, 0.22, sx * (w / 2 + 0.18), y, z);
+      addBox(gold, 0.12, 0.1, 0.34, sx * (w / 2 + 0.48), y + 0.19, z);
+    }
+  }
+  const tm = mergedMesh(teal, mats.teal, true, false);
+  const gm = mergedMesh(gold, mats.gold, true, false);
+  if (tm) group.add(tm);
+  if (gm) group.add(gm);
+}
+
 function towerFinial(group, y) {
   const gold = [];
   addCylinder(gold, 0.55, 0.7, 0.4, 10, 0, y + 0.2, 0);
@@ -299,6 +340,7 @@ export function createCornerTower() {
     band.castShadow = true;
     group.add(band);
     const geo = new THREE.PlaneGeometry(1, 1);
+    const frames = [];
     for (const [dx, dz, ry] of [
       [0, b.w / 2 + 0.03, 0],
       [0, -b.w / 2 - 0.03, Math.PI],
@@ -310,7 +352,27 @@ export function createCornerTower() {
       win.scale.set(b.w * 0.56, b.h * 0.58, 1);
       win.rotation.y = ry;
       group.add(win);
+      const ww = b.w * 0.62;
+      const hh = b.h * 0.64;
+      const nx = Math.abs(dx) > 0.01 ? dx + Math.sign(dx) * 0.07 : dx;
+      const nz = Math.abs(dz) > 0.01 ? dz + Math.sign(dz) * 0.07 : dz;
+      if (ry === 0 || ry === Math.PI) {
+        addBox(frames, ww + 0.12, 0.1, 0.1, 0, b.y + b.h * 0.48 + hh / 2, nz);
+        addBox(frames, ww + 0.12, 0.1, 0.1, 0, b.y + b.h * 0.48 - hh / 2, nz);
+        addBox(frames, 0.1, hh, 0.1, -ww / 2, b.y + b.h * 0.48, nz);
+        addBox(frames, 0.1, hh, 0.1, ww / 2, b.y + b.h * 0.48, nz);
+        addBox(frames, 0.06, hh, 0.06, 0, b.y + b.h * 0.48, nz);
+      } else {
+        addBox(frames, 0.1, 0.1, ww + 0.12, nx, b.y + b.h * 0.48 + hh / 2, 0);
+        addBox(frames, 0.1, 0.1, ww + 0.12, nx, b.y + b.h * 0.48 - hh / 2, 0);
+        addBox(frames, 0.1, hh, 0.1, nx, b.y + b.h * 0.48, -ww / 2);
+        addBox(frames, 0.1, hh, 0.1, nx, b.y + b.h * 0.48, ww / 2);
+        addBox(frames, 0.06, hh, 0.06, nx, b.y + b.h * 0.48, 0);
+      }
     }
+    const fm = mergedMesh(frames, mats.gold, false, false);
+    if (fm) group.add(fm);
+    addTowerBrackets(group, b.w, b.y + b.h - 0.35);
   }
 
   const skirt1 = createSkirtRoof({
@@ -357,7 +419,7 @@ export function createCornerTower() {
     curve: 1.55,
     ridgeRatio: 0,
     hasRidge: false,
-    beasts: false,
+    beasts: true,
   });
   topRoof.position.y = 17.2;
   group.add(topRoof);
@@ -382,20 +444,35 @@ export function createWall({ length, height = 10, thickness = 6, axis = 'x' }) {
   group.add(coping);
 
   const merlons = [];
+  const caps = [];
+  const bases = [];
   const step = 3.4;
   const along = length;
+  addBox(bases, w + 0.45, 0.42, d + 0.45, 0, 0.21, 0);
   for (let p = -along / 2 + 1.8; p <= along / 2 - 1.2; p += step) {
     for (const s of [-1, 1]) {
       const off = s * (thickness / 2 - 0.5);
       if (axis === 'x') {
         addBox(merlons, 1.8, 1.2, 0.8, p, height + 1.0, off);
+        addBox(caps, 1.95, 0.18, 0.94, p, height + 1.68, off);
       } else {
         addBox(merlons, 0.8, 1.2, 1.8, off, height + 1.0, p);
+        addBox(caps, 0.94, 0.18, 1.95, off, height + 1.68, p);
       }
+    }
+  }
+  for (let p = -along / 2 + 1.2; p <= along / 2 - 0.8; p += 3.1) {
+    for (const s of [-1, 1]) {
+      if (axis === 'x') addBox(caps, 0.75, 0.16, 0.5, p, height + 0.62, s * (thickness / 2 + 0.02));
+      else addBox(caps, 0.5, 0.16, 0.75, s * (thickness / 2 + 0.02), height + 0.62, p);
     }
   }
   const mm = mergedMesh(merlons, mats.wallDark, true, true);
   if (mm) group.add(mm);
+  const cm = mergedMesh(caps, mats.roofDark, false, false);
+  if (cm) group.add(cm);
+  const bm = mergedMesh(bases, mats.marbleShade, false, true);
+  if (bm) group.add(bm);
   return group;
 }
 

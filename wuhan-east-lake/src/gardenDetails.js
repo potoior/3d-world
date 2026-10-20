@@ -212,7 +212,7 @@ export function createWillow({ height = 7.5, spread = 2.8, seed = 1 }) {
   const foliage = [];
   for (let i = 0; i < 10; i++) {
     const r = 0.55 + rnd(i) * 0.75;
-    const blob = new THREE.IcosahedronGeometry(r, 1);
+    const blob = new THREE.IcosahedronGeometry(r, 0);
     blob.scale(0.75, 1.6, 0.75);
     blob.translate((rnd(i + 8) - 0.5) * spread * 1.6, height * (0.55 + rnd(i + 3) * 0.28), (rnd(i + 15) - 0.5) * spread * 1.6);
     foliage.push(blob);

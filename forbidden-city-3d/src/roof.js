@@ -4,9 +4,9 @@ import { addBox, mergedMesh } from './geometry.js';
 
 const TILE = 1.32;
 
-function tubeFromPoints(points, radius, radialSegments = 6) {
+function tubeFromPoints(points, radius, radialSegments = 5) {
   const curve = new THREE.CatmullRomCurve3(points);
-  return new THREE.TubeGeometry(curve, Math.max(8, points.length * 4), radius, radialSegments, false);
+  return new THREE.TubeGeometry(curve, Math.max(6, Math.round(points.length * 1.25)), radius, radialSegments, false);
 }
 
 function surfaceGeometry(sample, segments, vSegments) {
@@ -47,8 +47,8 @@ export function createRoofGeometry({
   cornerLift = 2.1,
   curve = 1.62,
   ridgeRatio = 0.55,
-  segments = 26,
-  vSegments = 16,
+  segments = 20,
+  vSegments = 12,
 }) {
   const W = width;
   const D = depth;
@@ -138,16 +138,29 @@ function addEaveTrim(group, width, depth, y = -0.18, scale = 1) {
   addBox(trim, 0.4, 0.11, depth + 0.26, -width * 0.5 - 0.13, y + 0.32, 0);
   const rm = mergedMesh(trim, mats.gold, false, false);
   if (rm) group.add(rm);
+  const shade = [];
+  addBox(shade, width + 0.12, 0.2, 0.3, 0, y - 0.52, depth * 0.5 + 0.08);
+  addBox(shade, width + 0.12, 0.2, 0.3, 0, y - 0.52, -depth * 0.5 - 0.08);
+  addBox(shade, 0.3, 0.2, depth + 0.12, width * 0.5 + 0.08, y - 0.52, 0);
+  addBox(shade, 0.3, 0.2, depth + 0.12, -width * 0.5 - 0.08, y - 0.52, 0);
+  const sm = mergedMesh(shade, mats.blue, false, false);
+  if (sm) group.add(sm);
 }
 
-function addEaveTiles(list, width, depth, cornerLift) {
+function addEaveTiles(list, width, depth, cornerLift, detail = false) {
   const spacing = 1.72;
+  let capTick = 0;
   const tile = (x, y, z, along) => {
-    const g = new THREE.CylinderGeometry(0.15, 0.17, 0.22, 6, 1, true);
+    const g = new THREE.CylinderGeometry(0.15, 0.17, 0.22, 5, 1, true);
     if (along === 'z') g.rotateX(Math.PI / 2);
     else g.rotateZ(Math.PI / 2);
     g.translate(x, y, z);
     list.push(g);
+    if (detail && capTick++ % 3 === 0) {
+      const dir = along === 'z' ? (z > 0 ? 1 : -1) : (x > 0 ? 1 : -1);
+      if (along === 'z') addBox(list, 0.28, 0.11, 0.07, x, y + 0.01, z + dir * 0.16);
+      else addBox(list, 0.07, 0.11, 0.28, x + dir * 0.16, y + 0.01, z);
+    }
   };
   const nx = Math.max(2, Math.round(width / spacing));
   for (let i = 0; i <= nx; i++) {
@@ -167,7 +180,7 @@ function addEaveTiles(list, width, depth, cornerLift) {
   }
 }
 
-function addCornerTips(list, width, depth, cornerLift) {
+function addCornerTips(list, width, depth, cornerLift, detail = false) {
   for (const sx of [-1, 1]) {
     for (const sz of [-1, 1]) {
       const p = new THREE.Vector3(sx * width * 0.5, cornerLift + 0.05, sz * depth * 0.5);
@@ -178,8 +191,38 @@ function addCornerTips(list, width, depth, cornerLift) {
         p.clone().add(new THREE.Vector3(sx * 1.3, 1.32, sz * 1.3)),
       ];
       list.push(tubeFromPoints(pts, 0.2, 5));
+      if (detail && width >= 36) {
+        const inner = [
+          p.clone().add(new THREE.Vector3(-sx * 0.35, -0.05, -sz * 0.35)),
+          p.clone().add(new THREE.Vector3(sx * 0.1, 0.14, sz * 0.1)),
+          p.clone().add(new THREE.Vector3(sx * 0.62, 0.5, sz * 0.62)),
+          p.clone().add(new THREE.Vector3(sx * 1.05, 1.12, sz * 1.05)),
+        ];
+        list.push(tubeFromPoints(inner, 0.12, 4));
+        for (let i = 0; i < 3; i++) {
+          const t = 0.42 + i * 0.18;
+          addBox(list, 0.1, 0.1, 0.74, sx * width * 0.5, cornerLift + t * 0.36, sz * depth * 0.5, sx * sz * 0.15);
+        }
+      }
     }
   }
+}
+
+function addBeast(list, x, y, z, s = 1) {
+  const body = new THREE.SphereGeometry(0.16 * s, 5, 3);
+  body.scale(1.45, 0.85, 0.72);
+  body.translate(x, y, z);
+  list.push(body);
+  const head = new THREE.SphereGeometry(0.1 * s, 4, 3);
+  head.translate(x + 0.2 * s, y + 0.06 * s, z);
+  list.push(head);
+  const ear = new THREE.ConeGeometry(0.045 * s, 0.13 * s, 4);
+  ear.translate(x + 0.2 * s, y + 0.17 * s, z);
+  list.push(ear);
+  const tail = new THREE.ConeGeometry(0.05 * s, 0.3 * s, 4);
+  tail.rotateZ(-0.7);
+  tail.translate(x - 0.27 * s, y + 0.1 * s, z);
+  list.push(tail);
 }
 
 function addCoffers(list, width, depth) {
@@ -211,7 +254,17 @@ export function createRoof({
   fascia = true,
 }) {
   const group = new THREE.Group();
-  const geo = createRoofGeometry({ width, depth, height, cornerLift, curve, ridgeRatio });
+  const rich = Math.min(width, depth) >= 13;
+  const geo = createRoofGeometry({
+    width,
+    depth,
+    height,
+    cornerLift,
+    curve,
+    ridgeRatio,
+    segments: rich ? 11 : 7,
+    vSegments: rich ? 7 : 4,
+  });
   const mesh = new THREE.Mesh(geo, mats.roof);
   mesh.castShadow = true;
   group.add(mesh);
@@ -220,8 +273,8 @@ export function createRoof({
   const goldList = [];
   const ridgeHalf = geo.userData.ridgeHalf;
 
-  addEaveTiles(darkList, width, depth, cornerLift);
-  addCornerTips(darkList, width, depth, cornerLift);
+  addEaveTiles(darkList, width, depth, cornerLift, rich);
+  addCornerTips(darkList, width, depth, cornerLift, rich);
   addCoffers(goldList, width, depth);
 
   if (hasRidge && ridgeHalf > 0.5) {
@@ -238,6 +291,11 @@ export function createRoof({
         8
       )
     );
+    if (rich) {
+      for (let p = -ridgeHalf + 0.55; p < ridgeHalf - 0.3; p += 1.6) {
+        addBox(darkList, 0.5, 0.26, 0.76, p, height + 0.62, 0);
+      }
+    }
     for (const sx of [-1, 1]) {
       const lip = new THREE.BoxGeometry(1.0, 2.2, 1.2);
       lip.translate(sx * (ridgeHalf + 0.18), height + 1.0, 0);
@@ -246,6 +304,19 @@ export function createRoof({
       tail.rotateZ(sx * -0.35);
       tail.translate(sx * (ridgeHalf + 0.34), height + 2.35, 0);
       darkList.push(tail);
+      if (rich) {
+        const curl = [
+          new THREE.Vector3(sx * (ridgeHalf + 0.1), height + 0.55, 0),
+          new THREE.Vector3(sx * (ridgeHalf + 0.62), height + 1.1, 0),
+          new THREE.Vector3(sx * (ridgeHalf + 0.28), height + 1.85, 0),
+          new THREE.Vector3(sx * (ridgeHalf - 0.12), height + 2.3, 0),
+          new THREE.Vector3(sx * (ridgeHalf - 0.52), height + 2.08, 0),
+        ];
+        darkList.push(tubeFromPoints(curl, 0.23, 5));
+        const eye = new THREE.SphereGeometry(0.24, 5, 4);
+        eye.translate(sx * (ridgeHalf + 0.34), height + 1.85, 0);
+        darkList.push(eye);
+      }
       if (beasts) {
         for (let i = 0; i < 3; i++) {
           const cone = new THREE.ConeGeometry(0.18, 0.5, 5);
@@ -264,13 +335,25 @@ export function createRoof({
         pts.push(hipPoint(width, depth, height, cornerLift, curve, sx, sz, v, ridgeRatio));
       }
       darkList.push(tubeFromPoints(pts, 0.28, 6));
-      if (beasts) {
-        for (let i = 0; i < 5; i++) {
-          const v = 0.55 + i * 0.075;
+      if (rich) {
+        for (let i = 0; i < 3; i++) {
+          const v = i / 3 + 0.08;
           const p = hipPoint(width, depth, height, cornerLift, curve, sx, sz, v, ridgeRatio);
-          const cone = new THREE.ConeGeometry(0.2 + 0.02 * i, 0.55 + 0.04 * i, 5);
-          cone.translate(p.x, p.y + 0.48, p.z);
-          goldList.push(cone);
+          const p2 = hipPoint(width, depth, height, cornerLift, curve, sx, sz, Math.min(1, v + 0.16), ridgeRatio);
+          addBox(darkList, 0.46, 0.22, 0.68, (p.x + p2.x) / 2, (p.y + p2.y) / 2 + 0.12, (p.z + p2.z) / 2, Math.atan2(p2.x - p.x, p2.z - p.z));
+        }
+      }
+      if (beasts) {
+        for (let i = 0; i < 2; i++) {
+          const v = 0.62 + i * 0.16;
+          const p = hipPoint(width, depth, height, cornerLift, curve, sx, sz, v, ridgeRatio);
+          if (rich) {
+            addBeast(goldList, p.x, p.y + 0.45, p.z, 0.9 + i * 0.06);
+          } else {
+            const cone = new THREE.ConeGeometry(0.2 + 0.02 * i, 0.55 + 0.04 * i, 5);
+            cone.translate(p.x, p.y + 0.48, p.z);
+            goldList.push(cone);
+          }
         }
       }
     }
@@ -299,8 +382,8 @@ export function createSkirtRoof({
   height,
   cornerLift = 1.8,
   curve = 1.5,
-  segments = 26,
-  vSegments = 14,
+  segments = 12,
+  vSegments = 6,
 }) {
   const geoParts = [];
   const slope = Math.hypot(height, (outerD - innerD) * 0.5 + 1);
@@ -359,8 +442,9 @@ export function createSkirtRoof({
   group.add(mesh);
 
   const darkList = [];
-  addEaveTiles(darkList, outerW, outerD, cornerLift);
-  addCornerTips(darkList, outerW, outerD, cornerLift);
+  const rich = outerW >= 20 || outerD >= 18;
+  addEaveTiles(darkList, outerW, outerD, cornerLift, rich);
+  addCornerTips(darkList, outerW, outerD, cornerLift, rich);
   for (const sx of [-1, 1]) {
     for (const sz of [-1, 1]) {
       const pts = [];

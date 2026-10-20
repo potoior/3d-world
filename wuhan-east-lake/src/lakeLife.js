@@ -4,6 +4,7 @@ import { mats } from './materials.js';
 import { addBox, mergedMesh } from './geometry.js';
 import { terrainHeight, WATER_Y } from './terrain.js';
 import { hash } from './detailKit.js';
+import { LAKE_RING } from './lakeData.js';
 
 function boatGeometry() {
   const dark = [];
@@ -15,6 +16,19 @@ function boatGeometry() {
   const deck = new THREE.BoxGeometry(5.8, 0.16, 2.1);
   deck.translate(0, 0.96, 0);
   light.push(deck);
+  const rim = new THREE.TorusGeometry(1.31, 0.06, 5, 14);
+  rim.rotateX(Math.PI / 2);
+  rim.scale(3.05, 1.02, 1);
+  rim.translate(0, 0.9, 0);
+  dark.push(rim);
+  for (let i = 0; i < 8; i++) {
+    addBox(dark, 0.055, 0.05, 2.05, -2.5 + i * 0.78, 0.87, 0);
+  }
+  for (const sx of [-1.75, 0.35]) {
+    for (const sz of [-0.88, 0.88]) addBox(dark, 0.075, 1.08, 0.075, sx, 1.48, sz);
+  }
+  addBox(light, 2.4, 0.07, 0.07, -0.7, 2.04, 0.88);
+  addBox(light, 2.4, 0.07, 0.07, -0.7, 2.04, -0.88);
   const cab = new THREE.BoxGeometry(2.2, 1.15, 1.75);
   cab.translate(-0.7, 1.5, 0);
   light.push(cab);
@@ -31,11 +45,14 @@ function boatGeometry() {
     o.rotateY(sz * 0.28);
     o.translate(0.6, 1.1, sz * 1.15);
     oars.push(o);
+    const blade = new THREE.BoxGeometry(0.24, 0.035, 0.55);
+    blade.rotateY(sz * 0.28);
+    blade.translate(0.15, 1.1, sz * 2.25);
+    oars.push(blade);
   }
-  const hull = mergedMesh(dark, mats.wood, true, true).geometry;
+  const hull = mergedMesh([...dark, ...oars], mats.wood, true, true).geometry;
   const canopy = mergedMesh(light, mats.white, true, true).geometry;
-  const oar = mergedMesh(oars, mats.wood, true, true).geometry;
-  return { hull, canopy, oar };
+  return { hull, canopy };
 }
 
 function makeBoats() {
@@ -44,13 +61,14 @@ function makeBoats() {
     [250, 270, 1.2, 1.1], [-250, 430, 2.8, 0.85],
     [430, -290, 3.6, 0.95], [-160, 120, 1.6, 0.75],
     [320, 150, 0.2, 0.7], [-300, 60, 2.2, 0.65],
+    [-80, -240, 1.4, 0.9], [180, 40, 2.7, 0.78],
+    [-320, 220, 0.8, 0.85], [440, 60, 3.1, 0.7],
   ].filter(([x, z]) => terrainHeight(x, z) < WATER_Y - 0.05);
-  const { hull, canopy, oar } = boatGeometry();
+  const { hull, canopy } = boatGeometry();
   const group = new THREE.Group();
   const h = new THREE.InstancedMesh(hull, mats.wood, defs.length);
   const c = new THREE.InstancedMesh(canopy, mats.white, defs.length);
-  const o = new THREE.InstancedMesh(oar, mats.wood, defs.length);
-  for (const m of [h, c, o]) {
+  for (const m of [h, c]) {
     m.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
     m.castShadow = true;
     m.receiveShadow = true;
@@ -70,8 +88,11 @@ function makeBoats() {
     }
   }
   const wake = mergedMesh(wakes, mats.wake, false, false);
-  if (wake) group.add(wake);
-  return { group, meshes: [h, c, o], defs };
+  if (wake) {
+    wake.renderOrder = 2;
+    group.add(wake);
+  }
+  return { group, meshes: [h, c], defs };
 }
 
 function petalTexture() {
@@ -93,8 +114,7 @@ function petalTexture() {
 }
 
 function makePetals() {
-  const count = 300;
-  const pos = new Float32Array(count * 3);
+  const count = 460;
   const bases = new Float32Array(count * 3);
   const seeds = new Float32Array(count);
   const clusters = [
@@ -103,6 +123,11 @@ function makePetals() {
     [-280, 790, 40, 0],
     [180, 130, 26, WATER_Y + 0.35],
     [-380, 20, 18, WATER_Y + 0.35],
+    [-370, 744, 32, 0],
+    [-300, 760, 32, 0],
+    [-238, 738, 24, 0],
+    [-340, 190, 18, WATER_Y + 0.35],
+    [-356, 120, 16, WATER_Y + 0.35],
   ];
   for (let i = 0; i < count; i++) {
     const c = clusters[i % clusters.length];
@@ -114,25 +139,31 @@ function makePetals() {
     bases[i * 3] = x;
     bases[i * 3 + 1] = y;
     bases[i * 3 + 2] = z;
-    pos[i * 3] = x;
-    pos[i * 3 + 1] = y;
-    pos[i * 3 + 2] = z;
     seeds[i] = hash(12000, i + 11);
   }
-  const geo = new THREE.BufferGeometry();
-  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-  const mat = new THREE.PointsMaterial({
+  const geo = new THREE.PlaneGeometry(1.75, 1.12);
+  const mat = new THREE.MeshBasicMaterial({
     map: petalTexture(),
     color: 0xf6c8d6,
-    size: 1.5,
     transparent: true,
     opacity: 0.85,
     depthWrite: false,
-    sizeAttenuation: true,
+    side: THREE.DoubleSide,
   });
-  const points = new THREE.Points(geo, mat);
-  points.frustumCulled = false;
-  return { points, bases, seeds, geo };
+  const mesh = new THREE.InstancedMesh(geo, mat, count);
+  mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+  mesh.frustumCulled = false;
+  for (let i = 0; i < count; i++) {
+    const s = seeds[i];
+    dummy.position.set(bases[i * 3], bases[i * 3 + 1], bases[i * 3 + 2]);
+    dummy.rotation.set(s * 1.8, s * 5.2, s * 2.4);
+    dummy.scale.setScalar(0.85 + s * 0.6);
+    dummy.updateMatrix();
+    mesh.setMatrixAt(i, dummy.matrix);
+  }
+  mesh.instanceMatrix.needsUpdate = true;
+  mesh.renderOrder = 2;
+  return { mesh, bases, seeds, count };
 }
 
 function makeFlags() {
@@ -188,26 +219,82 @@ function makeFlags() {
   return { mesh, uniforms };
 }
 
+function foamTexture() {
+  const c = document.createElement('canvas');
+  c.width = 128;
+  c.height = 32;
+  const ctx = c.getContext('2d');
+  ctx.clearRect(0, 0, 128, 32);
+  for (let i = 0; i < 70; i++) {
+    const x = (i * 47 % 128) + (i % 3) * 1.7;
+    const y = 10 + (i * 13 % 13);
+    const r = 1.2 + (i * 7 % 5) * 0.75;
+    const g = ctx.createRadialGradient(x, y, 0, x, y, r * 3.2);
+    g.addColorStop(0, 'rgba(244,251,249,0.55)');
+    g.addColorStop(1, 'rgba(228,244,241,0)');
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.ellipse(x, y, r * 3.2, r * 1.1, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.wrapS = THREE.RepeatWrapping;
+  return tex;
+}
+
+function makeShoreFoam() {
+  const n = LAKE_RING.length / 2;
+  const geo = new THREE.PlaneGeometry(1, 1);
+  geo.rotateX(-Math.PI / 2);
+  const mat = new THREE.MeshBasicMaterial({
+    map: foamTexture(),
+    color: 0xf2fbf8,
+    transparent: true,
+    opacity: 0.3,
+    depthWrite: false,
+    side: THREE.DoubleSide,
+  });
+  const mesh = new THREE.InstancedMesh(geo, mat, n);
+  for (let i = 0; i < n; i++) {
+    const j = (i + 1) % n;
+    const x = LAKE_RING[i * 2];
+    const z = LAKE_RING[i * 2 + 1];
+    const dx = LAKE_RING[j * 2] - x;
+    const dz = LAKE_RING[j * 2 + 1] - z;
+    const len = Math.hypot(dx, dz) || 1;
+    dummy.position.set(x + dx * 0.5, WATER_Y + 0.045, z + dz * 0.5);
+    dummy.rotation.set(0, Math.atan2(-dz, dx), 0);
+    dummy.scale.set(len * 1.08, 1, 3.1 + hash(15000, i) * 2.2);
+    dummy.updateMatrix();
+    mesh.setMatrixAt(i, dummy.matrix);
+  }
+  mesh.instanceMatrix.needsUpdate = true;
+  mesh.frustumCulled = false;
+  mesh.renderOrder = 3;
+  return mesh;
+}
+
 function makeKites() {
   const group = new THREE.Group();
   const mat = new THREE.MeshStandardMaterial({ color: 0xb43d2c, roughness: 0.7, side: THREE.DoubleSide });
   const defs = [
     [-140, 82, -320, 0.4], [210, 118, 140, 1.8], [-260, 96, 390, 3.4],
-    [360, 74, -120, 5.1],
+    [360, 74, -120, 5.1], [-20, 104, -250, 2.6], [120, 126, 260, 4.2],
+    [-360, 88, 80, 0.9],
   ];
   const list = [];
   for (const [x, y, z, phase] of defs) {
     const g = new THREE.Group();
+    const parts = [];
     const body = new THREE.CircleGeometry(1.25, 4);
     body.rotateZ(Math.PI / 4);
-    const tail = [];
+    parts.push(body);
     for (let i = 0; i < 5; i++) {
-      addBox(tail, 0.5 - i * 0.06, 0.5 - i * 0.06, 0.05, 0, -1.4 - i * 0.55, 0);
+      addBox(parts, 0.5 - i * 0.06, 0.5 - i * 0.06, 0.05, 0, -1.4 - i * 0.55, 0);
     }
-    const tm = mergedMesh(tail, mat, false, false);
-    const bm = new THREE.Mesh(body, mat);
-    g.add(bm);
-    if (tm) g.add(tm);
+    const bm = mergedMesh(parts, mat, false, false);
+    if (bm) g.add(bm);
     g.position.set(x, y, z);
     g.userData = { x, y, z, phase };
     group.add(g);
@@ -219,25 +306,30 @@ function makeKites() {
 function makeBirds() {
   const group = new THREE.Group();
   const mat = new THREE.MeshBasicMaterial({ color: 0x4e5c60, side: THREE.DoubleSide, transparent: true, opacity: 0.7 });
-  const geos = [];
-  for (let i = 0; i < 18; i++) {
-    const s = 1.3 + hash(13000, i) * 1.5;
-    const g = new THREE.BufferGeometry();
-    g.setAttribute('position', new THREE.Float32BufferAttribute([
-      -s, 0, 0, 0, s * 0.32, 0, 0, 0, 0,
-      s, 0, 0, 0, s * 0.32, 0, 0, 0, 0,
-    ], 3));
-    g.translate((hash(13000, i + 3) - 0.5) * 520, 20 + hash(13000, i + 7) * 70, (hash(13000, i + 11) - 0.5) * 430);
-    geos.push(g);
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute([
+    -1, 0, 0, 0, 0.32, 0, 0, 0, 0,
+    1, 0, 0, 0, 0.32, 0, 0, 0, 0,
+  ], 3));
+  const count = 36;
+  const mesh = new THREE.InstancedMesh(geo, mat, count);
+  for (let i = 0; i < count; i++) {
+    const scale = 1.3 + hash(13000, i) * 1.5;
+    dummy.position.set((hash(13000, i + 3) - 0.5) * 520, 20 + hash(13000, i + 7) * 70, (hash(13000, i + 11) - 0.5) * 430);
+    dummy.rotation.set(0, hash(13000, i + 17) * 6.28, 0);
+    dummy.scale.set(scale, scale, scale);
+    dummy.updateMatrix();
+    mesh.setMatrixAt(i, dummy.matrix);
   }
-  const mesh = mergedMesh(geos, mat, false, false);
-  if (mesh) group.add(mesh);
+  mesh.instanceMatrix.needsUpdate = true;
+  mesh.frustumCulled = false;
+  group.add(mesh);
   group.position.set(120, 92, -20);
   return group;
 }
 
 function makeSparkle() {
-  const count = 220;
+  const count = 340;
   const pos = new Float32Array(count * 3);
   const baseY = new Float32Array(count);
   const seeds = new Float32Array(count);
@@ -261,15 +353,45 @@ function makeSparkle() {
   });
   const points = new THREE.Points(geo, mat);
   points.frustumCulled = false;
+  points.renderOrder = 2;
   return { points, geo, mat, count: n, baseY, seeds };
+}
+
+function makeFloatingLanterns() {
+  const paper = [];
+  const gold = [];
+  const n = LAKE_RING.length / 2;
+  for (let i = 2; i < n; i += 9) {
+    const x = LAKE_RING[i * 2] * 0.93;
+    const z = LAKE_RING[i * 2 + 1] * 0.93;
+    if (terrainHeight(x, z) > WATER_Y - 0.1) continue;
+    const g = new THREE.SphereGeometry(0.2, 7, 5);
+    g.scale(1.15, 0.7, 1.15);
+    g.translate(x, WATER_Y + 0.13, z);
+    paper.push(g);
+    const ring = new THREE.TorusGeometry(0.22, 0.035, 4, 10);
+    ring.rotateX(Math.PI / 2);
+    ring.translate(x, WATER_Y + 0.12, z);
+    gold.push(ring);
+    const tip = new THREE.ConeGeometry(0.1, 0.16, 6);
+    tip.translate(x, WATER_Y + 0.28, z);
+    paper.push(tip);
+  }
+  const group = new THREE.Group();
+  const pm = mergedMesh(paper, mats.paper, false, false);
+  if (pm) group.add(pm);
+  const gm = mergedMesh(gold, mats.gold, false, false);
+  if (gm) group.add(gm);
+  return group;
 }
 
 export function createLakeLife() {
   const group = new THREE.Group();
   const boats = makeBoats();
   group.add(boats.group);
+  group.add(makeShoreFoam());
   const petals = makePetals();
-  group.add(petals.points);
+  group.add(petals.mesh);
   const flags = makeFlags();
   group.add(flags.mesh);
   const kites = makeKites();
@@ -278,6 +400,7 @@ export function createLakeLife() {
   group.add(birds);
   const sparkle = makeSparkle();
   group.add(sparkle.points);
+  group.add(makeFloatingLanterns());
   group.userData = { boats, petals, flags, kites, birds, sparkle };
   return group;
 }
@@ -300,21 +423,23 @@ export function updateLakeLife(extras, time) {
     for (const m of meshes) m.instanceMatrix.needsUpdate = true;
   }
   if (u.petals) {
-    const { geo, bases, seeds } = u.petals;
-    const p = geo.attributes.position;
+    const { mesh, bases, seeds } = u.petals;
     for (let i = 0; i < seeds.length; i++) {
       const s = seeds[i];
       const bx = bases[i * 3];
       const by = bases[i * 3 + 1];
       const bz = bases[i * 3 + 2];
-      p.setXYZ(
-        i,
+      dummy.position.set(
         bx + Math.sin(time * 0.32 + s * 11) * 4.2 + Math.sin(time * 0.11 + s * 4) * 3,
         by + Math.sin(time * 0.65 + s * 8) * 0.65,
         bz + Math.cos(time * 0.27 + s * 9) * 4.2
       );
+      dummy.rotation.set(s * 1.8 + Math.sin(time * 0.5 + s * 7) * 0.7, s * 5.2 + time * 0.18, s * 2.4 + Math.cos(time * 0.42 + s * 5) * 0.6);
+      dummy.scale.setScalar(0.85 + s * 0.6);
+      dummy.updateMatrix();
+      mesh.setMatrixAt(i, dummy.matrix);
     }
-    p.needsUpdate = true;
+    mesh.instanceMatrix.needsUpdate = true;
   }
   if (u.flags) u.flags.uniforms.uTime.value = time;
   if (u.kites) {

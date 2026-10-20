@@ -44,6 +44,10 @@ export function mergeStaticGroup(source) {
 
   source.traverse((obj) => {
     if (!obj.isMesh) return;
+    if (obj.isInstancedMesh) {
+      skipped.push(obj);
+      return;
+    }
     const mat = obj.material;
     if (Array.isArray(mat) || mat.transparent || mat.isShaderMaterial || !obj.visible) {
       skipped.push(obj);

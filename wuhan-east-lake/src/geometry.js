@@ -234,6 +234,29 @@ export function createPlinth({ w, d, h, stairs = 3.2, railing = true }) {
   return group;
 }
 
+const paletteCache = new Map();
+
+function paletteTarget(mat) {
+  if (mat.isMeshBasicMaterial || (mat.emissive && mat.emissive.getHex() !== 0)) return mat;
+  const doubleSide = mat.side === THREE.DoubleSide;
+  const metal = (mat.metalness || 0) >= 0.45;
+  const key = (mat.map ? 'm' + mat.map.uuid : metal ? 'metal' : 'plain') + (doubleSide ? 'D' : '');
+  if (!paletteCache.has(key)) {
+    paletteCache.set(
+      key,
+      new THREE.MeshStandardMaterial({
+        map: mat.map || null,
+        vertexColors: true,
+        color: 0xffffff,
+        roughness: metal ? 0.42 : mat.map ? mat.roughness : 0.85,
+        metalness: metal ? 0.72 : mat.map ? Math.min(mat.metalness || 0, 0.16) : 0.03,
+        side: doubleSide ? THREE.DoubleSide : THREE.FrontSide,
+      })
+    );
+  }
+  return paletteCache.get(key);
+}
+
 export function mergeStaticGroup(source) {
   source.updateMatrixWorld(true);
   const buckets = new Map();
@@ -245,6 +268,7 @@ export function mergeStaticGroup(source) {
       skipped.push(obj);
       return;
     }
+    const target = paletteTarget(mat);
     let geo = obj.geometry.clone();
     geo.applyMatrix4(obj.matrixWorld);
     if (geo.index) geo = geo.toNonIndexed();
@@ -256,23 +280,32 @@ export function mergeStaticGroup(source) {
       const count = geo.attributes.position.count;
       geo.setAttribute('uv', new THREE.Float32BufferAttribute(new Float32Array(count * 2), 2));
     }
-    if (!buckets.has(mat)) buckets.set(mat, []);
-    buckets.get(mat).push(geo);
+    if (target.vertexColors) {
+      const count = geo.attributes.position.count;
+      const color = geo.attributes.color;
+      if (!color) {
+        const arr = new Float32Array(count * 3);
+        arr.fill(1);
+        geo.setAttribute('color', new THREE.Float32BufferAttribute(arr, 3));
+      }
+      const attr = geo.attributes.color;
+      const r = mat.color ? mat.color.r : 1;
+      const g = mat.color ? mat.color.g : 1;
+      const b = mat.color ? mat.color.b : 1;
+      if (!color || target !== mat) {
+        for (let i = 0; i < count; i++) {
+          attr.setXYZ(i, attr.getX(i) * r, attr.getY(i) * g, attr.getZ(i) * b);
+        }
+        attr.needsUpdate = true;
+      }
+    }
+    const bucket = buckets.get(target);
+    if (bucket) bucket.push(geo);
+    else buckets.set(target, [geo]);
   });
 
   const merged = new THREE.Group();
   for (const [material, list] of buckets) {
-    const hasColor = list.some((g) => g.attributes.color);
-    if (hasColor) {
-      list.forEach((g) => {
-        if (!g.attributes.color) {
-          const count = g.attributes.position.count;
-          const arr = new Float32Array(count * 3);
-          arr.fill(1);
-          g.setAttribute('color', new THREE.Float32BufferAttribute(arr, 3));
-        }
-      });
-    }
     const geo = mergeGeometries(list, false);
     list.forEach((g) => g.dispose());
     if (!geo) continue;

@@ -3,6 +3,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { buildForbiddenCity } from './layout.js';
 import { createFirstPerson } from './firstperson.js';
 import { createAmbient } from './ambient.js';
+import { mats } from './materials.js';
 
 const isCompact = window.innerWidth < 820 || /Mobi|Android/i.test(navigator.userAgent);
 const canvas = document.getElementById('scene');
@@ -17,10 +18,12 @@ renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.12;
 renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.shadowMap.type = THREE.PCFShadowMap;
+renderer.shadowMap.autoUpdate = false;
+renderer.shadowMap.needsUpdate = true;
 
 const scene = new THREE.Scene();
-scene.fog = new THREE.Fog(0xbcd2e4, 1700, 4200);
+scene.fog = new THREE.Fog(0xbcd2e4, 1450, 3800);
 
 const camera = new THREE.PerspectiveCamera(80, window.innerWidth / window.innerHeight, 1, 6000);
 camera.position.set(0, 300, 820);
@@ -85,7 +88,7 @@ scene.add(hemi);
 const sun = new THREE.DirectionalLight(0xffebc2, 3.0);
 sun.position.set(420, 760, 560);
 sun.castShadow = true;
-sun.shadow.mapSize.set(isCompact ? 2048 : 4096, isCompact ? 2048 : 4096);
+sun.shadow.mapSize.set(1024, 1024);
 sun.shadow.camera.left = -880;
 sun.shadow.camera.right = 880;
 sun.shadow.camera.top = 880;
@@ -247,8 +250,10 @@ const tmpColor = new THREE.Color();
 const tmpSunPos = new THREE.Vector3();
 
 function updateEnvironment(dt) {
+  const prevMix = envMix;
   envMix += (envTarget - envMix) * Math.min(1, dt * 1.4);
   if (Math.abs(envTarget - envMix) < 0.001) envMix = envTarget;
+  if (envMix !== prevMix) renderer.shadowMap.needsUpdate = true;
 
   sun.color.copy(dayState.sun).lerp(duskState.sun, envMix);
   sun.intensity = THREE.MathUtils.lerp(dayState.sunIntensity, duskState.sunIntensity, envMix);
@@ -273,6 +278,7 @@ function updateEnvironment(dt) {
   waterMaterial.uniforms.uSunDir.value.copy(tmpSunPos).normalize();
   waterMaterial.uniforms.uDeep.value.copy(dayState.waterDeep).lerp(duskState.waterDeep, envMix);
   waterMaterial.uniforms.uSky.value.copy(dayState.waterSky).lerp(duskState.waterSky, envMix);
+  mats.lantern.emissiveIntensity = THREE.MathUtils.lerp(0.5, 1.65, envMix);
 }
 
 function animate() {

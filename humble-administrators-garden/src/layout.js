@@ -68,19 +68,29 @@ function createPond(material) {
   const curve = new THREE.CatmullRomCurve3(POND.map(([x, z]) => new THREE.Vector3(x, 0, z)), true, 'catmullrom', 0.4);
   const pts = curve.getPoints(120);
   const curb = [];
+  const joints = [];
   for (let i = 0; i < pts.length - 1; i++) {
     const a = pts[i];
     const b = pts[i + 1];
     const len = Math.hypot(b.x - a.x, b.z - a.z);
+    const ang = Math.atan2(b.x - a.x, b.z - a.z);
     const g = new THREE.BoxGeometry(0.9, 0.42, len + 0.35);
-    g.rotateY(Math.atan2(b.x - a.x, b.z - a.z));
+    g.rotateY(ang);
     g.translate((a.x + b.x) / 2, 0.18, (a.z + b.z) / 2);
     curb.push(g);
+    if (i % 3 === 0) {
+      const j = new THREE.BoxGeometry(0.94, 0.06, 0.12);
+      j.rotateY(ang);
+      j.translate(a.x, 0.41, a.z);
+      joints.push(j);
+    }
   }
   const group = new THREE.Group();
   group.add(water);
   const cm = mergedMesh(curb, mats.stone, true, true);
   if (cm) group.add(cm);
+  const jm = mergedMesh(joints, mats.trimDark, false, true);
+  if (jm) group.add(jm);
   return group;
 }
 

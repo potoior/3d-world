@@ -144,6 +144,12 @@ export function createWall(curve, options = {}) {
   const accentUV = [];
   const accent2Pos = [];
   const accent2UV = [];
+  const darkPos = [];
+  const darkUV = [];
+  const ironPos = [];
+  const ironUV = [];
+  const warmPos = [];
+  const warmUV = [];
   const depthAcc = [0];
   for (let i = 1; i < samples.length; i++) {
     depthAcc[i] = depthAcc[i - 1] + Math.hypot(samples[i].x - samples[i - 1].x, samples[i].z - samples[i - 1].z);
@@ -295,6 +301,60 @@ export function createWall(curve, options = {}) {
     geo.dispose();
   }
 
+  for (let i = 0; i < samples.length - 1; i++) {
+    const a = samples[i];
+    const b = samples[i + 1];
+    const seg = Math.max(0.3, depthAcc[i + 1] - depthAcc[i]);
+    if (seg < 0.2) continue;
+    const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, Math.atan2((a.tx + b.tx) * 0.5, (a.tz + b.tz) * 0.5), 0));
+    const mx = (a.x + b.x) * 0.5;
+    const mz = (a.z + b.z) * 0.5;
+    const my = (a.top + b.top) * 0.5;
+    pushBox(accent2Pos, accent2UV, 0.6, 0.13, seg * 1.03,
+      new THREE.Vector3(mx + a.nx * (topHalf - 0.24), my + 1.06, mz + a.nz * (topHalf - 0.24)), q);
+    pushBox(accent2Pos, accent2UV, 0.48, 0.11, seg * 1.03,
+      new THREE.Vector3(mx - a.nx * (topHalf - 0.2), my + 0.86, mz - a.nz * (topHalf - 0.2)), q);
+    if (i % 3 === 0) {
+      pushBox(darkPos, darkUV, 0.09, 0.46, 0.13,
+        new THREE.Vector3(a.x + a.nx * (topHalf + 0.005), a.top + 0.55, a.z + a.nz * (topHalf + 0.005)), q);
+    }
+    if (i % 5 === 0) {
+      pushBox(accentPos, accentUV, topHalf * 2 - 2.05, 0.035, 0.09,
+        new THREE.Vector3(mx, my + 0.068, mz), q);
+      pushBox(accentPos, accentUV, 0.42, 0.05, seg * 0.92,
+        new THREE.Vector3(mx, my + 0.075, mz), q);
+    }
+    if (i % 18 === 0) {
+      pushBox(accent2Pos, accent2UV, 1.05, 0.26, 0.34,
+        new THREE.Vector3(a.x + a.nx * (topHalf + 0.34), a.top - 0.62, a.z + a.nz * (topHalf + 0.34)), q);
+      pushBox(accent2Pos, accent2UV, 0.15, 0.34, 0.42,
+        new THREE.Vector3(a.x + a.nx * (topHalf + 0.86), a.top - 0.68, a.z + a.nz * (topHalf + 0.86)), q);
+      pushBox(darkPos, darkUV, 0.1, 0.1, 0.2,
+        new THREE.Vector3(a.x + a.nx * (topHalf + 0.9), a.top - 0.62, a.z + a.nz * (topHalf + 0.9)), q);
+    }
+    if (i % 32 === 0 && depthAcc[i] > 8) {
+      pushBox(accent2Pos, accent2UV, 1.15, 1.0, 1.0,
+        new THREE.Vector3(mx + a.nx * (bottomHalf + 0.2), a.baseTop - 0.85, mz + a.nz * (bottomHalf + 0.2)), q);
+    }
+  }
+
+  for (let i = 8; i < samples.length - 10; i += 3) {
+    const a = samples[i];
+    const b = samples[i + 3];
+    if (Math.abs(b.top - a.top) < 0.2) continue;
+    const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, Math.atan2(a.tx, a.tz), 0));
+    const off = -(topHalf - 0.78);
+    for (let k = 0; k <= 3; k++) {
+      const f = k / 3;
+      const px = a.x + (b.x - a.x) * f + a.nx * off;
+      const pz = a.z + (b.z - a.z) * f + a.nz * off;
+      const py = a.top + (b.top - a.top) * f;
+      pushBox(ironPos, ironUV, 0.07, 0.92, 0.07, new THREE.Vector3(px, py + 0.5, pz), q);
+    }
+    pushBox(ironPos, ironUV, 0.065, 0.065, Math.hypot(b.x - a.x, b.z - a.z) * 1.02,
+      new THREE.Vector3((a.x + b.x) * 0.5 + a.nx * off, (a.top + b.top) * 0.5 + 0.96, (a.z + b.z) * 0.5 + a.nz * off), q);
+  }
+
   for (let i = 2; i < samples.length - 2; i += 4) {
     const s = samples[i];
     const seg = depthAcc[i] - depthAcc[i - 1];
@@ -358,6 +418,36 @@ export function createWall(curve, options = {}) {
   for (const range of repairRanges) addRepairPatch(range[0], range[1], true);
   addRepairPatch(0.21, 0.995, false);
 
+  const addWarmPatch = (t0, t1, step) => {
+    for (let i = 5; i < samples.length - 5; i += step) {
+      const s = samples[i];
+      if (s.t < t0 || s.t > t1) continue;
+      const hsh = Math.sin(s.x * 0.83 + s.z * 1.27 + i * 1.71);
+      const ph = 0.45 + Math.abs(hsh) * 1.05;
+      const pw = 0.5 + Math.abs(Math.cos(i * 2.3)) * 0.7;
+      const cy = s.baseTop + (s.top - s.baseTop) * (0.22 + Math.abs(hsh) * 0.58);
+      const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, Math.atan2(s.tx, s.tz), 0));
+      const side = i % 2 === 0 ? 1 : -1;
+      pushBox(warmPos, warmUV, 0.055, ph, pw,
+        new THREE.Vector3(s.x + s.nx * (bodyBottomHalf + 0.01) * side, cy, s.z + s.nz * (bodyBottomHalf + 0.01) * side), q);
+    }
+  };
+  addWarmPatch(0.0, 1.0, 17);
+  for (const range of repairRanges) addWarmPatch(range[0], range[1], 2);
+
+  for (let i = 12; i < samples.length - 14; i += 23) {
+    const a = samples[i];
+    if (breakRange && (a.t < breakRange[0] - 0.012 || a.t > breakRange[1] + 0.012)) continue;
+    const yaw = Math.atan2(a.tx, a.tz);
+    for (let k = 0; k < 3; k++) {
+      const rx = a.x + a.nx * (bottomHalf + 0.7 + k * 0.65) + a.tx * (k - 1) * 1.1;
+      const rz = a.z + a.nz * (bottomHalf + 0.7 + k * 0.65) + a.tz * (k - 1) * 1.1;
+      const gy = heightAt(rx, rz);
+      const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(k * 0.4, yaw + k, k * 0.22));
+      pushBox(accentPos, accentUV, 0.4 + k * 0.12, 0.26, 0.3, new THREE.Vector3(rx, gy + 0.13, rz), q);
+    }
+  }
+
   const group = new THREE.Group();
   group.name = options.name || 'great-wall';
 
@@ -401,6 +491,30 @@ export function createWall(curve, options = {}) {
     spoutMesh.castShadow = true;
     spoutMesh.receiveShadow = true;
     group.add(spoutMesh);
+  }
+
+  if (darkPos.length) {
+    const slitGeo = makeBuffer(darkPos, darkUV);
+    const slitMesh = new THREE.Mesh(slitGeo, mats.dark);
+    slitMesh.castShadow = false;
+    slitMesh.receiveShadow = true;
+    group.add(slitMesh);
+  }
+
+  if (ironPos.length) {
+    const railGeo = makeBuffer(ironPos, ironUV);
+    const railMesh = new THREE.Mesh(railGeo, mats.iron);
+    railMesh.castShadow = true;
+    railMesh.receiveShadow = true;
+    group.add(railMesh);
+  }
+
+  if (warmPos.length) {
+    const warmGeo = makeBuffer(warmPos, warmUV, [1.02, 0.94, 0.82, 0.16]);
+    const warmMesh = new THREE.Mesh(warmGeo, mats.wallWarm);
+    warmMesh.castShadow = true;
+    warmMesh.receiveShadow = true;
+    group.add(warmMesh);
   }
 
   for (const end of [samples[0], samples[samples.length - 1]]) {

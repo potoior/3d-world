@@ -9,6 +9,7 @@ import {
   makeBannerTexture,
   makePlaqueTexture,
   makeSignTexture,
+  makeContactTexture,
 } from './textures.js';
 
 const brickMap = makeBrickTexture();
@@ -20,6 +21,7 @@ const mistMap = makeMistTexture();
 const bannerMap = makeBannerTexture();
 const plaqueMap = makePlaqueTexture();
 const signMap = makeSignTexture();
+const contactMap = makeContactTexture();
 
 brickMap.repeat.set(1, 1);
 stoneMap.repeat.set(1, 1);
@@ -37,19 +39,47 @@ export const mats = {
   wall: new THREE.MeshStandardMaterial({
     map: brickMap,
     bumpMap: brickMap,
-    bumpScale: 0.24,
-    color: 0xd7d2c7,
+    bumpScale: 0.26,
+    color: 0xd9d2c4,
     vertexColors: true,
-    roughness: 0.94,
+    roughness: 0.91,
     metalness: 0.0,
   }),
   wallShade: new THREE.MeshStandardMaterial({
     map: brickMap,
     bumpMap: brickMap,
-    bumpScale: 0.25,
-    color: 0xa9a69c,
+    bumpScale: 0.27,
+    color: 0xa6a298,
     vertexColors: true,
-    roughness: 0.96,
+    roughness: 0.93,
+  }),
+  wallWarm: new THREE.MeshStandardMaterial({
+    map: brickMap,
+    bumpMap: brickMap,
+    bumpScale: 0.22,
+    color: 0xc3a98b,
+    vertexColors: true,
+    roughness: 0.9,
+  }),
+  stoneWarm: new THREE.MeshStandardMaterial({
+    map: stoneMap,
+    bumpMap: stoneMap,
+    bumpScale: 0.28,
+    color: 0xbcae94,
+    vertexColors: true,
+    roughness: 0.95,
+  }),
+  iron: new THREE.MeshStandardMaterial({
+    color: 0x2c302c,
+    roughness: 0.58,
+    metalness: 0.65,
+  }),
+  contact: new THREE.MeshBasicMaterial({
+    map: contactMap,
+    transparent: true,
+    opacity: 0.5,
+    depthWrite: false,
+    toneMapped: false,
   }),
   stone: new THREE.MeshStandardMaterial({
     map: stoneMap,
@@ -88,8 +118,10 @@ export const mats = {
   }),
   terrain: new THREE.MeshStandardMaterial({
     map: mountainMap,
+    bumpMap: mountainMap,
+    bumpScale: 0.42,
     vertexColors: true,
-    roughness: 1.0,
+    roughness: 0.99,
     metalness: 0.0,
   }),
   farA: new THREE.MeshStandardMaterial({
@@ -192,4 +224,5 @@ export const sharedTextures = {
   bannerMap,
   plaqueMap,
   signMap,
+  contactMap,
 };

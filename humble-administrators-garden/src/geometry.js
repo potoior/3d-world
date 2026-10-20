@@ -256,8 +256,18 @@ export function mergeStaticGroup(source) {
       const count = geo.attributes.position.count;
       geo.setAttribute('uv', new THREE.Float32BufferAttribute(new Float32Array(count * 2), 2));
     }
-    if (!buckets.has(mat)) buckets.set(mat, []);
-    buckets.get(mat).push(geo);
+    let bucket = mat;
+    const region = mat.userData && mat.userData.atlasRegion;
+    if (region) {
+      const uv = geo.attributes.uv;
+      for (let i = 0; i < uv.count; i++) {
+        uv.setXY(i, region[0] + uv.getX(i) * (region[2] - region[0]), region[1] + uv.getY(i) * (region[3] - region[1]));
+      }
+      uv.needsUpdate = true;
+      bucket = mat.userData.atlasMaterial;
+    }
+    if (!buckets.has(bucket)) buckets.set(bucket, []);
+    buckets.get(bucket).push(geo);
   });
 
   const merged = new THREE.Group();

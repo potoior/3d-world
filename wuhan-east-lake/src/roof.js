@@ -6,7 +6,7 @@ const TILE = 1.32;
 
 function tubeFromPoints(points, radius, radialSegments = 6) {
   const curve = new THREE.CatmullRomCurve3(points);
-  return new THREE.TubeGeometry(curve, Math.max(8, points.length * 4), radius, radialSegments, false);
+  return new THREE.TubeGeometry(curve, Math.max(8, points.length * 2), radius, radialSegments, false);
 }
 
 function surfaceGeometry(sample, segments, vSegments) {
@@ -47,8 +47,8 @@ export function createRoofGeometry({
   cornerLift = 2.1,
   curve = 1.62,
   ridgeRatio = 0.55,
-  segments = 26,
-  vSegments = 16,
+  segments = 20,
+  vSegments = 12,
 }) {
   const W = width;
   const D = depth;
@@ -229,8 +229,8 @@ export function createSkirtRoof({
   height,
   cornerLift = 1.8,
   curve = 1.5,
-  segments = 26,
-  vSegments = 14,
+  segments = 20,
+  vSegments = 11,
 }) {
   const geoParts = [];
   const slope = Math.hypot(height, (outerD - innerD) * 0.5 + 1);

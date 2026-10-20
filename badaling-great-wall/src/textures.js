@@ -135,6 +135,53 @@ export function makeBrickTexture() {
     ctx.fill();
   }
   ctx.globalAlpha = 1;
+
+  for (let i = 0; i < 260; i++) {
+    const row = (rand() * 23) | 0;
+    const col = (rand() * 13) | 0;
+    const shift = row % 2 === 0 ? 0 : bw * 0.5;
+    const x = col * bw + shift;
+    const y = row * course;
+    const edge = rand();
+    ctx.strokeStyle = edge < 0.5 ? `rgba(42,38,32,${0.2 + rand() * 0.25})` : `rgba(220,210,188,${0.12 + rand() * 0.18})`;
+    ctx.lineWidth = 0.6 + rand() * 1.4;
+    ctx.beginPath();
+    if (edge < 0.34) {
+      ctx.moveTo(x + 3, y + 3 + rand() * 4);
+      ctx.lineTo(x + bw - 3 - rand() * 8, y + 3 + rand() * 5);
+    } else if (edge < 0.7) {
+      ctx.moveTo(x + 3 + rand() * 8, y + 3);
+      ctx.lineTo(x + 3 + rand() * 7, y + course - 3);
+    } else {
+      ctx.moveTo(x + 6 + rand() * 26, y + 4);
+      ctx.lineTo(x + 4 + rand() * 28, y + 8 + rand() * 10);
+      ctx.lineTo(x + 9 + rand() * 25, y + course - 4);
+    }
+    ctx.stroke();
+  }
+
+  for (let i = 0; i < 26; i++) {
+    const x = rand() * 512;
+    const y = 300 + rand() * 210;
+    const r = 12 + rand() * 38;
+    const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+    g.addColorStop(0, `rgba(58,72,48,${0.08 + rand() * 0.1})`);
+    g.addColorStop(1, 'rgba(58,72,48,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(x - r, y - r, r * 2, r * 2);
+  }
+  ctx.globalAlpha = 0.14;
+  for (let i = 0; i < 18; i++) {
+    const x = rand() * 512;
+    const w = 4 + rand() * 16;
+    const g = ctx.createLinearGradient(x, 0, x + w, 0);
+    g.addColorStop(0, 'rgba(238,236,226,0)');
+    g.addColorStop(0.5, 'rgba(238,236,226,0.5)');
+    g.addColorStop(1, 'rgba(238,236,226,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(x, 230 + rand() * 80, w, 130 + rand() * 110);
+  }
+  ctx.globalAlpha = 1;
   return finish(c);
 }
 
@@ -186,6 +233,44 @@ export function makeStoneTexture() {
     ctx.fill();
   }
   ctx.globalAlpha = 1;
+
+  for (let i = 0; i < 70; i++) {
+    const y = rand() * 512;
+    const bend = 2 + rand() * 7;
+    ctx.strokeStyle = rand() < 0.6 ? `rgba(52,50,43,${0.16 + rand() * 0.2})` : `rgba(206,196,172,${0.1 + rand() * 0.14})`;
+    ctx.lineWidth = 0.7 + rand() * 1.8;
+    ctx.beginPath();
+    ctx.moveTo(-10, y);
+    ctx.bezierCurveTo(140, y + bend, 350, y - bend, 522, y + rand() * bend * 0.6);
+    ctx.stroke();
+  }
+  for (let i = 0; i < 220; i++) {
+    const row = (rand() * 9) | 0;
+    let x = (rand() * 512) | 0;
+    const y = row * bh;
+    const w = 20 + rand() * 40;
+    ctx.strokeStyle = rand() < 0.55 ? `rgba(40,38,32,${0.18 + rand() * 0.24})` : `rgba(222,214,194,${0.1 + rand() * 0.16})`;
+    ctx.lineWidth = 0.6 + rand() * 1.2;
+    ctx.beginPath();
+    if (rand() < 0.5) {
+      ctx.moveTo(x, y + 4 + rand() * 40);
+      ctx.lineTo(x + w, y + 4 + rand() * 40);
+    } else {
+      ctx.moveTo(x, y + 4);
+      ctx.lineTo(x + rand() * 3 - 1.5, y + bh - 4);
+    }
+    ctx.stroke();
+  }
+  for (let i = 0; i < 26; i++) {
+    const x = rand() * 512;
+    const y = 300 + rand() * 212;
+    const r = 10 + rand() * 32;
+    const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+    g.addColorStop(0, `rgba(186,166,116,${0.08 + rand() * 0.1})`);
+    g.addColorStop(1, 'rgba(186,166,116,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(x - r, y - r, r * 2, r * 2);
+  }
   return finish(c);
 }
 
@@ -222,6 +307,38 @@ export function makeWalkwayTexture() {
   }
   mottle(ctx, 512, 512, rand, 100, ['#6c705f', '#a39a86', '#727669', '#b9ae96'], 0.08);
   speckle(ctx, 512, 512, 3600, rand, ['#605d53', '#a49e8f', '#b8b09e', '#54544b'], 0.17, 1.9);
+
+  for (let i = 0; i < 90; i++) {
+    const y = ((rand() * 9) | 0) * size;
+    const x = rand() * 512;
+    ctx.strokeStyle = rand() < 0.7 ? `rgba(46,43,37,${0.18 + rand() * 0.22})` : `rgba(226,218,198,${0.1 + rand() * 0.14})`;
+    ctx.lineWidth = 0.6 + rand() * 1.1;
+    ctx.beginPath();
+    if (rand() < 0.5) {
+      ctx.moveTo(x, y + 3);
+      ctx.lineTo(x + 10 + rand() * 34, y + 3 + rand() * 3);
+    } else {
+      ctx.moveTo(x, y + 3);
+      ctx.lineTo(x + rand() * 4 - 2, y + size - 3);
+    }
+    ctx.stroke();
+  }
+  for (let i = 0; i < 22; i++) {
+    const x = ((rand() * 9) | 0) * size;
+    const y = ((rand() * 9) | 0) * size;
+    ctx.fillStyle = `rgba(${rand() < 0.5 ? '150,146,132' : '88,86,78'},${0.08 + rand() * 0.08})`;
+    ctx.fillRect(x + 4, y + 4, size * (0.4 + rand() * 0.5), size * (0.3 + rand() * 0.5));
+  }
+  for (let i = 0; i < 38; i++) {
+    const x = rand() * 512;
+    const y = rand() * 512;
+    const r = 16 + rand() * 54;
+    const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+    g.addColorStop(0, `rgba(52,58,48,${0.05 + rand() * 0.08})`);
+    g.addColorStop(1, 'rgba(52,58,48,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(x - r, y - r, r * 2, r * 2);
+  }
   return finish(c);
 }
 
@@ -270,6 +387,24 @@ export function makeMountainTexture() {
     ctx.ellipse(rand() * 512, rand() * 512, 4 + rand() * 16, 2 + rand() * 7, rand() * 3, 0, Math.PI * 2);
     ctx.fill();
   }
+  for (let i = 0; i < 34; i++) {
+    const y = rand() * 512;
+    const h = 2 + rand() * 11;
+    ctx.fillStyle = rand() < 0.6 ? `rgba(70,72,62,${0.06 + rand() * 0.1})` : `rgba(196,178,142,${0.04 + rand() * 0.07})`;
+    ctx.beginPath();
+    ctx.moveTo(0, y + rand() * 6);
+    ctx.bezierCurveTo(150, y - 6 + rand() * 12, 360, y + 4 + rand() * 8, 512, y + rand() * 8);
+    ctx.lineTo(512, y + h + rand() * 5);
+    ctx.bezierCurveTo(350, y + h + 6 + rand() * 10, 160, y + h - 4 + rand() * 9, 0, y + h + rand() * 4);
+    ctx.closePath();
+    ctx.fill();
+  }
+  const warm = ctx.createLinearGradient(0, 480, 512, 0);
+  warm.addColorStop(0, 'rgba(230,196,146,0.09)');
+  warm.addColorStop(0.55, 'rgba(230,196,146,0)');
+  warm.addColorStop(1, 'rgba(84,92,88,0.12)');
+  ctx.fillStyle = warm;
+  ctx.fillRect(0, 0, 512, 512);
   return finish(c);
 }
 
@@ -449,6 +584,17 @@ export function makeSignTexture() {
   return finish(c, { repeat: false });
 }
 
+export function makeContactTexture() {
+  const [c, ctx] = makeCanvas(128, 128);
+  const g = ctx.createRadialGradient(64, 64, 4, 64, 64, 62);
+  g.addColorStop(0, 'rgba(0,0,0,0.5)');
+  g.addColorStop(0.45, 'rgba(0,0,0,0.26)');
+  g.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, 128, 128);
+  return finish(c, { repeat: false });
+}
+
 export const sharedTextures = {
   brick: makeBrickTexture,
   stone: makeStoneTexture,
@@ -456,4 +602,5 @@ export const sharedTextures = {
   mountain: makeMountainTexture,
   roof: makeRoofTexture,
   mist: makeMistTexture,
+  contact: makeContactTexture,
 };

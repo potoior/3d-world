@@ -2,39 +2,10 @@ import * as THREE from 'three';
 import { mats } from './materials.js';
 import { addBox, addCylinder, mergedMesh, createStairs } from './geometry.js';
 import { createRoof, createSkirtRoof } from './roof.js';
-
-const plaqueCache = new Map();
+import { plaqueMaterial } from './atlas.js';
 
 export function getPlaqueMaterial(text) {
-  if (plaqueCache.has(text)) return plaqueCache.get(text);
-  const c = document.createElement('canvas');
-  c.width = 512;
-  c.height = 160;
-  const ctx = c.getContext('2d');
-  ctx.fillStyle = '#2b2620';
-  ctx.fillRect(0, 0, 512, 160);
-  ctx.strokeStyle = '#a89c82';
-  ctx.lineWidth = 8;
-  ctx.strokeRect(7, 7, 498, 146);
-  ctx.strokeStyle = 'rgba(200,190,168,0.4)';
-  ctx.lineWidth = 2;
-  ctx.strokeRect(20, 20, 472, 120);
-  ctx.fillStyle = '#e9e1d0';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  const chars = text.split('');
-  const size = Math.min(84, 360 / Math.max(1, chars.length));
-  ctx.font = size + 'px "Noto Serif CJK SC", "Songti SC", "STSong", serif';
-  const total = size * chars.length;
-  chars.forEach((ch, i) => {
-    ctx.fillText(ch, 256 - total / 2 + size * (i + 0.5), 82);
-  });
-  const tex = new THREE.CanvasTexture(c);
-  tex.colorSpace = THREE.SRGBColorSpace;
-  tex.anisotropy = 8;
-  const mat = new THREE.MeshBasicMaterial({ map: tex, toneMapped: false });
-  plaqueCache.set(text, mat);
-  return mat;
+  return plaqueMaterial(text);
 }
 
 function addPlaque(group, text, y, z, width = 2.6) {
@@ -144,20 +115,32 @@ export function createPavilion({
   }
 
   const cols = [];
+  const drums = [];
   const bayW = w / bays;
   for (let i = 0; i <= bays; i++) {
     const px = -w / 2 + i * bayW;
     addCylinder(cols, 0.17, 0.19, wallH, 8, px, baseH + wallH / 2, d / 2 + 0.16);
     addCylinder(cols, 0.17, 0.19, wallH, 8, px, baseH + wallH / 2, -d / 2 - 0.16);
+    addCylinder(drums, 0.25, 0.29, 0.16, 8, px, baseH + 0.08, d / 2 + 0.16);
+    addCylinder(drums, 0.25, 0.29, 0.16, 8, px, baseH + 0.08, -d / 2 - 0.16);
   }
   const sideBays = Math.max(2, Math.round(d / 4.5));
   for (let i = 1; i < sideBays; i++) {
     const pz = -d / 2 + (i * d) / sideBays;
     addCylinder(cols, 0.17, 0.19, wallH, 8, w / 2 + 0.16, baseH + wallH / 2, pz);
     addCylinder(cols, 0.17, 0.19, wallH, 8, -w / 2 - 0.16, baseH + wallH / 2, pz);
+    addCylinder(drums, 0.25, 0.29, 0.16, 8, w / 2 + 0.16, baseH + 0.08, pz);
+    addCylinder(drums, 0.25, 0.29, 0.16, 8, -w / 2 - 0.16, baseH + 0.08, pz);
   }
   const colMesh = mergedMesh(cols, mats.wallDark, true, true);
   if (colMesh) group.add(colMesh);
+  const dm = mergedMesh(drums, mats.stone, true, true);
+  if (dm) group.add(dm);
+  const inlay = [];
+  for (let px = -bw / 2 + 1; px < bw / 2; px += 1.1) addBox(inlay, 0.035, 0.016, bd - 0.4, px, baseH + 0.008, 0);
+  for (let pz = -bd / 2 + 1; pz < bd / 2; pz += 1.1) addBox(inlay, bw - 0.4, 0.016, 0.035, 0, baseH + 0.008, pz);
+  const im = mergedMesh(inlay, mats.stone, false, true);
+  if (im) group.add(im);
 
   const frame = [];
   addBox(frame, w + 0.5, 0.28, d + 0.5, 0, baseH + wallH - 0.2, 0);
@@ -229,7 +212,7 @@ export function createPavilion({
   return group;
 }
 
-function hexRoofGeometry(R, H, sides = 6, segU = 10, segV = 10) {
+function hexRoofGeometry(R, H, sides = 6, segU = 8, segV = 8) {
   const positions = [];
   const uvs = [];
   const indices = [];
@@ -278,7 +261,7 @@ function addHexRidges(group, R, H, sides = 6) {
       pts.push(new THREE.Vector3(Math.cos(a) * R * v, H * Math.pow(1 - v, 1.55), Math.sin(a) * R * v));
     }
     const curve = new THREE.CatmullRomCurve3(pts);
-    list.push(new THREE.TubeGeometry(curve, 24, 0.16, 5, false));
+    list.push(new THREE.TubeGeometry(curve, 14, 0.16, 4, false));
   }
   const mesh = mergedMesh(list, mats.roofDark, true, false);
   if (mesh) group.add(mesh);
@@ -336,6 +319,38 @@ export function createHexPavilion({
   addHexRidges(ridgeGroup, radius + 2.1, roofH);
   ridgeGroup.position.y = baseH + wallH;
   group.add(ridgeGroup);
+  const eave = [];
+  const tips = [];
+  const R = radius + 2.1;
+  for (let k = 0; k < 6; k++) {
+    const a0 = (k / 6) * Math.PI * 2;
+    const a1 = ((k + 1) / 6) * Math.PI * 2;
+    for (let j = 1; j < 8; j++) {
+      const t = j / 8;
+      const x = Math.cos(a0) + (Math.cos(a1) - Math.cos(a0)) * t;
+      const z = Math.sin(a0) + (Math.sin(a1) - Math.sin(a0)) * t;
+      const lenR = Math.hypot(x, z);
+      const ang = Math.atan2(x, z);
+      const cap = new THREE.CylinderGeometry(0.08, 0.08, 0.2, 6);
+      cap.rotateX(Math.PI / 2);
+      cap.rotateY(ang);
+      cap.translate((x / lenR) * R, 0.02, (z / lenR) * R);
+      eave.push(cap);
+    }
+    const tip = new THREE.ConeGeometry(0.11, 0.3, 5);
+    tip.translate(Math.cos(a0) * R, 0.2, Math.sin(a0) * R);
+    tips.push(tip);
+  }
+  const em = mergedMesh(eave, mats.roofDark, false, false);
+  if (em) {
+    em.position.y = baseH + wallH;
+    group.add(em);
+  }
+  const tm = mergedMesh(tips, mats.gold, false, false);
+  if (tm) {
+    tm.position.y = baseH + wallH;
+    group.add(tm);
+  }
 
   const gold = [];
   const ball = new THREE.SphereGeometry(0.3, 10, 8);
@@ -479,10 +494,23 @@ export function createWalkway({ length = 30, width = 3.2, height = 3.1, roofH = 
       const r = new THREE.BoxGeometry(b - a, 0.08, 0.08);
       r.translate((a + b) / 2, 0.75, sz * (width / 2));
       posts.push(r);
+      for (let px = a + 0.3; px < b - 0.2; px += 0.78) {
+        addBox(posts, 0.045, 0.62, 0.045, px, 0.43, sz * (width / 2));
+      }
+      for (let px = a + 0.3; px < b - 0.2; px += 1.4) {
+        addBox(posts, 0.2, 0.08, 0.2, px, height - 0.32, sz * (width / 2));
+        addBox(posts, 0.08, 0.2, 0.2, px, height - 0.48, sz * (width / 2));
+      }
     }
   }
   const pm = mergedMesh(posts, mats.wallDark, true, true);
   if (pm) group.add(pm);
+  const floor = [];
+  for (let px = -length / 2 + 0.6; px < length / 2; px += 1.15) {
+    addBox(floor, 0.05, 0.018, width + 0.66, px, 0.305, 0);
+  }
+  const fm = mergedMesh(floor, mats.stone, false, true);
+  if (fm) group.add(fm);
 
   const roof = createRoof({
     width: length + eave * 2,

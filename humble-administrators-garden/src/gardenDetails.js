@@ -33,6 +33,8 @@ export function createCoveredBridge({ span = 14, width = 2.8, rise = 1.1, roofH 
       const yy = curveY(t);
       addBox(posts, 0.16, 2.2, 0.16, sx * (width / 2 - 0.12), yy + 1.05, zz);
       addBox(posts, 0.1, 0.1, 0.72, sx * (width / 2 + 0.02), yy + 1.05, zz);
+      addBox(posts, 0.24, 0.1, 0.24, sx * (width / 2 - 0.12), yy + 2.14, zz);
+      addBox(posts, 0.05, 0.62, 0.05, sx * (width / 2 - 0.12), yy + 0.5, zz);
     }
     for (let i = 0; i < 14; i++) {
       const t = -1 + (2 * i) / 14;
@@ -44,6 +46,9 @@ export function createCoveredBridge({ span = 14, width = 2.8, rise = 1.1, roofH 
       addBar(rails, sx * (width / 2 - 0.12), zz, sx * (width / 2 - 0.12), z2, (yy + y2) / 2 + 0.95, 0.09, 0.1);
       addBar(rails, sx * (width / 2 - 0.12), zz, sx * (width / 2 - 0.12), z2, (yy + y2) / 2 + 0.5, 0.07, 0.07);
       if (i % 2 === 0) addBox(rails, 0.08, 0.86, 0.08, sx * (width / 2 - 0.12), yy + 0.52, zz);
+      if (i % 2 === 0) {
+        addBar(rails, sx * (width / 2 - 0.12), zz, sx * (width / 2 - 0.12), z2, (yy + y2) / 2 + 0.76, 0.045, 0.045);
+      }
     }
   }
   const pm = mergedMesh(posts, mats.timberRed, true, true);
@@ -135,9 +140,28 @@ export function createGardenWall({ length = 40, height = 3.2, thickness = 0.55, 
   );
   ridge.position.y = height + 0.3;
   group.add(ridge);
+  const caps = [];
+  const count = Math.max(3, Math.round(length / 1.55));
+  for (let i = 0; i <= count; i++) {
+    const p = -length / 2 + (i * length) / count;
+    for (const side of [-1, 1]) {
+      const c = new THREE.CylinderGeometry(0.065, 0.065, thickness + 0.26, 4, 1, true);
+      if (axis === 'x') {
+        c.rotateX(Math.PI / 2);
+        c.translate(p, height + 0.29, side * 0.09);
+      } else {
+        c.rotateZ(Math.PI / 2);
+        c.translate(side * 0.09, height + 0.29, p);
+      }
+      caps.push(c);
+    }
+  }
+  const capMesh = mergedMesh(caps, mats.roofDark, false, false);
+  if (capMesh) group.add(capMesh);
 
   const geo = new THREE.PlaneGeometry(1, 1);
   const frames = [];
+  const sills = [];
   for (const off of windows) {
     for (const side of [1, -1]) {
       const win = new THREE.Mesh(geo, mats.leak);
@@ -169,10 +193,18 @@ export function createGardenWall({ length = 40, height = 3.2, thickness = 0.55, 
           0
         );
       }
+      const sillY = height * 0.56 - 0.82;
+      addBox(sills, along ? 2.16 : 0.26, 0.13, along ? 0.26 : 2.16, px, sillY, pz);
+      addBox(sills, along ? 2.2 : 0.2, 0.1, along ? 0.2 : 2.2, px, height * 0.56 + 0.84, pz);
+      for (const u of [-0.96, 0.96]) {
+        addBox(sills, along ? 0.2 : 0.2, 1.62, along ? 0.2 : 0.2, px + (along ? u : 0), height * 0.56, pz + (along ? 0 : u));
+      }
     }
   }
   const fm = mergedMesh(frames, mats.stone, false, true);
   if (fm) group.add(fm);
+  const sm = mergedMesh(sills, mats.stone, false, true);
+  if (sm) group.add(sm);
 
   group.position.set(x, 0, z);
   return group;
@@ -205,11 +237,27 @@ export function createMoonGateWall({ length = 22, height = 3.5, thickness = 0.7,
   const ridge = new THREE.Mesh(new THREE.BoxGeometry(length + 0.2, 0.14, 0.16), mats.trimDark);
   ridge.position.y = height + 0.3;
   group.add(ridge);
+  const caps = [];
+  const count = Math.max(4, Math.round(length / 1.5));
+  for (let i = 0; i <= count; i++) {
+    const p = -length / 2 + (i * length) / count;
+    for (const side of [-1, 1]) {
+      const c = new THREE.CylinderGeometry(0.07, 0.07, thickness + 0.28, 4, 1, true);
+      c.rotateX(Math.PI / 2);
+      c.translate(p, height + 0.29, side * 0.09);
+      caps.push(c);
+    }
+  }
+  const capMesh = mergedMesh(caps, mats.roofDark, false, false);
+  if (capMesh) group.add(capMesh);
 
   for (const sz of [-1, 1]) {
     const ring = new THREE.Mesh(new THREE.TorusGeometry(radius, 0.09, 8, 40), mats.stone);
     ring.position.set(0, height * 0.48, sz * (thickness / 2 + 0.02));
     group.add(ring);
+    const inner = new THREE.Mesh(new THREE.TorusGeometry(radius - 0.16, 0.035, 5, 32), mats.marbleShade);
+    inner.position.set(0, height * 0.48, sz * (thickness / 2 + 0.03));
+    group.add(inner);
   }
   const step = new THREE.Mesh(new THREE.BoxGeometry(radius * 1.5, 0.12, thickness + 1.2), mats.stone);
   step.position.set(0, 0.06, 0);
@@ -247,7 +295,28 @@ export function createRibbonPath({ points = [], width = 2.6, y = 0.05, material 
   geo.computeVertexNormals();
   const mesh = new THREE.Mesh(geo, material);
   mesh.receiveShadow = true;
-  return mesh;
+  const group = new THREE.Group();
+  group.add(mesh);
+  const edge = [];
+  const total = curve.getLength();
+  const step = Math.max(0.9, total / 90);
+  for (let d = 0; d < total; d += step * 1.95) {
+    const t = d / total;
+    const p = curve.getPoint(t);
+    const tan = curve.getTangent(t);
+    const ang = Math.atan2(tan.x, tan.z);
+    for (const side of [-1, 1]) {
+      const nx = -tan.z * side;
+      const nz = tan.x * side;
+      const g = new THREE.BoxGeometry(0.24, 0.09, step * 1.12);
+      g.rotateY(ang);
+      g.translate(p.x + nx * (width / 2 + 0.14), y + 0.02, p.z + nz * (width / 2 + 0.14));
+      edge.push(g);
+    }
+  }
+  const em = mergedMesh(edge, mats.stone, false, true);
+  if (em) group.add(em);
+  return group;
 }
 
 export function createWillow({ height = 7.5, spread = 2.8, seed = 1 }) {
@@ -276,6 +345,30 @@ export function createWillow({ height = 7.5, spread = 2.8, seed = 1 }) {
     strand.translate((rnd(i + 30) - 0.5) * spread * 2.0, height * 0.52 - len * 0.5, (rnd(i + 37) - 0.5) * spread * 2.0);
     foliage.push(strand);
   }
+  for (let i = 0; i < 12; i++) {
+    const a = rnd(i + 60) * Math.PI * 2;
+    const rr = spread * (0.55 + rnd(i + 61) * 0.75);
+    const leaf = new THREE.IcosahedronGeometry(0.1 + rnd(i + 62) * 0.1, 0);
+    leaf.scale(0.55, 1.9, 0.55);
+    leaf.translate(
+      Math.cos(a) * rr,
+      height * (0.2 + rnd(i + 63) * 0.34),
+      Math.sin(a) * rr
+    );
+    foliage.push(leaf);
+  }
+  const branches = [];
+  for (let i = 0; i < 3; i++) {
+    const a = rnd(i + 70) * Math.PI * 2;
+    const pts = [
+      new THREE.Vector3(0, height * 0.42, 0),
+      new THREE.Vector3(Math.cos(a) * spread * 0.4, height * 0.56, Math.sin(a) * spread * 0.4),
+      new THREE.Vector3(Math.cos(a) * spread * 0.8, height * (0.66 + rnd(i + 71) * 0.1), Math.sin(a) * spread * 0.8),
+    ];
+    branches.push(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 5, 0.06, 4, false));
+  }
+  const bm = mergedMesh(branches, mats.trunk, true, true);
+  if (bm) group.add(bm);
   const fm = mergedMesh(foliage, mats.willow, true, true);
   if (fm) group.add(fm);
   group.scale.setScalar(0.9 + rnd(50) * 0.35);
@@ -297,10 +390,17 @@ export function createBamboo({ height = 7, radius = 1.8, seed = 1 }) {
     g.rotateZ((rnd(i + 12) - 0.5) * 0.12);
     g.translate(x, h / 2, z);
     list.push(g);
-    for (let k = 0; k < 3; k++) {
-      const leaf = new THREE.IcosahedronGeometry(0.38 + rnd(i + k) * 0.2, 0);
-      leaf.scale(1.5, 0.45, 0.7);
-      leaf.translate(x + (rnd(i + k + 4) - 0.5) * 1.1, h * (0.62 + k * 0.12), z + (rnd(i + k + 7) - 0.5) * 1.1);
+    for (let k = 1; k <= 3; k++) {
+      const node = new THREE.CylinderGeometry(0.052, 0.052, 0.035, 4, 1, true);
+      node.rotateZ((rnd(i + 12) - 0.5) * 0.12);
+      node.translate(x, (h * k) / 4, z);
+      list.push(node);
+    }
+    for (let k = 0; k < 5; k++) {
+      const leaf = new THREE.IcosahedronGeometry(0.34 + rnd(i + k) * 0.22, 0);
+      leaf.scale(1.6, 0.4, 0.68);
+      leaf.rotateY(rnd(i + k + 17) * 3.1);
+      leaf.translate(x + (rnd(i + k + 4) - 0.5) * 1.2, h * (0.58 + k * 0.09), z + (rnd(i + k + 7) - 0.5) * 1.2);
       list.push(leaf);
     }
   }
@@ -313,6 +413,7 @@ export function createLotus({ x = 0, z = 0, radius = 3.2, count = 12, seed = 1 }
   const group = new THREE.Group();
   const leaves = [];
   const flowers = [];
+  const buds = [];
   const rnd = (n) => {
     const v = Math.sin(seed * 57.3 + n * 33.1) * 43758.5453;
     return v - Math.floor(v);
@@ -322,25 +423,48 @@ export function createLotus({ x = 0, z = 0, radius = 3.2, count = 12, seed = 1 }
     const r = Math.sqrt(rnd(i + 3)) * radius;
     const px = x + Math.cos(a) * r;
     const pz = z + Math.sin(a) * r;
-    const leaf = new THREE.CircleGeometry(0.45 + rnd(i + 6) * 0.55, 12);
+    const size = 0.45 + rnd(i + 6) * 0.55;
+    const ly = 0.24 + rnd(i + 9) * 0.08;
+    const leaf = new THREE.CircleGeometry(size, 14);
     leaf.rotateX(-Math.PI / 2);
     leaf.rotateY(rnd(i + 2) * 3.1);
-    leaf.translate(px, 0.24 + rnd(i + 9) * 0.08, pz);
+    leaf.translate(px, ly, pz);
     leaves.push(leaf);
+    for (let k = 0; k < 4; k++) {
+      const va = (k / 4) * Math.PI * 2 + rnd(i + 30) * 0.4;
+      addBar(leaves, px, pz, px + Math.cos(va) * size * 0.86, pz + Math.sin(va) * size * 0.86, ly + 0.006, 0.008, 0.014);
+    }
     const stem = new THREE.CylinderGeometry(0.025, 0.03, 0.34, 4);
     stem.translate(px, 0.15, pz);
     leaves.push(stem);
     if (i % 2 === 0) {
-      const f = new THREE.SphereGeometry(0.14, 7, 5);
-      f.scale(0.85, 1.35, 0.85);
-      f.translate(px, 0.55 + rnd(i + 4) * 0.22, pz);
-      flowers.push(f);
+      const cy = 0.55 + rnd(i + 4) * 0.22;
+      for (let k = 0; k < 4; k++) {
+        const pa = (k / 4) * Math.PI * 2 + rnd(i + 40) * 0.5;
+        const p = new THREE.SphereGeometry(0.075, 6, 4);
+        p.scale(1.15, 1.8, 0.42);
+        p.rotateX(0.55);
+        p.rotateY(pa);
+        p.translate(px + Math.cos(pa) * 0.11, cy, pz + Math.sin(pa) * 0.11);
+        flowers.push(p);
+      }
+      const core = new THREE.SphereGeometry(0.07, 6, 4);
+      core.scale(1, 0.7, 1);
+      core.translate(px, cy + 0.03, pz);
+      buds.push(core);
+    } else if (i % 5 === 0) {
+      const bud = new THREE.ConeGeometry(0.08, 0.28, 6);
+      bud.rotateZ((rnd(i + 50) - 0.5) * 0.3);
+      bud.translate(px, 0.72, pz);
+      flowers.push(bud);
     }
   }
   const lm = mergedMesh(leaves, mats.lotus, true, true);
   if (lm) group.add(lm);
-  const fm = mergedMesh(flowers, mats.blossom, true, false);
+  const fm = mergedMesh(flowers, seed % 3 === 0 ? mats.blossomPale : seed % 3 === 1 ? mats.blossom : mats.blossomRose, true, false);
   if (fm) group.add(fm);
+  const cm = mergedMesh(buds, mats.gold, false, false);
+  if (cm) group.add(cm);
   return group;
 }
 
@@ -473,6 +597,7 @@ export function createBoatPavilion({ x = 0, z = 0, rot = 0, name = '香洲' }) {
   const cm = mergedMesh(cols, mats.wallDark, true, true);
   if (cm) group.add(cm);
 
+  const rail = [];
   const geo = new THREE.PlaneGeometry(1, 1);
   for (let i = 0; i < 4; i++) {
     for (const sz of [1, -1]) {
@@ -481,9 +606,32 @@ export function createBoatPavilion({ x = 0, z = 0, rot = 0, name = '香洲' }) {
       win.rotation.y = sz > 0 ? 0 : Math.PI;
       win.scale.set(1.7, 1.8, 1);
       group.add(win);
+      const wx = -1.0 - 4.25 + (i + 0.5) * (8.5 / 4);
+      addBox(rail, 0.055, 1.86, 0.055, wx - 0.84, 2.7, sz * 2.0);
+      addBox(rail, 0.055, 1.86, 0.055, wx + 0.84, 2.7, sz * 2.0);
+      addBox(rail, 1.74, 0.055, 0.055, wx, 2.7, sz * 2.0);
+      addBox(rail, 1.74, 0.055, 0.055, wx, 2.32, sz * 2.0);
     }
   }
-  const rail = [];
+  const trim = [];
+  const bowRing = new THREE.TorusGeometry(1.1, 0.09, 6, 18);
+  bowRing.rotateY(Math.PI / 2);
+  bowRing.scale(1, 0.72, 1);
+  bowRing.translate(10.35, 0.72, 0);
+  trim.push(bowRing);
+  const head = new THREE.SphereGeometry(0.28, 8, 6);
+  head.scale(1.5, 0.9, 0.8);
+  head.translate(11.5, 0.86, 0);
+  trim.push(head);
+  const horn = new THREE.ConeGeometry(0.13, 0.7, 5);
+  horn.rotateZ(-0.7);
+  horn.translate(11.6, 1.3, 0.2);
+  trim.push(horn);
+  const horn2 = horn.clone();
+  horn2.translate(0, 0, -0.4);
+  trim.push(horn2);
+  const tm = mergedMesh(trim, mats.gold, false, false);
+  if (tm) group.add(tm);
   for (let i = 0; i <= 5; i++) {
     const px = 3.3 + i * 0.8;
     for (const sz of [-1, 1]) addCylinder(rail, 0.06, 0.07, 0.9, 5, px, 1.75, sz * 2.15);

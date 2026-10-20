@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { mats, getPlaqueMaterial } from './materials.js';
+import { mats, getPlaqueGeometry, plaqueMaterial } from './materials.js';
 import { addBox, addCylinder, mergedMesh, createPlinth } from './geometry.js';
 import { createRoof, createSkirtRoof } from './roof.js';
 
@@ -7,13 +7,20 @@ function addDougong(group, w, d, y) {
   const teal = [];
   const gold = [];
   const step = 1.7;
+  const rich = d >= 14;
+  let tick = 0;
   for (let x = -w / 2 + 0.9; x <= w / 2 - 0.9; x += step) {
     for (const sz of [1, -1]) {
       const z = sz * (d / 2 + 0.5);
       addBox(teal, 0.5, 0.42, 0.72, x, y, z);
       addBox(teal, 0.95, 0.2, 0.8, x, y + 0.27, z + sz * 0.05);
       addBox(gold, 0.22, 0.22, 0.26, x, y + 0.02, z + sz * 0.3);
+      if (rich && tick % 3 === 0) {
+        addBox(teal, 0.72, 0.18, 0.9, x, y + 0.46, z + sz * 0.02);
+        addBox(gold, 0.14, 0.34, 0.14, x - 0.26, y + 0.22, z + sz * 0.42);
+      }
     }
+    tick++;
   }
   for (let z = -d / 2 + 1.2; z <= d / 2 - 1.2; z += step) {
     for (const sx of [1, -1]) {
@@ -21,7 +28,12 @@ function addDougong(group, w, d, y) {
       addBox(teal, 0.72, 0.42, 0.5, x, y, z);
       addBox(teal, 0.8, 0.2, 0.95, x + sx * 0.05, y + 0.27, z);
       addBox(gold, 0.26, 0.22, 0.22, x + sx * 0.3, y + 0.02, z);
+      if (rich && tick % 3 === 0) {
+        addBox(teal, 0.9, 0.18, 0.72, x + sx * 0.02, y + 0.46, z);
+        addBox(gold, 0.14, 0.34, 0.14, x + sx * 0.42, y + 0.22, z - 0.26);
+      }
     }
+    tick++;
   }
   addBox(gold, w, 0.16, 0.28, 0, y - 0.3, d / 2 + 0.2);
   addBox(gold, w, 0.16, 0.28, 0, y - 0.3, -d / 2 - 0.2);
@@ -38,13 +50,51 @@ function addDoorRow(group, { w, d, baseY, wallH, bays, back = false, scale = 1 }
   const doorH = wallH * 0.7 * scale;
   const doorW = bayW * 0.7;
   const geo = new THREE.PlaneGeometry(1, 1);
+  const gold = [];
+  const wood = [];
+  const ringGeo = new THREE.TorusGeometry(0.16, 0.035, 3, 6);
+  const studly = d >= 14;
+  const center = (bays - 1) / 2;
+  const transomH = Math.max(0.5, Math.min(1.15, wallH * 0.2));
+  const transomY = baseY + doorH + 0.25 + transomH * 0.5;
   for (let i = 0; i < bays; i++) {
     const x = -w / 2 + bayW * (i + 0.5);
+    const zf = d / 2 + 0.18;
     const front = new THREE.Mesh(geo, mats.door);
     front.position.set(x, baseY + doorH / 2 + 0.25, d / 2 + 0.16);
     front.scale.set(doorW, doorH, 1);
     front.castShadow = false;
     group.add(front);
+    if (studly) {
+      for (let r = 0; r < 2; r++) {
+        for (let c = 0; c < 2; c++) {
+          addBox(gold, 0.09, 0.09, 0.055, x + (c - 0.5) * doorW * 0.3, baseY + 0.62 + doorH * (0.18 + r * 0.2), zf);
+        }
+      }
+    }
+    if (studly) {
+      addBox(wood, doorW * 0.018, doorH * 0.9, 0.035, x - doorW * 0.02, baseY + doorH * 0.5 + 0.25, zf);
+      addBox(gold, doorW * 0.88, 0.11, 0.05, x, baseY + 0.18, zf);
+      addBox(gold, doorW * 0.9, 0.06, 0.045, x, baseY + doorH * 0.93, zf);
+      if (d >= 18 && Math.abs(i - center) < 0.6) {
+        for (const sx of [-1, 1]) {
+          const ring = ringGeo.clone();
+          ring.translate(x + sx * doorW * 0.13, baseY + 0.72, zf + 0.03);
+          gold.push(ring);
+          addBox(gold, 0.2, 0.2, 0.035, x + sx * doorW * 0.13, baseY + 0.72, zf);
+        }
+      }
+    }
+    const pane = new THREE.Mesh(geo, mats.lattice);
+    pane.position.set(x, transomY, d / 2 + 0.13);
+    pane.scale.set(doorW * 0.94, transomH, 1);
+    group.add(pane);
+    if (studly) {
+      for (const sx of [-1, 0, 1]) {
+        addBox(wood, 0.045, transomH, 0.05, x + sx * doorW * 0.24, transomY, d / 2 + 0.17);
+      }
+      addBox(wood, doorW * 0.94, 0.05, 0.05, x, transomY, d / 2 + 0.17);
+    }
     if (back) {
       const rear = new THREE.Mesh(geo, mats.door);
       rear.position.set(x, baseY + doorH / 2 + 0.25, -d / 2 - 0.16);
@@ -57,6 +107,10 @@ function addDoorRow(group, { w, d, baseY, wallH, bays, back = false, scale = 1 }
   addBox(beam, w + 0.4, 0.34, 0.42, 0, baseY + doorH + 0.42, d / 2 + 0.3);
   const bm = mergedMesh(beam, mats.gold, false, false);
   if (bm) group.add(bm);
+  const gm = mergedMesh(gold, mats.gold, false, false);
+  if (gm) group.add(gm);
+  const wm = mergedMesh(wood, mats.wood, false, false);
+  if (wm) group.add(wm);
   const step = new THREE.Mesh(new THREE.BoxGeometry(w * 0.96, 0.22, 1.1), mats.marbleShade);
   step.position.set(0, baseY + 0.11, d / 2 + 0.55);
   step.receiveShadow = true;
@@ -66,11 +120,15 @@ function addDoorRow(group, { w, d, baseY, wallH, bays, back = false, scale = 1 }
 function addColumns(group, { w, d, baseY, wallH, bays }) {
   const cols = [];
   const bases = [];
+  const gold = [];
   const radius = 0.44;
   const bayW = w / bays;
+  const rich = d >= 14;
   const drum = (x, z) => {
     addCylinder(cols, radius, radius * 1.06, wallH, 10, x, baseY + 0.24 + wallH / 2, z);
     addCylinder(bases, 0.58, 0.66, 0.42, 8, x, baseY + 0.21, z);
+    if (d >= 14) addBox(bases, 0.92, 0.14, 0.92, x, baseY + 0.07, z);
+    if (d >= 18) addCylinder(gold, 0.61, 0.61, 0.07, 8, x, baseY + 0.38, z);
   };
   for (let i = 0; i <= bays; i++) {
     const x = -w / 2 + i * bayW;
@@ -87,6 +145,8 @@ function addColumns(group, { w, d, baseY, wallH, bays }) {
   if (mesh) group.add(mesh);
   const baseMesh = mergedMesh(bases, mats.marbleShade, true, true);
   if (baseMesh) group.add(baseMesh);
+  const gm = mergedMesh(gold, mats.gold, true, false);
+  if (gm) group.add(gm);
 }
 
 function addSideWindows(group, { w, d, baseY, wallH }) {
@@ -108,15 +168,52 @@ function addSideWindows(group, { w, d, baseY, wallH }) {
       addBox(frames, 0.13, winH + 0.3, 0.15, sx * (w / 2 + 0.2), y, z + winW / 2 + 0.1);
       addBox(frames, 0.13, 0.16, winW + 0.4, sx * (w / 2 + 0.2), y + winH / 2 + 0.12, z);
       addBox(frames, 0.13, 0.16, winW + 0.4, sx * (w / 2 + 0.2), y - winH / 2 - 0.12, z);
+      addBox(frames, 0.34, 0.13, winW + 0.55, sx * (w / 2 + 0.25), y - winH / 2 - 0.26, z);
+      for (const off of [-winW / 3, 0, winW / 3]) {
+        addBox(frames, 0.06, winH * 0.92, 0.06, sx * (w / 2 + 0.25), y, z + off);
+      }
+      for (const off of [-winH / 4, winH / 4]) {
+        addBox(frames, 0.06, 0.055, winW * 0.92, sx * (w / 2 + 0.25), y + off, z);
+      }
     }
   }
   const fm = mergedMesh(frames, mats.gold, false, false);
   if (fm) group.add(fm);
 }
 
+function addBeamBands(group, { w, d, baseY, wallH }) {
+  const teal = [];
+  const gold = [];
+  const blue = [];
+  const ys = [baseY + wallH - 1.7, baseY + wallH - 1.35];
+  for (const y of ys) {
+    addBox(teal, w + 0.55, 0.16, 0.12, 0, y, d / 2 + 0.29);
+    addBox(teal, w + 0.55, 0.16, 0.12, 0, y, -d / 2 - 0.29);
+    addBox(teal, 0.12, 0.16, d + 0.55, w / 2 + 0.29, y, 0);
+    addBox(teal, 0.12, 0.16, d + 0.55, -w / 2 - 0.29, y, 0);
+  }
+  const y = ys[1] + 0.19;
+  addBox(gold, w + 0.6, 0.08, 0.15, 0, y, d / 2 + 0.3);
+  addBox(gold, w + 0.6, 0.08, 0.15, 0, y, -d / 2 - 0.3);
+  addBox(gold, 0.15, 0.08, d + 0.6, w / 2 + 0.3, y, 0);
+  addBox(gold, 0.15, 0.08, d + 0.6, -w / 2 - 0.3, y, 0);
+  if (d >= 14) {
+    for (let x = -w / 2 + 1; x <= w / 2 - 1; x += 3.4) {
+      addBox(blue, 0.7, 0.12, 0.1, x, ys[0] + 0.19, d / 2 + 0.31);
+      addBox(blue, 0.7, 0.12, 0.1, x, ys[0] + 0.19, -d / 2 - 0.31);
+    }
+  }
+  const tm = mergedMesh(teal, mats.teal, false, false);
+  const gm = mergedMesh(gold, mats.gold, false, false);
+  const bm = mergedMesh(blue, mats.blue, false, false);
+  if (tm) group.add(tm);
+  if (gm) group.add(gm);
+  if (bm) group.add(bm);
+}
+
 function addPlaque(group, { name, d, y, zOffset = 0.5, width = 3.8 }) {
   if (!name) return;
-  const plaque = new THREE.Mesh(new THREE.PlaneGeometry(width, width * 0.375), getPlaqueMaterial(name));
+  const plaque = new THREE.Mesh(getPlaqueGeometry(name, width), plaqueMaterial);
   plaque.position.set(0, y, d / 2 + zOffset);
   group.add(plaque);
   const frame = [];
@@ -207,6 +304,7 @@ export function createHall({
 
   addColumns(group, { w, d, baseY: baseH, wallH, bays });
   addSideWindows(group, { w, d, baseY: baseH, wallH });
+  addBeamBands(group, { w, d, baseY: baseH, wallH });
 
   const frieze = new THREE.Mesh(new THREE.BoxGeometry(w + 0.9, 1.15, d + 0.9), mats.frieze);
   frieze.position.y = baseH + wallH - 0.35;
@@ -253,6 +351,7 @@ export function createHall({
       baseY: upperBase,
       wallH: upperWallH,
     });
+    addBeamBands(group, { w: upperW, d: upperD, baseY: upperBase, wallH: upperWallH });
     addDoorRow(group, {
       w: upperW,
       d: upperD,

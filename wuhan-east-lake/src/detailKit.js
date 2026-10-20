@@ -149,7 +149,7 @@ export function addCherryTree(seed, height = 7, spread = 3.2) {
   const blobs = [];
   for (let i = 0; i < 11; i++) {
     const r = spread * (0.5 + hash(seed, i) * 0.5);
-    const blob = new THREE.IcosahedronGeometry(r, 1);
+    const blob = new THREE.IcosahedronGeometry(r, 0);
     blob.scale(1.2, 0.7, 1.2);
     blob.translate(
       (hash(seed, i + 5) - 0.5) * spread * 2.0,
@@ -226,6 +226,145 @@ export function addBannerPole(gold, red, x, z, gy, h = 6.4) {
   addBox(red, 0.95, 1.75, 0.05, x + 0.95, gy + h - 1.0, z);
 }
 
+export function addLatticePanel(root, x, y, z, w, h, ry = 0, mat = mats.lattice) {
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mat);
+  m.position.set(x, y, z);
+  m.rotation.y = ry;
+  root.add(m);
+  return m;
+}
+
+export function addPlankRun(list, ax, az, bx, bz, y, width = 2.4, count = 10, thick = 0.11) {
+  const dx = bx - ax;
+  const dz = bz - az;
+  const len = Math.hypot(dx, dz) || 1;
+  const ang = Math.atan2(dx, dz);
+  for (let i = 0; i < count; i++) {
+    const t = (i + 0.5) / count;
+    const g = new THREE.BoxGeometry(width, thick, (len / count) * 0.82);
+    g.rotateY(ang);
+    g.translate(ax + dx * t, y + (i % 2) * 0.008, az + dz * t);
+    list.push(g);
+  }
+}
+
+export function addBollard(list, cap, x, z, gy, h = 0.85) {
+  addCylinder(list, 0.13, 0.17, h, 7, x, gy + h / 2, z);
+  addCylinder(list, 0.22, 0.19, 0.1, 7, x, gy + h, z);
+  const ring = new THREE.TorusGeometry(0.2, 0.035, 5, 10);
+  ring.rotateX(Math.PI / 2);
+  ring.translate(x, gy + h * 0.64, z);
+  cap.push(ring);
+}
+
+export function addColumnBase(list, x, y, z, r = 0.34) {
+  addCylinder(list, r, r * 1.12, 0.2, 8, x, y + 0.1, z);
+  addCylinder(list, r * 0.86, r, 0.1, 8, x, y + 0.24, z);
+}
+
+export function addLanternString(gold, paper, ax, az, bx, bz, y, count = 7, sag = 0.6) {
+  let px = ax;
+  let pz = az;
+  for (let i = 0; i <= 12; i++) {
+    const t = (i + 1) / 12;
+    const x = ax + (bx - ax) * t;
+    const z = az + (bz - az) * t;
+    const yy = y - Math.sin(t * Math.PI) * sag;
+    addBar(gold, px, pz, x, z, yy, 0.035, 0.035);
+    px = x;
+    pz = z;
+  }
+  for (let i = 1; i <= count; i++) {
+    const t = i / (count + 1);
+    const x = ax + (bx - ax) * t;
+    const z = az + (bz - az) * t;
+    const yy = y - Math.sin(t * Math.PI) * sag - 0.34;
+    addCylinder(gold, 0.018, 0.018, 0.34, 4, x, yy + 0.42, z);
+    const body = new THREE.SphereGeometry(0.19, 7, 5);
+    body.scale(0.85, 1.25, 0.85);
+    body.translate(x, yy, z);
+    paper.push(body);
+    addCylinder(gold, 0.15, 0.17, 0.07, 6, x, yy + 0.24, z);
+    addCylinder(gold, 0.15, 0.17, 0.07, 6, x, yy - 0.24, z);
+  }
+}
+
+export function addPerson(root, x, z, gy, ry, seed = 1, colors = null) {
+  const bodyMat = colors && colors[0] ? colors[0] : mats.blue;
+  const coatMat = colors && colors[1] ? colors[1] : mats.teal;
+  const g = new THREE.Group();
+  const body = [];
+  addCylinder(body, 0.16, 0.22, 0.78, 6, 0, 0.77, 0);
+  for (const sx of [-0.1, 0.1]) addCylinder(body, 0.055, 0.07, 0.7, 5, sx, 0.35, 0);
+  const bm = mergedMesh(body, bodyMat, true, true);
+  if (bm) g.add(bm);
+  const coat = [];
+  addCylinder(coat, 0.2, 0.25, 0.62, 6, 0, 1.08, 0);
+  addCylinder(coat, 0.07, 0.07, 0.55, 5, -0.24, 1.03, 0.02);
+  addCylinder(coat, 0.07, 0.07, 0.55, 5, 0.24, 1.03, -0.02);
+  const cm = mergedMesh(coat, coatMat, true, true);
+  if (cm) g.add(cm);
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.14, 8, 6), mats.trunk);
+  head.position.y = 1.52;
+  g.add(head);
+  if (seed % 3 === 1) {
+    const hat = new THREE.Mesh(new THREE.ConeGeometry(0.25, 0.16, 8), mats.reed);
+    hat.position.y = 1.64;
+    g.add(hat);
+  }
+  g.position.set(x, gy, z);
+  g.rotation.y = ry;
+  root.add(g);
+  return g;
+}
+
+export function addFisher(root, x, z, gy, ry, seed = 1) {
+  const g = new THREE.Group();
+  const list = [];
+  addBox(list, 0.62, 0.1, 0.5, 0, 0.42, 0);
+  for (const sx of [-0.24, 0.24]) addCylinder(list, 0.05, 0.06, 0.4, 5, sx, 0.2, 0);
+  addCylinder(list, 0.18, 0.24, 0.62, 6, 0, 0.82, 0);
+  addCylinder(list, 0.12, 0.15, 0.48, 5, 0.28, 0.68, 0.16);
+  const body = mergedMesh(list, mats.teal, true, true);
+  if (body) g.add(body);
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.13, 8, 6), mats.trunk);
+  head.position.set(0, 1.24, 0);
+  g.add(head);
+  const hat = new THREE.Mesh(new THREE.ConeGeometry(0.3, 0.17, 9), mats.reed);
+  hat.position.y = 1.36;
+  g.add(hat);
+  const rod = [];
+  const ang = -0.62 - (seed % 5) * 0.03;
+  const rg = new THREE.CylinderGeometry(0.012, 0.025, 2.8, 4);
+  rg.rotateZ(ang);
+  rg.translate(0.9, 1.5, 0.3);
+  rod.push(rg);
+  const line = new THREE.CylinderGeometry(0.004, 0.004, 1.7, 3);
+  line.translate(1.98, 1.02, 0.3);
+  rod.push(line);
+  const rm = mergedMesh(rod, mats.wallDark, false, false);
+  if (rm) g.add(rm);
+  const bucket = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.13, 0.26, 7), mats.wood);
+  bucket.position.set(-0.45, 0.14, -0.22);
+  g.add(bucket);
+  g.position.set(x, gy, z);
+  g.rotation.y = ry;
+  root.add(g);
+  return g;
+}
+
+export function addShrub(list, x, z, gy, seed, radius = 1.2, count = 6) {
+  for (let i = 0; i < count; i++) {
+    const a = hash(seed, i) * Math.PI * 2;
+    const r = Math.sqrt(hash(seed, i + 3)) * radius * 0.8;
+    const s = radius * (0.3 + hash(seed, i + 7) * 0.3);
+    const g = new THREE.IcosahedronGeometry(s, 0);
+    g.scale(1.2, 0.72, 1.2);
+    g.translate(x + Math.cos(a) * r, gy + s * 0.5, z + Math.sin(a) * r);
+    list.push(g);
+  }
+}
+
 export function addTreeLine(root, pts, offset, count, seed, kind = 'broad') {
   for (let i = 0; i < count; i++) {
     const t = (i + 0.5) / count;
@@ -251,7 +390,7 @@ export function addTreeLine(root, pts, offset, count, seed, kind = 'broad') {
     const canopies = 5 + (i % 3);
     for (let k = 0; k < canopies; k++) {
       const r = 2.1 + hash(seed, i * 7 + k) * 1.7;
-      const b = new THREE.IcosahedronGeometry(r, 1);
+      const b = new THREE.IcosahedronGeometry(r, 0);
       b.scale(1, 0.82, 1);
       b.translate(
         (hash(seed, i + k) - 0.5) * 4.2,

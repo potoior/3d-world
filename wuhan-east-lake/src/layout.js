@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { mats, makeWaterMaterial } from './materials.js';
 import { addBox, mergedMesh, mergeStaticGroup } from './geometry.js';
 import { createTree, createRock } from './props.js';
@@ -33,6 +34,8 @@ import { addGreenwayDetails } from './greenwayDetails.js';
 import { addWaterDetails } from './waterDetails.js';
 import { addXingyinDetails, addMoshanDetails, addCherryDetails } from './landmarkDetails.js';
 import { createLakeLife } from './lakeLife.js';
+import { createInstancedForest } from './instancedTrees.js';
+import { addPerson, addFisher, addShrub } from './detailKit.js';
 
 const ISLAND = { x: -382, z: -8 };
 const ISLAND_BASE = terrainHeight(ISLAND.x, ISLAND.z);
@@ -67,14 +70,14 @@ function createCherry({ height = 7, spread = 3.2, seed = 1 }) {
     return v - Math.floor(v);
   };
   const blobs = [];
-  for (let i = 0; i < 10; i++) {
-    const r = spread * (0.5 + rnd(i) * 0.5);
+  for (let i = 0; i < 8; i++) {
+    const r = spread * (0.56 + rnd(i) * 0.52);
     const blob = new THREE.IcosahedronGeometry(r, 1);
-    blob.scale(1.15, 0.72, 1.15);
+    blob.scale(1.16, 0.73, 1.16);
     blob.translate(
-      (rnd(i + 5) - 0.5) * spread * 1.9,
-      height * (0.52 + rnd(i + 9) * 0.36),
-      (rnd(i + 13) - 0.5) * spread * 1.9
+      (rnd(i + 5) - 0.5) * spread * 2.0,
+      height * (0.53 + rnd(i + 9) * 0.35),
+      (rnd(i + 13) - 0.5) * spread * 2.0
     );
     blobs.push(blob);
   }
@@ -125,7 +128,9 @@ function createWakes(boats) {
       geos.push(g);
     }
   }
-  return mergedMesh(geos, mats.wake, false, false);
+  const mesh = mergedMesh(geos, mats.wake, false, false);
+  if (mesh) mesh.renderOrder = 2;
+  return mesh;
 }
 
 function createBirds() {
@@ -185,8 +190,8 @@ function addShoreTrees(root, rnd) {
   }
 }
 
-function addMoshanForest(root, rnd) {
-  for (let i = 0; i < 150; i++) {
+function collectMoshanForest(defs, rnd) {
+  for (let i = 0; i < 170; i++) {
     const a = rnd() * Math.PI * 2;
     const r = 35 + Math.sqrt(rnd()) * 300;
     const x = 680 + Math.cos(a) * r;
@@ -196,13 +201,27 @@ function addMoshanForest(root, rnd) {
     if (lakeField(x, z) < 6) continue;
     if (Math.hypot(x - 600, z + 110) < 52) continue;
     if (x > 480 && x < 610 && z > -155 && z < -85) continue;
-    let t;
-    if (rnd() < 0.2) t = createWillow({ height: 8 + rnd() * 3, spread: 2.8, seed: i + 1200 });
-    else if (rnd() < 0.55) t = createWaterFir({ height: 9 + rnd() * 6, seed: i + 1300 });
-    else t = createTree({ height: 8 + rnd() * 8, spread: 2.8 + rnd() * 2.2, kind: 'broad', seed: i + 1400 });
-    t.position.set(x, h - 0.2, z);
-    t.rotation.y = rnd() * 6.28;
-    root.add(t);
+    let kind;
+    let height;
+    let spread;
+    let seed;
+    if (rnd() < 0.2) {
+      kind = 'willow';
+      height = 8 + rnd() * 3;
+      spread = 2.8;
+      seed = i + 1200;
+    } else if (rnd() < 0.55) {
+      kind = 'fir';
+      height = 9 + rnd() * 6;
+      spread = 2.4;
+      seed = i + 1300;
+    } else {
+      kind = 'broad';
+      height = 8 + rnd() * 8;
+      spread = 2.8 + rnd() * 2.2;
+      seed = i + 1400;
+    }
+    defs.push({ kind, x, z, h, height, spread, seed, rot: rnd() * 6.28 });
   }
 }
 
@@ -216,7 +235,7 @@ function addCherryGarden(root, rnd) {
   ];
   let idx = 0;
   for (const [cx, cz, rx, rz] of clusters) {
-    for (let i = 0; i < 24; i++) {
+    for (let i = 0; i < 32; i++) {
       const a = rnd() * Math.PI * 2;
       const r = Math.sqrt(rnd());
       const x = cx + Math.cos(a) * rx * r;
@@ -231,7 +250,7 @@ function addCherryGarden(root, rnd) {
       idx++;
     }
   }
-  for (let i = 0; i < 14; i++) {
+  for (let i = 0; i < 18; i++) {
     const x = -400 + rnd() * 170;
     const z = 650 + rnd() * 160;
     const h = terrainHeight(x, z);
@@ -247,14 +266,15 @@ export function buildEastLakeScene() {
   const waterMaterial = makeWaterMaterial();
   root.add(createTerrain());
 
-  const water = new THREE.Mesh(createWater(), waterMaterial);
+  const lakeGeo = createWater();
+  const coveGeo = createCoveWater();
+  coveGeo.translate(0, 0.01, 0);
+  const water = new THREE.Mesh(mergeGeometries([lakeGeo, coveGeo], false), waterMaterial);
+  lakeGeo.dispose();
+  coveGeo.dispose();
   water.position.y = WATER_Y;
   water.renderOrder = 1;
   root.add(water);
-  const cove = new THREE.Mesh(createCoveWater(), waterMaterial);
-  cove.position.y = WATER_Y + 0.01;
-  cove.renderOrder = 1;
-  root.add(cove);
 
   root.add(createFarMountains());
   root.add(createSkyline());
@@ -366,7 +386,8 @@ export function buildEastLakeScene() {
   })();
 
   addShoreTrees(root, rnd);
-  addMoshanForest(root, rnd);
+  const forestDefs = [];
+  collectMoshanForest(forestDefs, rnd);
   addCherryGarden(root, rnd);
   for (const [cx, cz, rad] of [[128, 152, 30], [-205, 288, 24], [420, 108, 26]]) {
     for (let i = 0; i < 14; i++) {
@@ -436,12 +457,36 @@ export function buildEastLakeScene() {
   addCherryDetails(root);
   addWaterDetails(root);
 
+  for (const [px, pz, ry, seed] of [
+    [-440, -600, 0.2, 7101], [-460, -340, 1.3, 7102],
+    [-430, -146, 0.7, 7103], [-450, 8, 2.2, 7104],
+    [-386, 62, 1.1, 7105], [-352, 152, 2.6, 7106],
+    [-346, 216, 0.4, 7107], [-432, 328, -0.6, 7108],
+    [-416, 386, 1.6, 7109], [-488, 482, 2.9, 7110],
+  ]) {
+    const gy = Math.max(0.7, terrainHeight(px, pz));
+    addPerson(root, px, pz, gy, ry, seed, seed % 2 ? [mats.blue, mats.white] : [mats.redLacquer, mats.teal]);
+  }
+  addFisher(root, -407, 18, Math.max(0.6, terrainHeight(-407, 18)) + 0.04, Math.PI / 2, 7201);
+  addFisher(root, 334, -48, Math.max(0.6, terrainHeight(334, -48)) + 0.04, -Math.PI / 2, 7202);
+  addFisher(root, 96, 126, Math.max(0.6, terrainHeight(96, 126)) + 0.04, -Math.PI / 2, 7203);
+  const shrubs = [];
+  for (const [px, pz, seed] of [
+    [-394, 46, 7301], [-426, 104, 7302], [-360, 188, 7303],
+    [-330, 92, 7304], [-300, 700, 7305], [-350, 810, 7306],
+    [492, -156, 7307], [548, -98, 7308], [620, -150, 7309],
+  ]) {
+    const gy = terrainHeight(px, pz);
+    if (gy < 0.8) continue;
+    addShrub(shrubs, px, pz, gy, seed, 1.4, 6);
+  }
+  const shrubMesh = mergedMesh(shrubs, mats.blade, true, true);
+  if (shrubMesh) root.add(shrubMesh);
+
   const extras = new THREE.Group();
   const wake = createWakes(boatDefs);
   if (wake) extras.add(wake);
-  const birds = createBirds();
-  extras.add(birds);
-  extras.userData.birds = birds;
+  extras.add(createInstancedForest(forestDefs));
   const life = createLakeLife();
   extras.add(life);
   extras.userData.life = life;
@@ -449,6 +494,8 @@ export function buildEastLakeScene() {
   const rockSpots = [
     [468, -120, 2.2], [486, -150, 1.8], [-430, 20, 1.8], [-360, 22, 1.6],
     [-410, 64, 1.8], [520, -110, 2.0], [-390, 250, 1.8], [600, -260, 2.0],
+    [-398, 16, 1.5], [-366, 42, 1.5], [572, -146, 1.7], [624, -78, 1.9],
+    [-326, 214, 1.6], [432, 122, 1.6], [118, 142, 1.5], [-208, 278, 1.5],
   ];
   for (const [x, z, s] of rockSpots) {
     const rock = createRock();

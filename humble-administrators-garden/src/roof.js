@@ -47,8 +47,8 @@ export function createRoofGeometry({
   cornerLift = 2.1,
   curve = 1.62,
   ridgeRatio = 0.55,
-  segments = 26,
-  vSegments = 16,
+  segments = 20,
+  vSegments = 12,
 }) {
   const W = width;
   const D = depth;
@@ -122,6 +122,77 @@ export function hipPoint(width, depth, height, cornerLift, curve, sx, sz, v, rid
   return new THREE.Vector3(x, y, z);
 }
 
+function addRoofDetail(group, width, depth, height, cornerLift, curve, ridgeRatio) {
+  const W = width;
+  const D = depth;
+  const H = height;
+  const caps = [];
+  const ribs = [];
+  const gold = [];
+  const ridgeHalf = Math.max(0, (W - D) * 0.5 * ridgeRatio);
+  const eaveY = (s) => cornerLift * Math.pow(Math.abs(s), 4.5);
+  const nx = Math.max(3, Math.round(W / 1.8));
+  for (let i = 0; i <= nx; i++) {
+    const x = -W / 2 + (i * W) / nx;
+    const y = eaveY(x / (W / 2)) + 0.02;
+    for (const sz of [-1, 1]) {
+      const c = new THREE.CylinderGeometry(0.085, 0.085, 0.2, 4, 1, true);
+      c.rotateX(Math.PI / 2);
+      c.translate(x, y, sz * (D / 2 + 0.02));
+      caps.push(c);
+    }
+  }
+  const nz = Math.max(3, Math.round(D / 1.8));
+  for (let i = 0; i <= nz; i++) {
+    const z = -D / 2 + (i * D) / nz;
+    const y = eaveY(z / (D / 2)) + 0.02;
+    for (const sx of [-1, 1]) {
+      const c = new THREE.CylinderGeometry(0.085, 0.085, 0.2, 4, 1, true);
+      c.rotateZ(Math.PI / 2);
+      c.translate(sx * (W / 2 + 0.02), y, z);
+      caps.push(c);
+    }
+  }
+  for (const v of [0.34, 0.56, 0.78]) {
+    const span = ridgeHalf + (W / 2 - ridgeHalf) * v;
+    const y = H * Math.pow(1 - v, curve);
+    const z0 = D * 0.5 * (1 - v);
+    const y2 = H * Math.pow(1 - v - 0.03, curve);
+    const z2 = D * 0.5 * (1 - v - 0.03);
+    const ang = Math.atan2(y2 - y, z2 - z0);
+    for (const sz of [-1, 1]) {
+      const g = new THREE.BoxGeometry(span * 1.94, 0.055, 0.1);
+      g.rotateX(sz * ang);
+      g.translate(0, y + 0.035, sz * z0);
+      ribs.push(g);
+    }
+    for (const sx of [-1, 1]) {
+      const g = new THREE.BoxGeometry(0.1, 0.055, D * (1 - v) * 1.94);
+      g.rotateZ(-sx * ang);
+      g.translate(sx * span, y + 0.035, 0);
+      ribs.push(g);
+    }
+  }
+  for (const sx of [-1, 1]) {
+    for (const sz of [-1, 1]) {
+      const cone = new THREE.ConeGeometry(0.11, 0.32, 5);
+      cone.translate(sx * (W / 2 - 0.02), cornerLift + 0.18, sz * (D / 2 - 0.02));
+      gold.push(cone);
+    }
+  }
+  for (const x of [-ridgeHalf * 0.55, 0, ridgeHalf * 0.55]) {
+    const b = new THREE.SphereGeometry(0.12, 6, 4);
+    b.translate(x, H + 0.42, 0);
+    gold.push(b);
+  }
+  const cm = mergedMesh(caps, mats.roofDark, false, false);
+  if (cm) group.add(cm);
+  const rm = mergedMesh(ribs, mats.roofDark, true, false);
+  if (rm) group.add(rm);
+  const gm = mergedMesh(gold, mats.gold, false, false);
+  if (gm) group.add(gm);
+}
+
 function addEaveTrim(group, width, depth, y = -0.18, scale = 1) {
   const teal = [];
   addBox(teal, width + 0.2, 0.62 * scale, 0.34, 0, y, depth * 0.5 + 0.12);
@@ -172,7 +243,7 @@ export function createRoof({
           new THREE.Vector3(ridgeHalf, height + 0.1, 0),
         ],
         0.38,
-        8
+        5
       )
     );
     for (const sx of [-1, 1]) {
@@ -189,11 +260,11 @@ export function createRoof({
   for (const sx of [-1, 1]) {
     for (const sz of [-1, 1]) {
       const pts = [];
-      for (let i = 0; i <= 10; i++) {
-        const v = i / 10;
+      for (let i = 0; i <= 7; i++) {
+        const v = i / 7;
         pts.push(hipPoint(width, depth, height, cornerLift, curve, sx, sz, v, ridgeRatio));
       }
-      darkList.push(tubeFromPoints(pts, 0.28, 6));
+      darkList.push(tubeFromPoints(pts, 0.28, 4));
       if (beasts) {
         for (let i = 0; i < 5; i++) {
           const v = 0.55 + i * 0.075;
@@ -207,6 +278,7 @@ export function createRoof({
   }
 
   if (fascia) addEaveTrim(group, width, depth);
+  addRoofDetail(group, width, depth, height, cornerLift, curve, ridgeRatio);
 
   const darkMesh = mergedMesh(darkList, mats.roofDark, true, false);
   if (darkMesh) group.add(darkMesh);
@@ -221,6 +293,44 @@ export function createRoof({
   return group;
 }
 
+function addSkirtDetail(group, outerW, outerD, cornerLift) {
+  const caps = [];
+  const gold = [];
+  const nx = Math.max(3, Math.round(outerW / 1.85));
+  const nz = Math.max(3, Math.round(outerD / 1.85));
+  for (let i = 0; i <= nx; i++) {
+    const x = -outerW / 2 + (i * outerW) / nx;
+    const y = cornerLift * Math.pow(Math.abs(x / (outerW / 2)), 4.5) + 0.02;
+    for (const sz of [-1, 1]) {
+      const c = new THREE.CylinderGeometry(0.085, 0.085, 0.2, 4, 1, true);
+      c.rotateX(Math.PI / 2);
+      c.translate(x, y, sz * outerD / 2);
+      caps.push(c);
+    }
+  }
+  for (let i = 0; i <= nz; i++) {
+    const z = -outerD / 2 + (i * outerD) / nz;
+    const y = cornerLift * Math.pow(Math.abs(z / (outerD / 2)), 4.5) + 0.02;
+    for (const sx of [-1, 1]) {
+      const c = new THREE.CylinderGeometry(0.085, 0.085, 0.2, 4, 1, true);
+      c.rotateZ(Math.PI / 2);
+      c.translate(sx * outerW / 2, y, z);
+      caps.push(c);
+    }
+  }
+  for (const sx of [-1, 1]) {
+    for (const sz of [-1, 1]) {
+      const cone = new THREE.ConeGeometry(0.11, 0.3, 5);
+      cone.translate(sx * (outerW / 2 - 0.02), cornerLift + 0.16, sz * (outerD / 2 - 0.02));
+      gold.push(cone);
+    }
+  }
+  const cm = mergedMesh(caps, mats.roofDark, false, false);
+  if (cm) group.add(cm);
+  const gm = mergedMesh(gold, mats.gold, false, false);
+  if (gm) group.add(gm);
+}
+
 export function createSkirtRoof({
   outerW,
   outerD,
@@ -229,8 +339,8 @@ export function createSkirtRoof({
   height,
   cornerLift = 1.8,
   curve = 1.5,
-  segments = 26,
-  vSegments = 14,
+  segments = 20,
+  vSegments = 10,
 }) {
   const geoParts = [];
   const slope = Math.hypot(height, (outerD - innerD) * 0.5 + 1);
@@ -292,8 +402,8 @@ export function createSkirtRoof({
   for (const sx of [-1, 1]) {
     for (const sz of [-1, 1]) {
       const pts = [];
-      for (let i = 0; i <= 8; i++) {
-        const v = i / 8;
+      for (let i = 0; i <= 6; i++) {
+        const v = i / 6;
         const lift = cornerLift * Math.pow(v, 3.0);
         pts.push(
           new THREE.Vector3(
@@ -303,10 +413,11 @@ export function createSkirtRoof({
           )
         );
       }
-      darkList.push(tubeFromPoints(pts, 0.28, 6));
+      darkList.push(tubeFromPoints(pts, 0.28, 4));
     }
   }
   addEaveTrim(group, outerW, outerD);
+  addSkirtDetail(group, outerW, outerD, cornerLift);
   const dm = mergedMesh(darkList, mats.roofDark, true, false);
   if (dm) group.add(dm);
 

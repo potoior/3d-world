@@ -147,7 +147,7 @@ export function createTree({ height = 9, spread = 3.4, kind = 'pine', seed = 1 }
   } else {
     for (let i = 0; i < 6; i++) {
       const r = spread * (0.5 + rnd(i) * 0.5);
-      const blob = new THREE.IcosahedronGeometry(r, 1);
+      const blob = new THREE.IcosahedronGeometry(r, 0);
       blob.scale(1, 0.8, 1);
       blob.translate(
         (rnd(i) - 0.5) * spread * 1.3,

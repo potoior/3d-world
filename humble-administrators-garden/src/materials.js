@@ -141,6 +141,34 @@ export const mats = {
     color: 0xe7b8bd,
     roughness: 0.8,
   }),
+  blossomRose: new THREE.MeshStandardMaterial({
+    color: 0xd98f9c,
+    roughness: 0.82,
+  }),
+  blossomPale: new THREE.MeshStandardMaterial({
+    color: 0xf2d9dd,
+    roughness: 0.8,
+  }),
+  blossomGold: new THREE.MeshStandardMaterial({
+    color: 0xe2b75f,
+    roughness: 0.76,
+  }),
+  lichen: new THREE.MeshStandardMaterial({
+    color: 0x9baa82,
+    roughness: 1.0,
+    side: THREE.DoubleSide,
+  }),
+  mossDeep: new THREE.MeshStandardMaterial({
+    color: 0x5d7048,
+    roughness: 1.0,
+  }),
+  foam: new THREE.MeshBasicMaterial({
+    color: 0xf0f7ee,
+    transparent: true,
+    opacity: 0.2,
+    depthWrite: false,
+    side: THREE.DoubleSide,
+  }),
   copper: new THREE.MeshStandardMaterial({
     color: 0x574c3c,
     roughness: 0.5,
@@ -262,10 +290,14 @@ export const mats = {
   }),
 };
 
+mats.timber = mats.wallDark;
+
 withSway(mats.willow, 0.012, 1.25);
 withSway(mats.bamboo, 0.0085, 1.6);
 withSway(mats.banana, 0.018, 1.1);
 withSway(mats.lotus, 0.026, 1.45);
+withSway(mats.pine, 0.0045, 0.9);
+withSway(mats.blade, 0.0055, 1.15);
 
 export function getPlaqueMaterial(text) {
   if (!plaqueCache.has(text)) {
@@ -301,6 +333,8 @@ export function makeWaterMaterial() {
         vec3 pos = position;
         pos.z += sin(pos.x * 0.12 + uTime * 0.7) * 0.06;
         pos.z += cos(pos.y * 0.16 + uTime * 0.5) * 0.05;
+        pos.z += sin(pos.x * 0.46 + uTime * 1.45) * 0.022;
+        pos.z += cos(pos.y * 0.58 - uTime * 1.1) * 0.016;
         vec4 world = modelMatrix * vec4(pos, 1.0);
         vWorldPos = world.xyz;
         vNormalW = normalize(mat3(modelMatrix) * normal);
@@ -323,7 +357,9 @@ export function makeWaterMaterial() {
         vec2 uv2 = vWorldPos.xz * 0.021 - vec2(uTime * 0.006, uTime * 0.011);
         vec3 n1 = texture2D(uNormalMap, uv1).rgb * 2.0 - 1.0;
         vec3 n2 = texture2D(uNormalMap, uv2).rgb * 2.0 - 1.0;
-        vec3 n = normalize(vNormalW + vec3(n1.x + n2.x, 0.0, n1.y + n2.y) * 0.35);
+        vec2 uv3 = vWorldPos.xz * 0.17 + vec2(uTime * 0.045, -uTime * 0.038);
+        vec3 n3 = texture2D(uNormalMap, uv3).rgb * 2.0 - 1.0;
+        vec3 n = normalize(vNormalW + vec3(n1.x + n2.x + n3.x * 0.6, 0.0, n1.y + n2.y + n3.y * 0.6) * 0.33);
         vec3 viewDir = normalize(cameraPosition - vWorldPos);
         float fres = pow(1.0 - clamp(dot(viewDir, n), 0.0, 1.0), 2.8);
         vec3 base = mix(uDeep, uShallow, 0.42 + 0.26 * n.x);
@@ -331,8 +367,22 @@ export function makeWaterMaterial() {
         vec3 hv = normalize(viewDir + normalize(uSunDir));
         float spec = pow(max(dot(n, hv), 0.0), 90.0);
         col += uSun * spec * 0.42;
+        float glint = pow(max(dot(n, hv), 0.0), 210.0);
+        col += uSun * glint * 0.34;
+        float fine = pow(max(dot(n, normalize(hv + vec3(n3.x * 0.1, 0.0, n3.y * 0.1))), 0.0), 360.0);
+        float micro = pow(max(sin(vWorldPos.x * 2.9 + uTime * 2.3) * sin(vWorldPos.z * 2.2 - uTime * 1.8), 0.0), 26.0);
+        col += uSun * (fine * 0.55 + micro * 0.13);
+        vec3 flatView = normalize(vec3(viewDir.x, 0.0, viewDir.z));
+        vec3 flatSun = normalize(vec3(uSunDir.x, 0.0, uSunDir.z));
+        float sunPath = pow(max(dot(flatView, flatSun), 0.0), 6.0);
+        col += uSun * sunPath * fres * 0.11;
         float sparkle = pow(max(sin(vWorldPos.x * 0.7 + uTime * 1.3) * sin(vWorldPos.z * 0.5 - uTime * 0.9), 0.0), 18.0);
         col += vec3(1.0, 0.96, 0.85) * sparkle * 0.1;
+        float band = sin(vWorldPos.x * 1.35 + vWorldPos.z * 0.7 + uTime * 1.1 + n1.x * 2.0)
+                   * sin(vWorldPos.z * 1.1 - uTime * 0.8 + n2.y * 2.0);
+        col += uSky * smoothstep(0.78, 1.0, band) * 0.032;
+        float fineBand = sin(vWorldPos.x * 3.2 + vWorldPos.z * 2.0 - uTime * 2.6 + n3.x * 3.2) * 0.5 + 0.5;
+        col += uSky * pow(fineBand, 9.0) * 0.026;
         gl_FragColor = vec4(col, 0.965);
         #include <tonemapping_fragment>
         #include <colorspace_fragment>

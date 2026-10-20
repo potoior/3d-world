@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { mats } from './materials.js';
 import { createHall, createCorridor } from './buildings.js';
 import { addBox, mergedMesh } from './geometry.js';
-import { createTree, createRock, createLantern, createShrub, createVat, createIncenseBurner } from './props.js';
+import { createTree, createRock, createLantern, createShrub, createVat, createIncenseBurner, createDrainGrate } from './props.js';
 
 function courtyardWall(group, w, d, h = 3.2) {
   const list = [];
@@ -22,6 +22,28 @@ function courtyardWall(group, w, d, h = 3.2) {
   addBox(caps, 1.4, 0.35, d + 0.3, w / 2, h + 0.12, 0);
   const cm = mergedMesh(caps, mats.roofDark, false, false);
   if (cm) group.add(cm);
+}
+
+function gardenPath(group, x, z, w, d) {
+  const slab = new THREE.Mesh(new THREE.BoxGeometry(w, 0.07, d), mats.marbleShade);
+  slab.position.set(x, 0.035, z);
+  slab.receiveShadow = true;
+  group.add(slab);
+  const lines = [];
+  const across = Math.max(2, Math.floor(d / 2.6));
+  for (let i = 1; i < across; i++) {
+    addBox(lines, w * 0.94, 0.028, 0.08, x, 0.078, z - d / 2 + (i * d) / across);
+  }
+  for (const sx of [-1, 1]) {
+    addBox(lines, 0.12, 0.04, d, x + sx * (w / 2 + 0.48), 0.075, z);
+  }
+  const lm = mergedMesh(lines, mats.stone, false, true);
+  if (lm) group.add(lm);
+  for (let i = -1; i <= 1; i += 2) {
+    const grate = createDrainGrate(1.0, 0.62);
+    grate.position.set(x + i * (w / 2 + 1.35), 0.01, z + d * 0.3);
+    group.add(grate);
+  }
 }
 
 function createCourtyard(seed) {
@@ -134,13 +156,21 @@ export function buildSidePalaces() {
   return group;
 }
 
-function grassPatch(group, x, z, rx, rz) {
-  const material = new THREE.MeshStandardMaterial({ color: 0x5c6a45, roughness: 1 });
-  const mesh = new THREE.Mesh(new THREE.CircleGeometry(1, 22), material);
-  mesh.rotation.x = -Math.PI / 2;
-  mesh.scale.set(rx, rz, 1);
-  mesh.position.set(x, 0.02, z);
+function addGrassPatches(group, patches) {
+  const mesh = new THREE.InstancedMesh(new THREE.CircleGeometry(1, 22), mats.grass, patches.length);
+  const matrix = new THREE.Matrix4();
+  const quat = new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.PI / 2, 0, 0));
+  const pos = new THREE.Vector3();
+  const scale = new THREE.Vector3();
+  patches.forEach(([x, z, rx, rz], i) => {
+    pos.set(x, 0.02, z);
+    scale.set(rx, rz, 1);
+    matrix.compose(pos, quat, scale);
+    mesh.setMatrixAt(i, matrix);
+  });
+  mesh.instanceMatrix.needsUpdate = true;
   mesh.receiveShadow = true;
+  mesh.computeBoundingSphere();
   group.add(mesh);
 }
 
@@ -173,6 +203,9 @@ export function buildGarden() {
   const group = new THREE.Group();
 
   gardenWall(group);
+  gardenPath(group, 0, -405, 7.2, 108);
+  gardenPath(group, 0, -382, 132, 5.2);
+  gardenPath(group, 0, -447, 150, 4.4);
 
   const gate = createHall({
     w: 22,
@@ -238,7 +271,7 @@ export function buildGarden() {
     [-95, -450, 18, 14],
     [95, -446, 18, 16],
   ];
-  for (const p of patchDefs) grassPatch(group, ...p);
+  addGrassPatches(group, patchDefs);
 
   const rocks = [
     [88, -422, 2.4],
@@ -312,6 +345,12 @@ export function buildGarden() {
     rock.position.set(x, 0, z);
     rock.rotation.y = x * 0.5 + z * 0.2;
     group.add(rock);
+  }
+
+  for (let i = 0; i < 6; i++) {
+    const lantern = createLantern();
+    lantern.position.set(i % 2 === 0 ? -9 : 9, 0, -356 - i * 17);
+    group.add(lantern);
   }
 
   for (const sx of [-1, 1]) {

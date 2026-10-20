@@ -94,6 +94,8 @@ sun.shadow.camera.near = 20;
 sun.shadow.camera.far = 700;
 sun.shadow.bias = -0.00035;
 sun.shadow.normalBias = 1.2;
+sun.shadow.autoUpdate = false;
+sun.shadow.needsUpdate = true;
 scene.add(sun);
 scene.add(sun.target);
 
@@ -187,6 +189,9 @@ function travelTo(view) {
   document.getElementById('btn-rotate').classList.remove('active');
 }
 
+window.__garden.tour = tour;
+window.__garden.views = views;
+
 const notes = {
   overview: ['拙政园', '以水为心，远香堂、荷风亭、小飞虹、见山楼与香洲环水而立'],
   yuanxiang: ['远香堂', '主厅面北临水，四面通透，荷风送香，为全园宴客之所'],
@@ -242,8 +247,10 @@ const tmpColor = new THREE.Color();
 const tmpSunPos = new THREE.Vector3();
 
 function updateEnvironment(dt) {
+  const prevMix = envMix;
   envMix += (envTarget - envMix) * Math.min(1, dt * 1.4);
   if (Math.abs(envTarget - envMix) < 0.001) envMix = envTarget;
+  if (Math.abs(envMix - prevMix) > 0.0004) sun.shadow.needsUpdate = true;
 
   sun.color.copy(dayState.sun).lerp(duskState.sun, envMix);
   sun.intensity = THREE.MathUtils.lerp(dayState.sunIntensity, duskState.sunIntensity, envMix);

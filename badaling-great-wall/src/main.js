@@ -10,16 +10,16 @@ const renderer = new THREE.WebGLRenderer({
   antialias: true,
   powerPreference: 'high-performance',
 });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, isCompact ? 1.35 : 1.7));
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, isCompact ? 1.3 : 1.6));
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.28;
+renderer.toneMappingExposure = 1.24;
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
 const scene = new THREE.Scene();
-scene.fog = new THREE.Fog(0xbccbd4, 520, 3050);
+scene.fog = new THREE.Fog(0xc3cbc8, 540, 3120);
 
 const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.8, 7500);
 const controls = new OrbitControls(camera, renderer.domElement);
@@ -31,11 +31,11 @@ controls.maxPolarAngle = Math.PI * 0.486;
 controls.autoRotateSpeed = 0.24;
 
 const skyUniforms = {
-  topColor: { value: new THREE.Color(0x3a78c0) },
-  horizonColor: { value: new THREE.Color(0xcad9e2) },
-  bottomColor: { value: new THREE.Color(0x9bafb8) },
-  sunDir: { value: new THREE.Vector3(0.45, 0.62, 0.38).normalize() },
-  sunColor: { value: new THREE.Color(0xffd9a6) },
+  topColor: { value: new THREE.Color(0x3d78ba) },
+  horizonColor: { value: new THREE.Color(0xd8d3c0) },
+  bottomColor: { value: new THREE.Color(0xa5ad9f) },
+  sunDir: { value: new THREE.Vector3(0.6, 0.4, 0.42).normalize() },
+  sunColor: { value: new THREE.Color(0xffdcae) },
 };
 const sky = new THREE.Mesh(
   new THREE.SphereGeometry(5200, 48, 28),
@@ -67,6 +67,12 @@ const sky = new THREE.Mesh(
         col += sunColor * pow(sd, 18.0) * 0.12;
         float haze = smoothstep(0.16, -0.04, h) * smoothstep(-0.25, -0.02, h);
         col = mix(col, horizonColor * 1.03, haze * 0.16);
+        float c1 = sin(dir.x * 8.0 + dir.z * 5.0) * 0.5 + 0.5;
+        float c2 = sin(dir.x * 17.0 - dir.z * 11.0 - 1.3) * 0.5 + 0.5;
+        float cloud = smoothstep(0.62, 0.96, c1 * c2);
+        cloud *= smoothstep(0.015, 0.12, h) * (1.0 - smoothstep(0.3, 0.62, h));
+        vec3 cloudCol = mix(vec3(0.78, 0.82, 0.86), sunColor * 1.05, 0.35);
+        col = mix(col, cloudCol, cloud * 0.13);
         gl_FragColor = vec4(col, 1.0);
         #include <tonemapping_fragment>
         #include <colorspace_fragment>
@@ -76,11 +82,11 @@ const sky = new THREE.Mesh(
 );
 scene.add(sky);
 
-const hemi = new THREE.HemisphereLight(0xbcd4e8, 0x6c7884, 1.5);
+const hemi = new THREE.HemisphereLight(0xc4d8e8, 0x7a6d58, 1.45);
 scene.add(hemi);
 
-const sun = new THREE.DirectionalLight(0xffe8d2, 2.26);
-sun.position.set(720, 335, 470);
+const sun = new THREE.DirectionalLight(0xffdfb4, 2.42);
+sun.position.set(760, 300, 440);
 sun.castShadow = true;
 sun.shadow.mapSize.set(2048, 2048);
 sun.shadow.camera.left = -1080;
@@ -95,10 +101,10 @@ scene.add(sun);
 scene.add(sun.target);
 sun.target.position.set(-150, 40, -180);
 
-const ambient = new THREE.AmbientLight(0xb8c8d2, 1.02);
+const ambient = new THREE.AmbientLight(0xc4c8bc, 1.06);
 scene.add(ambient);
 
-const fill = new THREE.DirectionalLight(0x8fb4d4, 0.72);
+const fill = new THREE.DirectionalLight(0x9cb8cc, 0.66);
 fill.position.set(-520, 280, -600);
 scene.add(fill);
 
@@ -114,18 +120,18 @@ try {
 }
 
 const dayState = {
-  sun: new THREE.Color(0xffe8d2),
-  hemiSky: new THREE.Color(0xbcd4e8),
-  hemiGround: new THREE.Color(0x6c7884),
-  top: new THREE.Color(0x3a78c0),
-  horizon: new THREE.Color(0xcad9e2),
-  bottom: new THREE.Color(0x9bafb8),
-  fog: new THREE.Color(0xbccbd4),
-  sunPos: new THREE.Vector3(720, 335, 470),
-  sunIntensity: 2.26,
-  hemiIntensity: 1.5,
-  fillIntensity: 0.72,
-  exposure: 1.18,
+  sun: new THREE.Color(0xffdfb4),
+  hemiSky: new THREE.Color(0xc4d8e8),
+  hemiGround: new THREE.Color(0x7a6d58),
+  top: new THREE.Color(0x3d78ba),
+  horizon: new THREE.Color(0xd8d3c0),
+  bottom: new THREE.Color(0xa5ad9f),
+  fog: new THREE.Color(0xc3cbc8),
+  sunPos: new THREE.Vector3(760, 300, 440),
+  sunIntensity: 2.42,
+  hemiIntensity: 1.45,
+  fillIntensity: 0.66,
+  exposure: 1.2,
 };
 
 const duskState = {
@@ -234,7 +240,7 @@ window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, isCompact ? 1.35 : 1.7));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, isCompact ? 1.3 : 1.6));
 });
 
 const clock = new THREE.Clock();
@@ -295,13 +301,13 @@ updateEnvironment(1);
 animate();
 
 const loader = document.getElementById('loader');
-requestAnimationFrame(() => {
-  requestAnimationFrame(() => {
-    loader.classList.add('hidden');
-    document.body.classList.add('ready');
-    window.__ready = true;
-  });
-});
+function revealScene() {
+  loader.classList.add('hidden');
+  document.body.classList.add('ready');
+  window.__ready = true;
+}
+setTimeout(revealScene, 700);
+requestAnimationFrame(() => requestAnimationFrame(revealScene));
 
 function checkWallGrounding() {
   const walls = [world.mainWall, world.southWall];

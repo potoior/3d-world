@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { mats, sharedTextures } from './materials.js';
 import { heightAt, mainCurve, mainSamples, southSamples } from './terrain.js';
 import { WALL_HEIGHT, getWallFrame } from './wall.js';
+import { mergeGeometryList } from './geometry.js';
 
 function mulberry32(seed) {
   let a = seed >>> 0;
@@ -145,20 +146,45 @@ function buildRidgeWall(group, path, seed, height, halfTop) {
   }
 }
 
-function addFigure(group, x, y, z, yaw, variant) {
-  box(group, mats.cloth, 0.5, 0.7, 0.3, x, y + 1.12, z, yaw);
-  box(group, mats.dark, 0.19, 0.78, 0.22, x + Math.cos(yaw) * 0.13, y + 0.4, z - Math.sin(yaw) * 0.13, yaw);
-  box(group, mats.dark, 0.19, 0.78, 0.22, x - Math.cos(yaw) * 0.13, y + 0.4, z + Math.sin(yaw) * 0.13, yaw);
-  box(group, mats.cloth, 0.15, 0.58, 0.18, x + Math.cos(yaw) * 0.34, y + 1.12, z - Math.sin(yaw) * 0.34, yaw);
-  box(group, mats.cloth, 0.15, 0.58, 0.18, x - Math.cos(yaw) * 0.34, y + 1.12, z + Math.sin(yaw) * 0.34, yaw);
-  box(group, mats.wood, 0.3, 0.34, 0.3, x, y + 1.68, z, yaw);
-  box(group, mats.dark, 0.44, 0.08, 0.44, x, y + 1.9, z, yaw);
-  if (variant % 2 === 0) {
-    box(group, mats.wood, 0.4, 0.46, 0.2, x - Math.sin(yaw) * 0.22, y + 1.2, z - Math.cos(yaw) * 0.22, yaw);
+function addColoredBox(list, color, w, h, d, x, y, z, ry = 0) {
+  const geo = new THREE.BoxGeometry(w, h, d);
+  if (ry) geo.rotateY(ry);
+  geo.translate(x, y, z);
+  const count = geo.attributes.position.count;
+  const colors = new Float32Array(count * 3);
+  const c = new THREE.Color(color);
+  for (let i = 0; i < count; i++) {
+    colors[i * 3] = c.r;
+    colors[i * 3 + 1] = c.g;
+    colors[i * 3 + 2] = c.b;
   }
-  if (variant % 3 === 0) {
-    box(group, mats.stoneDark, 0.06, 1.5, 0.06, x + Math.cos(yaw) * 0.5, y + 0.8, z - Math.sin(yaw) * 0.5, yaw);
-  }
+  geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+  list.push(geo);
+}
+
+function makeFigureGeometry() {
+  const list = [];
+  addColoredBox(list, 0x8e3a2e, 0.5, 0.7, 0.3, 0, 1.12, 0);
+  addColoredBox(list, 0x101411, 0.19, 0.78, 0.22, 0.13, 0.4, 0);
+  addColoredBox(list, 0x101411, 0.19, 0.78, 0.22, -0.13, 0.4, 0);
+  addColoredBox(list, 0x8e3a2e, 0.15, 0.58, 0.18, 0.34, 1.12, 0);
+  addColoredBox(list, 0x8e3a2e, 0.15, 0.58, 0.18, -0.34, 1.12, 0);
+  addColoredBox(list, 0x5d4732, 0.3, 0.34, 0.3, 0, 1.68, 0);
+  addColoredBox(list, 0x101411, 0.44, 0.08, 0.44, 0, 1.9, 0);
+  addColoredBox(list, 0x5d4732, 0.4, 0.46, 0.2, 0, 1.2, -0.22);
+  addColoredBox(list, 0x7e7b72, 0.06, 1.5, 0.06, 0.5, 0.8, 0);
+  return mergeGeometryList(list);
+}
+
+const figureGeo = makeFigureGeometry();
+const figureMat = new THREE.MeshStandardMaterial({
+  color: 0xffffff,
+  vertexColors: true,
+  roughness: 0.95,
+});
+
+function addFigure(figures, x, y, z, yaw) {
+  figures.push({ x, y, z, yaw });
 }
 
 function addBench(group, x, y, z, yaw) {
@@ -188,6 +214,8 @@ export function createDetailStatics(towers) {
   const group = new THREE.Group();
   group.name = 'wall-detail-props';
   const rand = mulberry32(4211);
+  const figures = [];
+  const contacts = [];
 
   const byName = {};
   for (const tower of towers) byName[tower.name] = tower;
@@ -210,14 +238,18 @@ export function createDetailStatics(towers) {
     board.rotation.y = yaw;
     board.castShadow = true;
     group.add(board);
+    contacts.push({ x, y: y + 0.02, z, sx: 3.4 * scale, sz: 1.4 * scale });
   };
 
   addSign(byName['北一楼'], 0.9);
   addSign(byName['北八楼'], 1.1);
   addSign(byName['南四楼'], 0.9);
+  addSign(byName['北四楼'], 0.82);
+  addSign(byName['北二楼'], 0.72);
 
   const benchSpecs = [
     ['北四楼', 21, 1], ['北八楼', -24, 2], ['南四楼', 18, 3], ['北一楼', 19, 4],
+    ['北五楼', 22, 5], ['北九楼', -20, 6], ['南一楼', 17, 7], ['南三楼', 20, 8],
   ];
   for (const [name, off, seed] of benchSpecs) {
     const tower = byName[name];
@@ -226,37 +258,87 @@ export function createDetailStatics(towers) {
     const sign = off < 0 ? -1 : 1;
     const x = tower.x + f.nx * off + f.tx * (seed * 2 - 5);
     const z = tower.z + f.nz * off + f.tz * (seed * 2 - 5);
-    addBench(group, x, heightAt(x, z), z, Math.atan2(f.tx, f.tz) + sign * 0.2);
+    const y = heightAt(x, z);
+    addBench(group, x, y, z, Math.atan2(f.tx, f.tz) + sign * 0.2);
+    contacts.push({ x, y: y + 0.02, z, sx: 3.1, sz: 1.5 });
   }
 
-  for (const name of ['北一楼', '北四楼', '北八楼', '南四楼']) {
+  for (const name of ['北一楼', '北四楼', '北八楼', '南四楼', '北五楼', '北九楼']) {
     const tower = byName[name];
     if (!tower) continue;
     const f = tower.frame;
     const side = name === '北八楼' ? -1 : 1;
     const x = tower.x + f.nx * 17 * side + f.tx * (rand() - 0.5) * 9;
     const z = tower.z + f.nz * 17 * side + f.tz * (rand() - 0.5) * 9;
-    addFirePit(group, x, heightAt(x, z), z, rand);
+    const y = heightAt(x, z);
+    addFirePit(group, x, y, z, rand);
+    contacts.push({ x, y: y + 0.02, z, sx: 2.8, sz: 2.8 });
   }
 
-  const guardTs = [0.132, 0.286, 0.512, 0.742];
+  const guardTs = [0.132, 0.286, 0.512, 0.742, 0.612, 0.862];
   for (let i = 0; i < guardTs.length; i++) {
     const t = guardTs[i];
     const frame = getWallFrame(mainCurve, t);
     const side = i % 2 === 0 ? -1 : 1;
     const x = frame.x + frame.nx * 1.34 * side;
     const z = frame.z + frame.nz * 1.34 * side;
-    addFigure(group, x, frame.y + WALL_HEIGHT, z, frame.yaw + Math.PI * 0.5, i);
+    addFigure(figures, x, frame.y + WALL_HEIGHT, z, frame.yaw + Math.PI * 0.5);
   }
 
-  for (const name of ['北二楼', '北八楼', '南三楼']) {
+  for (const name of ['北二楼', '北八楼', '南三楼', '北一楼', '北四楼', '南四楼', '北九楼']) {
     const tower = byName[name];
     if (!tower) continue;
     const f = tower.frame;
     const side = rand() < 0.5 ? -1 : 1;
     const x = tower.x + f.nx * (20 + rand() * 10) * side + f.tx * (rand() - 0.5) * 12;
     const z = tower.z + f.nz * (20 + rand() * 10) * side + f.tz * (rand() - 0.5) * 12;
-    addFigure(group, x, heightAt(x, z), z, rand() * Math.PI * 2, 5);
+    addFigure(figures, x, heightAt(x, z), z, rand() * Math.PI * 2);
+  }
+
+  for (const f of figures) {
+    contacts.push({ x: f.x, y: f.y + 0.02, z: f.z, sx: 1.05, sz: 1.05 });
+  }
+  for (const tower of towers) {
+    contacts.push({ x: tower.x, y: heightAt(tower.x, tower.z) + 0.03, z: tower.z, sx: 17, sz: 13 });
+  }
+
+  if (figures.length) {
+    const figureMesh = new THREE.InstancedMesh(figureGeo, figureMat, figures.length);
+    const dummy = new THREE.Object3D();
+    for (let i = 0; i < figures.length; i++) {
+      const f = figures[i];
+      dummy.position.set(f.x, f.y, f.z);
+      dummy.rotation.set(0, f.yaw, 0);
+      dummy.scale.set(1, 1, 1);
+      dummy.updateMatrix();
+      figureMesh.setMatrixAt(i, dummy.matrix);
+    }
+    figureMesh.instanceMatrix.needsUpdate = true;
+    figureMesh.castShadow = true;
+    figureMesh.receiveShadow = true;
+    figureMesh.name = 'wall-figures';
+    figureMesh.computeBoundingSphere();
+    group.add(figureMesh);
+  }
+
+  if (contacts.length) {
+    const discGeo = new THREE.PlaneGeometry(1, 1);
+    discGeo.rotateX(-Math.PI * 0.5);
+    const discs = new THREE.InstancedMesh(discGeo, mats.contact, contacts.length);
+    const dummy = new THREE.Object3D();
+    for (let i = 0; i < contacts.length; i++) {
+      const c = contacts[i];
+      dummy.position.set(c.x, c.y, c.z);
+      dummy.rotation.set(0, (i * 1.7) % 3.14, 0);
+      dummy.scale.set(c.sx, 1, c.sz);
+      dummy.updateMatrix();
+      discs.setMatrixAt(i, dummy.matrix);
+    }
+    discs.instanceMatrix.needsUpdate = true;
+    discs.renderOrder = 1;
+    discs.name = 'contact-shadows';
+    discs.computeBoundingSphere();
+    group.add(discs);
   }
 
   for (const tower of towers) {
@@ -349,20 +431,26 @@ export function createDetailDynamics(towers, mists) {
   root.add(flagMesh);
 
   const birdGeo = makeBirdGeometry();
-  const birds = new THREE.InstancedMesh(birdGeo, mats.dark, 14);
+  const birds = new THREE.InstancedMesh(birdGeo, mats.dark, 28);
   birds.castShadow = false;
   birds.frustumCulled = false;
   root.add(birds);
   const birdSeeds = [];
   const centerTower = towers.find((t) => t.name === '北八楼') || towers[0];
-  for (let i = 0; i < 14; i++) {
+  const anchors = [
+    centerTower,
+    towers.find((t) => t.name === '北四楼') || centerTower,
+    towers.find((t) => t.name === '南四楼') || centerTower,
+  ];
+  for (let i = 0; i < 28; i++) {
+    const anchor = anchors[i % anchors.length];
     birdSeeds.push({
-      cx: centerTower.x + (i % 2 === 0 ? 0 : -210) + (i - 7) * 9,
-      cz: centerTower.z + (i % 2 === 0 ? -35 : -150) + (i - 7) * 7,
-      y: centerTower.walkTop + 34 + (i % 5) * 7,
-      r: 26 + (i % 4) * 13,
-      speed: 0.11 + (i % 3) * 0.035,
-      phase: i * 0.83,
+      cx: anchor.x + ((i % 7) - 3) * 13 + (i % 2 === 0 ? 0 : -120),
+      cz: anchor.z + ((i % 5) - 2) * 11 + (i % 2 === 0 ? -35 : -130),
+      y: anchor.walkTop + 26 + (i % 6) * 6,
+      r: 22 + (i % 5) * 11,
+      speed: 0.1 + (i % 4) * 0.028,
+      phase: i * 0.63,
       tilt: (i % 2 ? 1 : -1),
     });
   }
@@ -441,18 +529,32 @@ export function createDetailDynamics(towers, mists) {
     if (fireLight) fireLight.intensity = 8 + Math.sin(elapsed * 11.3) * 1.8;
 
     if (mists) {
-      for (let i = 0; i < mists.sprites.length; i++) {
-        const s = mists.sprites[i];
-        s.userData.baseX = s.userData.baseX ?? s.position.x;
-        s.userData.baseZ = s.userData.baseZ ?? s.position.z;
-        s.position.x = s.userData.baseX + Math.sin(elapsed * 0.035 + i * 1.7) * 34;
-        s.position.z = s.userData.baseZ + Math.sin(elapsed * 0.021 + i * 2.3) * 18;
+      for (let i = 0; i < mists.puffData.length; i++) {
+        const s = mists.puffData[i];
+        dummy.position.set(
+          s.baseX + Math.sin(elapsed * 0.035 + s.phase) * 34,
+          s.y,
+          s.z + Math.sin(elapsed * 0.021 + s.phase * 1.4) * 18
+        );
+        dummy.rotation.set(0, s.ry + elapsed * 0.006, 0);
+        dummy.scale.set(s.sx, s.sy, s.sx);
+        dummy.updateMatrix();
+        mists.puffMesh.setMatrixAt(i, dummy.matrix);
       }
-      for (let i = 0; i < mists.sheets.length; i++) {
-        const s = mists.sheets[i];
-        s.userData.baseX = s.userData.baseX ?? s.position.x;
-        s.position.x = s.userData.baseX + Math.sin(elapsed * 0.018 + i * 2.1) * 55;
+      mists.puffMesh.instanceMatrix.needsUpdate = true;
+      for (let i = 0; i < mists.sheetData.length; i++) {
+        const s = mists.sheetData[i];
+        dummy.position.set(
+          s.baseX + Math.sin(elapsed * 0.018 + s.phase) * 55,
+          s.y,
+          s.z
+        );
+        dummy.rotation.set(0, s.ry, 0);
+        dummy.scale.set(s.w, 1, s.d);
+        dummy.updateMatrix();
+        mists.sheetMesh.setMatrixAt(i, dummy.matrix);
       }
+      mists.sheetMesh.instanceMatrix.needsUpdate = true;
     }
   }
 
@@ -474,5 +576,13 @@ export function createDistantWalls() {
     [-586, 610], [-626, 400], [-676, 190], [-714, -20],
     [-726, -238], [-790, -456], [-902, -650],
   ], 947, 4.6, 1.75);
+  buildRidgeWall(group, [
+    [-1280, -1180], [-1040, -1240], [-780, -1268], [-520, -1245],
+    [-230, -1262], [80, -1238], [390, -1218], [690, -1195], [980, -1150], [1240, -1120],
+  ], 1201, 4.2, 1.62);
+  buildRidgeWall(group, [
+    [-1180, 980], [-1010, 1080], [-760, 1128], [-480, 1148],
+    [-180, 1132], [140, 1105], [450, 1068], [760, 1030], [1040, 985],
+  ], 1307, 3.9, 1.55);
   return group;
 }

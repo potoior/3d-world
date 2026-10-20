@@ -479,6 +479,7 @@ export function createGreenway({ points = [], width = 4, safe = 0, rails = true,
   const goldList = [];
   const lampList = [];
   const benchList = [];
+  const edgeList = [];
   let prevSide = 1;
   for (let i = 0; i <= segs; i++) {
     const t = i / segs;
@@ -535,6 +536,12 @@ export function createGreenway({ points = [], width = 4, safe = 0, rails = true,
         addBox(woodList, 0.12, 0.55, 0.5, px + tan.x * o, gy + 0.28, pz + tan.z * o);
       }
     }
+    if (i < segs) {
+      const ang = Math.atan2(tan.x, tan.z);
+      for (const side of [-1, 1]) {
+        addBox(edgeList, 0.3, 0.14, 1.45, p.x + nx * (half + 0.16) * side, ground + 0.06, p.z + nz * (half + 0.16) * side, ang);
+      }
+    }
   }
   for (let i = 0; i < segs; i++) {
     const a = i * 2;
@@ -558,29 +565,66 @@ export function createGreenway({ points = [], width = 4, safe = 0, rails = true,
   if (bm) group.add(bm);
   const wm = mergedMesh(woodList, mats.wood, true, true);
   if (wm) group.add(wm);
+  const em = mergedMesh(edgeList, mats.stone, true, true);
+  if (em) group.add(em);
   return group;
 }
 
 export function createDock({ x, z, rot = 0, length = 26, width = 5 }) {
   const group = new THREE.Group();
   const wood = [];
+  const stone = [];
+  const gold = [];
+  const paper = [];
   addBox(wood, length, 0.28, width, 0, 0.28, 0);
-  for (let i = 0; i < 7; i++) {
-    const t = -length / 2 + (i / 6) * length;
-    addBox(wood, 0.24, 0.08, width + 0.5, t, 0.46, 0);
+  const planks = Math.max(8, Math.round(length / 1.1));
+  for (let i = 0; i < planks; i++) {
+    const t = -length / 2 + ((i + 0.5) / planks) * length;
+    addBox(wood, (length / planks) * 0.84, 0.06, width - 0.1, t, 0.45, 0);
+  }
+  for (const sz of [-1, 1]) {
+    for (let i = 0; i < planks; i++) {
+      const t = -length / 2 + (i / planks) * length;
+      addBox(wood, 0.06, 0.08, width, t, 0.49, 0, 0);
+    }
+    addBox(wood, length, 0.1, 0.16, 0, 0.5, sz * (width / 2 - 0.08));
   }
   for (const sx of [-1, 1]) {
     for (const sz of [-1, 1]) {
       addCylinder(wood, 0.16, 0.2, 1.8, 6, sx * (length / 2 - 0.5), -0.4, sz * (width / 2 - 0.4));
+      addCylinder(stone, 0.17, 0.2, 2.4, 6, sx * (length / 2 - 0.5), -0.7, sz * (width / 2 - 0.4));
+      addBox(wood, 0.14, 0.7, 0.14, sx * (length / 2 - 0.5), 0.75, sz * (width / 2 - 0.4));
+      addBox(wood, 0.5, 0.08, 0.12, sx * (length / 2 - 0.5), 0.55, sz * (width / 2 - 0.8));
     }
-    addBox(wood, 0.14, 0.7, 0.14, sx * (length / 2 - 0.5), 0.75, width / 2 - 0.4);
   }
-  const wm = mergedMesh(wood, mats.wood, true, true);
-  if (wm) group.add(wm);
+  for (let i = 0; i < 4; i++) {
+    for (const sz of [-1, 1]) {
+      const px = -length / 2 + 2 + (i * (length - 4)) / 3;
+      addCylinder(wood, 0.12, 0.16, 0.9, 6, px, 0.55, sz * (width / 2 - 0.15));
+      addCylinder(stone, 0.02, 0.02, 0.03, 4, px, 1.02, sz * (width / 2 - 0.15));
+    }
+  }
+  for (const sz of [-1, 1]) {
+    addBox(wood, 0.14, 0.7, 0.14, length / 2 - 0.5, 0.75, sz * (width / 2 - 0.4));
+  }
   const trim = [];
   for (let i = 0; i < 4; i++) addCylinder(trim, 0.12, 0.16, 2.0, 6, -length / 2 + 2 + i * (length - 4) / 3, 1.15, -width / 2 + 0.3);
+  const wm = mergedMesh(wood, mats.plank, true, true);
+  if (wm) group.add(wm);
+  const sm = mergedMesh(stone, mats.stone, true, true);
+  if (sm) group.add(sm);
   const tm = mergedMesh(trim, mats.wood, true, true);
   if (tm) group.add(tm);
+  addCylinder(gold, 0.07, 0.1, 2.2, 6, length / 2 - 1.2, 1.25, 0);
+  addBox(gold, 0.4, 0.1, 0.4, length / 2 - 1.2, 2.35, 0);
+  const lamp = new THREE.SphereGeometry(0.28, 8, 6);
+  lamp.scale(0.9, 1.2, 0.9);
+  lamp.translate(length / 2 - 1.2, 2.06, 0);
+  paper.push(lamp);
+  const gm = mergedMesh(gold, mats.gold, true, false);
+  if (gm) group.add(gm);
+  const pm = mergedMesh(paper, mats.paper, true, false);
+  if (pm) group.add(pm);
   const cap = new THREE.Mesh(new THREE.BoxGeometry(length * 0.36, 0.12, width + 1.2), mats.white);
   cap.position.set(-length * 0.18, 1.9, 0);
   cap.castShadow = true;

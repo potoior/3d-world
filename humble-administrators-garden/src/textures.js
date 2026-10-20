@@ -391,11 +391,32 @@ export function makeWaterNormalTexture() {
   const [c, ctx] = makeCanvas(256, 256);
   const rand = mulberry32(77);
   const img = ctx.createImageData(256, 256);
-  for (let i = 0; i < 256 * 256; i++) {
-    img.data[i * 4] = 128 + (rand() - 0.5) * 40;
-    img.data[i * 4 + 1] = 128 + (rand() - 0.5) * 40;
-    img.data[i * 4 + 2] = 255;
-    img.data[i * 4 + 3] = 255;
+  const waves = [
+    [2, 1, 0.55, 0.7],
+    [3, -2, 0.4, 1.9],
+    [5, 3, 0.28, 4.2],
+    [7, -4, 0.18, 2.6],
+    [11, 6, 0.1, 5.1],
+  ];
+  for (let y = 0; y < 256; y++) {
+    for (let x = 0; x < 256; x++) {
+      let dx = 0;
+      let dy = 0;
+      for (const [fx, fy, a, ph] of waves) {
+        const kx = (Math.PI * 2 * fx) / 256;
+        const ky = (Math.PI * 2 * fy) / 256;
+        const v = Math.cos(kx * x + ky * y + ph) * a;
+        dx += v * kx * 5.5;
+        dy += v * ky * 5.5;
+      }
+      dx += (rand() - 0.5) * 0.22;
+      dy += (rand() - 0.5) * 0.22;
+      const i = (y * 256 + x) * 4;
+      img.data[i] = 128 + Math.max(-50, Math.min(50, dx * 42));
+      img.data[i + 1] = 128 + Math.max(-50, Math.min(50, dy * 42));
+      img.data[i + 2] = 255;
+      img.data[i + 3] = 255;
+    }
   }
   ctx.putImageData(img, 0, 0);
   return finish(c, { srgb: false });

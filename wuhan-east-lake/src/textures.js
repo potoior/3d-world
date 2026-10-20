@@ -344,6 +344,39 @@ export function makeRampTexture() {
   return finish(c);
 }
 
+export function makePlankTexture() {
+  const [c, ctx] = makeCanvas(256, 256);
+  const rand = mulberry32(611);
+  ctx.fillStyle = '#7b5a3e';
+  ctx.fillRect(0, 0, 256, 256);
+  for (let x = 0; x < 256; x += 32) {
+    const v = 0.78 + rand() * 0.34;
+    ctx.fillStyle = `rgb(${(128 * v) | 0},${(94 * v) | 0},${(62 * v) | 0})`;
+    ctx.fillRect(x + 1, 0, 30, 256);
+    ctx.fillStyle = 'rgba(38,24,14,0.5)';
+    ctx.fillRect(x, 0, 2, 256);
+    ctx.fillStyle = 'rgba(235,205,160,0.13)';
+    ctx.fillRect(x + 2, 0, 2, 256);
+    for (let i = 0; i < 7; i++) {
+      ctx.strokeStyle = `rgba(52,34,20,${0.08 + rand() * 0.12})`;
+      ctx.lineWidth = 0.6 + rand();
+      ctx.beginPath();
+      const yy = rand() * 256;
+      ctx.moveTo(x + 4, yy);
+      ctx.bezierCurveTo(x + 12, yy + 18, x + 18, yy - 22, x + 28, yy + 6);
+      ctx.stroke();
+    }
+  }
+  for (let y = 20; y < 256; y += 46) {
+    ctx.fillStyle = 'rgba(30,18,10,0.55)';
+    ctx.fillRect(0, y, 256, 1.5);
+    ctx.fillStyle = 'rgba(240,212,168,0.12)';
+    ctx.fillRect(0, y + 2, 256, 1);
+  }
+  speckle(ctx, 256, 256, 1200, rand, ['#5a3f2a', '#9d7752', '#6c4d33'], 0.2);
+  return finish(c);
+}
+
 export function makeWaterNormalTexture() {
   const size = 256;
   const [c, ctx] = makeCanvas(size, size);
