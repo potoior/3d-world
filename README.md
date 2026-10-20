@@ -1,6 +1,6 @@
 # 3d-world
 
-二十六座中国地标的可交互 Three.js 3D 场景。全部资源本地化，无需构建步骤。
+二十九座中国地标的可交互 Three.js 3D 场景。全部资源本地化，无需构建步骤。
 
 ## 场景
 
@@ -30,6 +30,9 @@
 - **承德避暑山庄**：湖岛堤桥、金山亭、文津阁、烟雨楼、蒙古包与鹿群。
 - **大理 · 三塔洱海**：崇圣寺三塔、洱海、苍山、大理古城与白族民居。
 - **长白山天池**：火山口湖、长白瀑布、温泉蒸汽、冷杉林与雪岩。
+- **纳木错**：念青唐古拉、扎西半岛、玛尼堆、经幡与牦牛。
+- **乌镇**：西栅水巷、石桥、廊棚、白墙黛瓦与乌篷船。
+- **庐山**：三叠泉、五老峰、含鄱口、云海与山寺。
 
 ## 交互
 
@@ -73,7 +76,7 @@ python3 -m http.server 8123
 
 ```text
 .
-├── index.html                  # 二十六场景选择页
+├── index.html                  # 二十九场景选择页
 ├── assets/                     # 缩略图
 ├── shared/interactions.js      # 地标索引、巡游、天气、摄影、音景
 ├── forbidden-city-3d/
@@ -101,7 +104,10 @@ python3 -m http.server 8123
 ├── dujiangyan/
 ├── chengde-resort/
 ├── dali-three-pagodas/
-└── changbai-tianchi/
+├── changbai-tianchi/
+├── namtso/
+├── wuzhen/
+└── lushan/
 ```
 
 ## 部署
