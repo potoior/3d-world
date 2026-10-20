@@ -7,6 +7,7 @@ import { createCloudSea } from './clouds.js';
 import { createFineDetail, createSkyDetail } from './details.js';
 import { createArchitecture } from './architecture.js';
 import { createLife } from './life.js';
+import { createMountTaiFinalPolish } from './finalPolish.js';
 import { mergeStaticGroup } from './geometry.js';
 import { makeLabelTexture } from './textures.js';
 
@@ -49,6 +50,8 @@ export function buildTaishan() {
   staticRoot.add(architecture.group);
   const vegetation = createVegetation();
   staticRoot.add(vegetation.group);
+  const finalPolish = createMountTaiFinalPolish();
+  staticRoot.add(finalPolish.staticGroup);
 
   const merged = mergeStaticGroup(staticRoot);
   merged.name = 'merged-static-scene';
@@ -56,6 +59,7 @@ export function buildTaishan() {
 
   const life = createLife(architecture);
   root.add(life.group);
+  root.add(finalPolish.dynamicGroup);
 
   const labels = [
     makeLabel('十八盘', 'EIGHTEEN BENDS · 1633 STEPS', -32, 206, -128, 1),
@@ -96,9 +100,11 @@ export function buildTaishan() {
     architecture,
     life,
     vegetation: vegetation.counts,
+    finalPolish: finalPolish.stats,
     update: (elapsed, dt = 0.016) => {
       clouds.update(elapsed);
       life.update(elapsed, dt);
+      finalPolish.update(elapsed, dt);
     },
     views,
     notes,

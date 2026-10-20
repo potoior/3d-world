@@ -30,6 +30,8 @@ import {
   createShoreMist,
 } from './fineDetail.js';
 import { createWestLakeRefineStatic, createWestLakeRefineLife } from './refineDetail.js';
+import { createWestLakeFinalStatic } from './finalPolish.js';
+import { createWestLakeFinalLife } from './finalLife.js';
 
 export const LAKE = [
   [-178, -44], [-172, -82], [-150, -112], [-110, -128], [-58, -134], [-6, -130],
@@ -345,6 +347,12 @@ export function buildWestLakeScene() {
     leifeng: { x: 46, z: 220, baseY: 30.5 },
     santan: [[-69, 110], [-43, 127], [-17, 110]],
   }));
+  root.add(createWestLakeFinalStatic({
+    bridges: BRIDGES,
+    lotusBeds,
+    leifeng: { x: 46, z: 220, baseY: 30.5 },
+    santan: [[-69, 110], [-43, 127], [-17, 110]],
+  }));
 
   const shrubs = [
     [-140, -128], [-164, -104], [-196, -26], [-172, 92], [-112, 142],
@@ -373,12 +381,20 @@ export function buildWestLakeScene() {
     santan: [[-69, 110], [-43, 127], [-17, 110]],
     leifeng: { x: 46, z: 220, baseY: 30.5 },
   });
+  const finalLife = createWestLakeFinalLife({
+    lotusBeds,
+    bridges: BRIDGES,
+    santan: [[-69, 110], [-43, 127], [-17, 110]],
+    leifeng: { x: 46, z: 220, baseY: 30.5 },
+  });
   const baseLifeUpdate = life.update;
   life.update = (t, dt) => {
     baseLifeUpdate(t, dt);
     refineLife.update(t, dt);
+    finalLife.update(t, dt);
   };
   merged.add(life.group);
   merged.add(refineLife.group);
+  merged.add(finalLife.group);
   return { group: merged, waterMaterial, life, lanternMaterial: mats.lantern };
 }

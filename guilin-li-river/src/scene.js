@@ -8,6 +8,7 @@ import { createShoreDetails } from './waterDetails.js';
 import { createXingping, createElephantHill, createNineHorseCliff, colliders } from './architectures.js';
 import { createRafts, createBirds } from './life.js';
 import { buildRefineDetails, createRefineLife } from './refine.js';
+import { buildPolishDetails, createPolishLife } from './polish.js';
 
 export function buildGuilinScene() {
   colliders.length = 0;
@@ -21,6 +22,7 @@ export function buildGuilinScene() {
 
   root.add(createPeaks());
   buildRefineDetails(root);
+  buildPolishDetails(root);
   root.add(createBamboo());
   root.add(createTrees());
   root.add(createPines());
@@ -46,6 +48,9 @@ export function buildGuilinScene() {
   const refineLife = createRefineLife();
   extras.add(refineLife.group);
   extras.userData.refineLife = refineLife;
+  const polishLife = createPolishLife();
+  extras.add(polishLife.group);
+  extras.userData.polishLife = polishLife;
 
   return { group: mergeStaticGroup(root), extras, waterMaterial, colliders };
 }

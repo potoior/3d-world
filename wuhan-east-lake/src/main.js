@@ -330,6 +330,8 @@ function animate() {
   if (life) updateLakeLife(life, time);
   const refineLife = world.extras.userData.refineLife;
   if (refineLife) refineLife.update(time);
+  const finalLife = world.extras.userData.finalLife;
+  if (finalLife) finalLife.update(time, dt);
   if (fp.isActive()) fp.update(dt);
   else controls.update();
   renderer.render(scene, camera);
@@ -352,10 +354,9 @@ const interactions = initInteractions({
 window.__interactions = interactions;
 
 updateEnvironment(1);
-animate();
 
 const loader = document.getElementById('loader');
-requestAnimationFrame(() => {
-  loader.classList.add('hidden');
-  document.body.classList.add('ready');
-});
+loader.classList.add('hidden');
+document.body.classList.add('ready');
+
+requestAnimationFrame(() => requestAnimationFrame(animate));

@@ -246,6 +246,7 @@ const tmpSunPos = new THREE.Vector3();
 const rafts = world.extras.userData.rafts;
 const birds = world.extras.userData.birds;
 const refineLife = world.extras.userData.refineLife;
+const polishLife = world.extras.userData.polishLife;
 
 function updateEnvironment(dt) {
   envMix += (envTarget - envMix) * Math.min(1, dt * 1.4);
@@ -293,6 +294,7 @@ function animate() {
   }
   if (rafts) updateRafts(rafts, time);
   if (refineLife) refineLife.update(time);
+  if (polishLife) polishLife.update(time);
   if (birds) {
     birds.rotation.y = Math.sin(time * 0.04) * 0.18;
     birds.position.y = Math.sin(time * 0.2) * 2.4;

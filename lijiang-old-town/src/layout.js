@@ -15,6 +15,7 @@ import {
 } from './town.js';
 import { createTownLife } from './townLife.js';
 import { createOldTownDetail } from './oldTownDetail.js';
+import { createLijiangFinalPolish } from './finalPolish.js';
 
 export const CANALS = [
   { x: 52, z: -7.5, w: 9, d: 315, rot: 0 },
@@ -73,10 +74,10 @@ const HOUSE_DEFS = [
   { x: -8, z: 47, w: 30, d: 14, rot: Math.PI, storeys: 2, name: '四方街', seed: 11 },
   { x: 24, z: 46, w: 14, d: 12, rot: Math.PI, storeys: 2, name: '普洱茶', seed: 12 },
   { x: -36, z: 46, w: 15, d: 12, rot: Math.PI, storeys: 1, name: '东巴纸坊', seed: 13 },
-  { x: -31, z: -17, w: 17, d: 11, storeys: 1, name: '银器', seed: 14 },
-  { x: -11, z: -17, w: 17, d: 11, storeys: 2, name: '丽江粑粑', seed: 15 },
-  { x: 9, z: -17, w: 15, d: 11, storeys: 1, name: '蜡染', seed: 16 },
-  { x: 26, z: -17, w: 12, d: 11, seed: 17 },
+  { x: -31, z: -17, w: 17, d: 11, rot: 0, storeys: 1, name: '银器', seed: 14 },
+  { x: -11, z: -17, w: 17, d: 11, rot: 0, storeys: 2, name: '丽江粑粑', seed: 15 },
+  { x: 9, z: -17, w: 15, d: 11, rot: 0, storeys: 1, name: '蜡染', seed: 16 },
+  { x: 26, z: -17, w: 12, d: 11, rot: 0, seed: 17 },
   { x: -42, z: -2, w: 14, d: 11, rot: Math.PI / 2, storeys: 1, name: '客栈', seed: 18 },
   { x: -42, z: 17, w: 14, d: 11, rot: Math.PI / 2, storeys: 2, name: '茶马古道', seed: 19 },
   { x: -42, z: 36, w: 12, d: 11, rot: Math.PI / 2, seed: 20 },
@@ -145,8 +146,8 @@ const HOUSE_DEFS = [
   { x: 15, z: 86, w: 14, d: 10, rot: -Math.PI / 2, storeys: 1, seed: 105 },
   { x: -18, z: 116, w: 14, d: 10, rot: Math.PI / 2, storeys: 1, name: '银器', seed: 106 },
   { x: 15, z: 116, w: 14, d: 10, rot: -Math.PI / 2, storeys: 2, name: '普洱茶', seed: 107 },
-  { x: -20, z: -152, w: 16, d: 10, storeys: 1, seed: 108 },
-  { x: 12, z: -152, w: 16, d: 10, storeys: 2, name: '客栈', seed: 109 },
+  { x: -20, z: -152, w: 16, d: 10, rot: 0, storeys: 1, seed: 108 },
+  { x: 12, z: -152, w: 16, d: 10, rot: 0, storeys: 2, name: '客栈', seed: 109 },
 ];
 
 function addHouse(root, spots, def) {
@@ -272,6 +273,13 @@ export function buildLijiangScene() {
   });
   root.add(detail.staticGroup);
 
+  const finalPolish = createLijiangFinalPolish({
+    canals: CANALS,
+    bridges: BRIDGES,
+    houses: HOUSE_DEFS,
+  });
+  root.add(finalPolish.staticGroup);
+
   for (let i = 0; i < WILLOWS.length; i++) {
     const [x, z] = WILLOWS[i];
     const scale = 0.88 + (i % 4) * 0.06;
@@ -308,9 +316,11 @@ export function buildLijiangScene() {
   life.update = (time, dt) => {
     baseLifeUpdate(time, dt);
     detail.update(time, dt);
+    finalPolish.update(time, dt);
   };
   merged.add(life.group);
   merged.add(detail.dynamicGroup);
+  merged.add(finalPolish.dynamicGroup);
 
   return {
     group: merged,
@@ -320,5 +330,6 @@ export function buildLijiangScene() {
     lanternMaterial: mats.lanternRed,
     glowMaterial: life.glowMaterial,
     spawn: SPAWN,
+    finalPolish: finalPolish.stats,
   };
 }

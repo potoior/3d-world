@@ -417,6 +417,27 @@ const STYLE = `
     min-width: 0;
     padding: 7px 18px;
   }
+  #scene {
+    filter: saturate(1.06) contrast(1.035) brightness(1.01);
+  }
+  #xi-grade {
+    position: fixed;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+    background:
+      radial-gradient(ellipse at 50% 43%, transparent 50%, rgba(8, 9, 7, 0.26) 100%),
+      linear-gradient(180deg, rgba(255, 238, 206, 0.035), transparent 20%, transparent 78%, rgba(8, 10, 8, 0.1));
+  }
+  #xi-grade::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    opacity: 0.24;
+    background-image:
+      repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.022) 0, rgba(255, 255, 255, 0.022) 1px, transparent 1px, transparent 3px);
+    mix-blend-mode: soft-light;
+  }
   #xi-wx-vignette {
     position: fixed;
     inset: 0;
@@ -605,6 +626,12 @@ function noteFor(notes, key) {
 
 export function initInteractions(options = {}) {
   injectStyle();
+  let gradeEl = document.getElementById('xi-grade');
+  if (!gradeEl) {
+    gradeEl = document.createElement('div');
+    gradeEl.id = 'xi-grade';
+    document.body.appendChild(gradeEl);
+  }
 
   const sourceViews = options.views || (options.world && options.world.views) || {};
   const sourceNotes = options.notes || (options.world && options.world.notes) || {};
@@ -1649,6 +1676,45 @@ export function initInteractions(options = {}) {
 
   on(window, 'keydown', onKeyDown);
 
+  /* ---------- atmosphere motes ---------- */
+  let moteGroup = null;
+  let moteTexture = null;
+  if (scene && camera) {
+    const c = document.createElement('canvas');
+    c.width = c.height = 64;
+    const g = c.getContext('2d');
+    const rg = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+    rg.addColorStop(0, 'rgba(255,240,210,0.9)');
+    rg.addColorStop(0.3, 'rgba(255,232,190,0.35)');
+    rg.addColorStop(1, 'rgba(255,232,190,0)');
+    g.fillStyle = rg;
+    g.fillRect(0, 0, 64, 64);
+    moteTexture = new THREE.CanvasTexture(c);
+    const count = 160;
+    const pos = new Float32Array(count * 3);
+    for (let i = 0; i < count; i++) {
+      pos[i * 3] = (Math.random() - 0.5) * 110;
+      pos[i * 3 + 1] = (Math.random() - 0.5) * 50;
+      pos[i * 3 + 2] = (Math.random() - 0.5) * 110;
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    const mat = new THREE.PointsMaterial({
+      map: moteTexture,
+      color: 0xffe0ad,
+      size: 0.72,
+      transparent: true,
+      opacity: 0.26,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+      sizeAttenuation: true,
+    });
+    moteGroup = new THREE.Points(geo, mat);
+    moteGroup.name = 'xi-motes';
+    moteGroup.frustumCulled = false;
+    scene.add(moteGroup);
+  }
+
   /* ---------- per-frame projection & weather ---------- */
   const markerDir = new THREE.Vector3();
   const markerWorld = new THREE.Vector3();
@@ -1691,6 +1757,11 @@ export function initInteractions(options = {}) {
 
   function frame(now) {
     if (destroyed) return;
+    if (moteGroup && camera) {
+      moteGroup.position.set(camera.position.x, camera.position.y - 2, camera.position.z);
+      moteGroup.rotation.y = now * 0.000018;
+      moteGroup.rotation.x = Math.sin(now * 0.00005) * 0.03;
+    }
     updateMarkers();
     updateWeather(now);
     rafId = requestAnimationFrame(frame);
@@ -1726,6 +1797,14 @@ export function initInteractions(options = {}) {
       } catch (err) {}
     });
     listeners.length = 0;
+    if (moteGroup) {
+      if (scene) scene.remove(moteGroup);
+      try {
+        moteGroup.geometry.dispose();
+        moteGroup.material.dispose();
+        if (moteTexture) moteTexture.dispose();
+      } catch (err) {}
+    }
     if (weatherBuilt) {
       Object.values(weatherSystems).forEach((system) => {
         try {
@@ -1735,7 +1814,7 @@ export function initInteractions(options = {}) {
       });
       if (scene) scene.remove(weatherGroup);
     }
-    [sidebarToggle, sidebar, markerLayer, card, dock, help, vignette, photoHint, toastEl].forEach((node) => {
+    [sidebarToggle, sidebar, markerLayer, card, dock, help, vignette, photoHint, toastEl, gradeEl].forEach((node) => {
       if (node && node.parentNode) node.parentNode.removeChild(node);
     });
     document.body.classList.remove('xi-photo');

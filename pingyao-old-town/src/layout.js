@@ -8,6 +8,10 @@ import { createCityWall, createMarketTower } from './citywall.js';
 import { createTownLife } from './townLife.js';
 import { createCloseDetail } from './closeDetail.js';
 import { createDetailLife } from './detailLife.js';
+import { createFinalPolish } from './finalPolish.js';
+import { createFinalLife } from './finalLife.js';
+
+const HOUSE_DEFS = [];
 
 export const SPAWN = { x: 0, z: -158, yaw: Math.PI };
 export const BOUNDS = { minX: -170, maxX: 170, minZ: -190, maxZ: 190 };
@@ -39,6 +43,7 @@ function addCircleCollider(x, z, r, name) {
 }
 
 function addHouse(root, spots, def) {
+  HOUSE_DEFS.push(def);
   const h = createPingyaoHouse(def);
   root.add(h.group);
   spots.push(...h.spots);
@@ -304,6 +309,19 @@ export function buildPingyaoScene() {
     root.add(createHill({ x, z, rx, rz, h, mat, seed }));
   }
 
+  const finalDetail = createFinalPolish({
+    houses: HOUSE_DEFS,
+    compounds: COMPOUNDS,
+    wells: WELLS,
+    halfX: HALF_X,
+    halfZ: HALF_Z,
+    wallH: WALL_H,
+    wallT: WALL_T,
+    gateWidth: 15,
+  });
+  root.add(finalDetail.group);
+  for (const c of finalDetail.colliders) addCircleCollider(c.x, c.z, c.r, c.name);
+
   const merged = mergeStaticGroup(root);
   const detailLife = createDetailLife({ gates: wall.gates, wells: WELLS });
   merged.add(detailLife.group);
@@ -315,14 +333,18 @@ export function buildPingyaoScene() {
     ],
   });
   merged.add(townLife.group);
+  const finalLife = createFinalLife({ lanternSpots: spots, banners: finalDetail.banners });
+  merged.add(finalLife.group);
   const life = {
     group: townLife.group,
     update(time, dt) {
       townLife.update(time, dt);
       detailLife.update(time, dt);
+      finalLife.update(time, dt);
     },
     glowMaterial: townLife.glowMaterial,
     detailLife,
+    finalLife,
   };
 
   return {
@@ -330,6 +352,8 @@ export function buildPingyaoScene() {
     life,
     closeDetail,
     detailLife,
+    finalDetail,
+    finalLife,
     lanternMaterial: mats.lanternRed,
     glowMaterial: life.glowMaterial,
     spawn: SPAWN,

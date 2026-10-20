@@ -6,6 +6,8 @@ import { createVegetation } from './vegetation.js';
 import { createCloudSea } from './clouds.js';
 import { createFineDetail, createSkyDetail } from './details.js';
 import { createHuangshanRefineStatic, createHuangshanRefineLife } from './refineDetail.js';
+import { createHuangshanFinalStatic } from './finalPolish.js';
+import { createHuangshanFinalLife } from './finalLife.js';
 import { mergeStaticGroup } from './geometry.js';
 import { makeLabelTexture } from './textures.js';
 
@@ -44,6 +46,7 @@ export function buildHuangshan() {
   staticRoot.add(createTrailMarkers());
   staticRoot.add(createFineDetail());
   staticRoot.add(createHuangshanRefineStatic());
+  staticRoot.add(createHuangshanFinalStatic());
   const vegetation = createVegetation();
   staticRoot.add(vegetation.group);
 
@@ -60,8 +63,10 @@ export function buildHuangshan() {
 
   const clouds = createCloudSea();
   const refineLife = createHuangshanRefineLife();
+  const finalLife = createHuangshanFinalLife();
   root.add(clouds.group);
   root.add(refineLife.group);
+  root.add(finalLife.group);
   root.add(createSkyDetail());
 
   function view(p, t) {
@@ -93,6 +98,7 @@ export function buildHuangshan() {
     update: (elapsed, dt) => {
       clouds.update(elapsed, dt);
       refineLife.update(elapsed, dt);
+      finalLife.update(elapsed, dt);
     },
     views,
     notes,

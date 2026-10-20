@@ -337,6 +337,9 @@ animate();
 const loader = document.getElementById('loader');
 requestAnimationFrame(() => {
   loader.classList.add('hidden');
+  loader.style.transition = 'none';
+  loader.style.opacity = '0';
+  loader.style.visibility = 'hidden';
   document.body.classList.add('ready');
   window.__ready = true;
 });

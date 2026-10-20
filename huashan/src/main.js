@@ -319,15 +319,20 @@ const interactions = initInteractions({
 });
 window.__interactions = interactions;
 
-updateEnvironment(1);
-animate();
-
 const loader = document.getElementById('loader');
 function revealScene() {
   loader.classList.add('hidden');
+  loader.style.transition = 'none';
+  loader.style.opacity = '0';
+  loader.style.visibility = 'hidden';
   document.body.classList.add('ready');
   window.__ready = true;
 }
+
+updateEnvironment(1);
+revealScene();
+void loader.offsetWidth;
+animate();
 setTimeout(revealScene, 700);
 requestAnimationFrame(() => requestAnimationFrame(revealScene));
 

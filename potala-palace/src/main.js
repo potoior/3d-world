@@ -4,6 +4,7 @@ import { buildPotala } from './layout.js';
 import { createFirstPerson } from './firstperson.js';
 import { createAmbient } from './ambient.js';
 import { createRefineAmbient } from './refine.js';
+import { createPolishAmbient } from './polish.js';
 import { makeSkyMaterial } from './materials.js';
 import { initInteractions } from '../../shared/interactions.js';
 
@@ -71,6 +72,8 @@ const ambient = createAmbient();
 scene.add(ambient.group);
 const refine = createRefineAmbient();
 scene.add(refine.group);
+const polish = createPolishAmbient();
+scene.add(polish.group);
 
 let fp = null;
 
@@ -241,6 +244,7 @@ function animate() {
   updateEnvironment(Math.min(rawDt, 0.2));
   ambient.update(time);
   refine.update(time, envMix);
+  polish.update(time, envMix);
   if (tour.active) {
     tour.t += rawDt / tour.duration;
     const t = Math.min(1, tour.t);
@@ -268,6 +272,7 @@ window.__potala = {
   world,
   ambient,
   refine,
+  polish,
   fp,
   tour,
   views,

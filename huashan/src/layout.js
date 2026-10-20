@@ -16,6 +16,8 @@ import { createCloudSea } from './clouds.js';
 import { createFineDetail, createSkyDetail } from './details.js';
 import { createArchitecture } from './architecture.js';
 import { createLife } from './life.js';
+import { createFinalPolish } from './finalPolish.js';
+import { createFinalLife } from './finalLife.js';
 import { mergeStaticGroup } from './geometry.js';
 import { makeLabelTexture } from './textures.js';
 
@@ -59,6 +61,8 @@ export function buildHuashan() {
   staticRoot.add(chainRoute.group);
   staticRoot.add(createTrailMarkers());
   staticRoot.add(createFineDetail());
+  const finalPolish = createFinalPolish();
+  staticRoot.add(finalPolish.group);
   staticRoot.add(architecture.group);
   const vegetation = createVegetation();
   staticRoot.add(vegetation.group);
@@ -69,6 +73,11 @@ export function buildHuashan() {
 
   const life = createLife(architecture);
   root.add(life.group);
+  const finalLife = createFinalLife({
+    peopleSpots: finalPolish.peopleSpots,
+    ribbonRacks: finalPolish.ribbonRacks,
+  });
+  root.add(finalLife.group);
 
   const labels = [
     makeLabel('长空栈道', 'CHANGKONG PLANK ROAD · 2160 M', 58, 356, -352, 0.95),
@@ -111,10 +120,13 @@ export function buildHuashan() {
     life,
     walkway,
     chainRoute,
+    finalPolish,
+    finalLife,
     vegetation: vegetation.counts,
     update: (elapsed, dt = 0.016) => {
       clouds.update(elapsed);
       life.update(elapsed, dt);
+      finalLife.update(elapsed);
     },
     views,
     notes,

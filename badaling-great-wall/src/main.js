@@ -314,7 +314,6 @@ const interactions = initInteractions({
 window.__interactions = interactions;
 
 updateEnvironment(1);
-animate();
 
 const loader = document.getElementById('loader');
 function revealScene() {
@@ -322,8 +321,8 @@ function revealScene() {
   document.body.classList.add('ready');
   window.__ready = true;
 }
-setTimeout(revealScene, 700);
-requestAnimationFrame(() => requestAnimationFrame(revealScene));
+revealScene();
+requestAnimationFrame(() => requestAnimationFrame(animate));
 
 function checkWallGrounding() {
   const walls = [world.mainWall, world.southWall];
