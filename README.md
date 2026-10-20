@@ -1,6 +1,6 @@
 # 3d-world
 
-三十五座中国地标的可交互 Three.js 3D 场景。全部资源本地化，无需构建步骤。
+三十九座中国地标的可交互 Three.js 3D 场景。全部资源本地化，无需构建步骤。
 
 ## 场景
 
@@ -39,6 +39,10 @@
 - **黄鹤楼**：五层重檐、长江大桥、诗碑与蛇山江景。
 - **瘦西湖**：五亭桥、白塔、徐园、长堤春柳与画舫。
 - **泸沽湖**：里格半岛、湖心岛、摩梭木楞房、猪槽船与格姆女神山。
+- **云冈石窟**：第20窟露天大佛、第5/6窟、云冈寺与砂岩崖壁。
+- **天坛**：祈年殿、圜丘坛、丹陛桥、皇穹宇与柏树林。
+- **颐和园**：万寿山佛香阁、昆明湖、十七孔桥、长廊与石舫。
+- **西递**：胡文光牌坊、敬爱堂、大路街与徽州马头墙。
 
 ## 交互
 
@@ -82,7 +86,7 @@ python3 -m http.server 8123
 
 ```text
 .
-├── index.html                  # 三十五场景选择页
+├── index.html                  # 三十九场景选择页
 ├── assets/                     # 缩略图
 ├── shared/interactions.js      # 地标索引、巡游、天气、摄影、音景
 ├── forbidden-city-3d/
@@ -119,7 +123,11 @@ python3 -m http.server 8123
 ├── longmen-grottoes/
 ├── yellow-crane-tower/
 ├── slender-west-lake/
-└── lugu-lake/
+├── lugu-lake/
+├── yungang-grottoes/
+├── temple-of-heaven/
+├── summer-palace/
+└── xidi/
 ```
 
 ## 部署

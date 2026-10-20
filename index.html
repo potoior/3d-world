@@ -440,10 +440,6 @@
       display: none;
     }
     @media (min-width: 1201px) {
-      .grid > .card:last-child {
-        grid-column: span 2;
-        aspect-ratio: 32 / 9.3;
-      }
       .card-body {
         left: 18px;
         right: 18px;
@@ -562,35 +558,36 @@
       </div>
       <div class="topnote">
         <span></span>
-        三十五境 · 实时三维 · 本地渲染
+        三十九境 · 实时三维 · 本地渲染
       </div>
     </header>
 
     <section class="hero">
       <div>
         <div class="eyebrow">INTERACTIVE ARCHITECTURE &amp; LANDSCAPE</div>
-        <h2>山河<em>三十五境</em></h2>
+        <h2>山河<em>三十九境</em></h2>
       </div>
       <div class="hero-right">
         <div class="mark"></div>
-        <p>宫城、园林、湖山、长城、雪域、漓江、大漠、峰林、古城与岱宗。<br />三十五座地标，三十五种中国。选择一处，进入可交互的三维场景。</p>
+        <p>宫城、园林、湖山、长城、雪域、漓江、大漠、峰林、古城与岱宗。<br />三十九座地标，三十九种中国。选择一处，进入可交互的三维场景。</p>
         <small>DRAG TO ORBIT · SCROLL TO ZOOM · CLICK TO ENTER</small>
       </div>
     </section>
 
     <div class="filters" id="filters">
       <div class="chips" role="group" aria-label="按类型筛选场景">
-        <button class="chip active" data-filter="all">全部 <b>35</b></button>
+        <button class="chip active" data-filter="all">全部 <b>39</b></button>
         <button class="chip" data-filter="宫城">宫城 <b>2</b></button>
-        <button class="chip" data-filter="园林">园林 <b>2</b></button>
+        <button class="chip" data-filter="园林">园林 <b>3</b></button>
         <button class="chip" data-filter="湖山">湖山 <b>10</b></button>
         <button class="chip" data-filter="山岳">山岳 <b>8</b></button>
-        <button class="chip" data-filter="古城">古城 <b>3</b></button>
+        <button class="chip" data-filter="古城">古城 <b>4</b></button>
         <button class="chip" data-filter="河山">河山 <b>3</b></button>
         <button class="chip" data-filter="水乡">水乡 <b>2</b></button>
-        <button class="chip" data-filter="石窟">石窟 <b>3</b></button>
+        <button class="chip" data-filter="石窟">石窟 <b>4</b></button>
         <button class="chip" data-filter="关隘">关隘 <b>1</b></button>
         <button class="chip" data-filter="楼阁">楼阁 <b>1</b></button>
+        <button class="chip" data-filter="坛庙">坛庙 <b>1</b></button>
       </div>
       <button class="random" id="random-scene" type="button">随机进入 ↗</button>
     </div>
@@ -1118,6 +1115,66 @@
           <p class="en">LUGU LAKE · YUNNAN</p>
           <p class="desc">格姆女神山环抱深蓝湖面，里格半岛与湖心岛浮于水上。木楞房、猪槽船与经幡，构成摩梭人的湖畔日常。</p>
           <div class="tags"><i>第一人称漫游</i><i>里格半岛</i><i>湖心岛</i><i>猪槽船</i></div>
+        </div>
+      </a>
+
+      <a class="card" href="yungang-grottoes/" data-cat="石窟" style="--accent:#b79b7a">
+        <img src="assets/yungang.jpg?v=16" alt="云冈石窟 3D 鸟瞰" />
+        <div class="card-top">
+          <span class="num">36 / GROTTOES</span>
+          <span class="corner">↗</span>
+        </div>
+        <div class="card-body">
+          <div class="card-kicker"><span></span>北魏石窟</div>
+          <h3>云冈石窟</h3>
+          <p class="en">YUNGANG GROTTOES · SHANXI</p>
+          <p class="desc">砂岩崖壁上窟龛密布，第20窟露天大佛端坐千年，第5/6窟的双佛与中心塔柱保存着北魏造像的雄浑与彩绘残迹。</p>
+          <div class="tags"><i>第一人称漫游</i><i>露天大佛</i><i>第5/6窟</i><i>云冈寺</i></div>
+        </div>
+      </a>
+
+      <a class="card" href="temple-of-heaven/" data-cat="坛庙" style="--accent:#6f93b8">
+        <img src="assets/tiantan.jpg?v=16" alt="天坛 3D 鸟瞰" />
+        <div class="card-top">
+          <span class="num">37 / ALTAR</span>
+          <span class="corner">↗</span>
+        </div>
+        <div class="card-body">
+          <div class="card-kicker"><span></span>祭天坛庙</div>
+          <h3>天坛</h3>
+          <p class="en">TEMPLE OF HEAVEN · BEIJING</p>
+          <p class="desc">祈年殿三重蓝瓦圆顶立于汉白玉台基，圜丘坛层层收分，丹陛桥连接南北。柏树林与红墙围出明清祭天的秩序。</p>
+          <div class="tags"><i>第一人称漫游</i><i>祈年殿</i><i>圜丘坛</i><i>丹陛桥</i></div>
+        </div>
+      </a>
+
+      <a class="card" href="summer-palace/" data-cat="园林" style="--accent:#9fb69a">
+        <img src="assets/summerpalace.jpg?v=16" alt="颐和园 3D 鸟瞰" />
+        <div class="card-top">
+          <span class="num">38 / IMPERIAL GARDEN</span>
+          <span class="corner">↗</span>
+        </div>
+        <div class="card-body">
+          <div class="card-kicker"><span></span>皇家园林</div>
+          <h3>颐和园</h3>
+          <p class="en">SUMMER PALACE · BEIJING</p>
+          <p class="desc">万寿山佛香阁俯瞰昆明湖，十七孔桥连向南湖岛。长廊、石舫、西堤与苏州街，把皇家园林的湖山长卷铺到眼前。</p>
+          <div class="tags"><i>第一人称漫游</i><i>佛香阁</i><i>昆明湖</i><i>十七孔桥</i></div>
+        </div>
+      </a>
+
+      <a class="card" href="xidi/" data-cat="古城" style="--accent:#a9b2a5">
+        <img src="assets/xidi.jpg?v=16" alt="西递 3D 鸟瞰" />
+        <div class="card-top">
+          <span class="num">39 / HUI VILLAGE</span>
+          <span class="corner">↗</span>
+        </div>
+        <div class="card-body">
+          <div class="card-kicker"><span></span>徽州古村</div>
+          <h3>西递</h3>
+          <p class="en">XIDI VILLAGE · ANHUI</p>
+          <p class="desc">胡文光牌坊立于村口，青石板街穿行于白墙黛瓦之间。敬爱堂、履福堂与马头墙，把徽州宗族与商旅的记忆留在巷陌。</p>
+          <div class="tags"><i>第一人称漫游</i><i>胡文光牌坊</i><i>敬爱堂</i><i>大路街</i></div>
         </div>
       </a>
     </main>
