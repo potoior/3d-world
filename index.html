@@ -440,6 +440,10 @@
       display: none;
     }
     @media (min-width: 1201px) {
+      .grid > .card:last-child {
+        grid-column: span 2;
+        aspect-ratio: 32 / 9.3;
+      }
       .card-body {
         left: 18px;
         right: 18px;
@@ -558,31 +562,31 @@
       </div>
       <div class="topnote">
         <span></span>
-        二十一境 · 实时三维 · 本地渲染
+        二十三境 · 实时三维 · 本地渲染
       </div>
     </header>
 
     <section class="hero">
       <div>
         <div class="eyebrow">INTERACTIVE ARCHITECTURE &amp; LANDSCAPE</div>
-        <h2>山河<em>二十一境</em></h2>
+        <h2>山河<em>二十三境</em></h2>
       </div>
       <div class="hero-right">
         <div class="mark"></div>
-        <p>宫城、园林、湖山、长城、雪域、漓江、大漠、峰林、古城与岱宗。<br />二十一座地标，二十一种中国。选择一处，进入可交互的三维场景。</p>
+        <p>宫城、园林、湖山、长城、雪域、漓江、大漠、峰林、古城与岱宗。<br />二十三座地标，二十三种中国。选择一处，进入可交互的三维场景。</p>
         <small>DRAG TO ORBIT · SCROLL TO ZOOM · CLICK TO ENTER</small>
       </div>
     </section>
 
     <div class="filters" id="filters">
       <div class="chips" role="group" aria-label="按类型筛选场景">
-        <button class="chip active" data-filter="all">全部 <b>21</b></button>
+        <button class="chip active" data-filter="all">全部 <b>23</b></button>
         <button class="chip" data-filter="宫城">宫城 <b>2</b></button>
         <button class="chip" data-filter="园林">园林 <b>1</b></button>
-        <button class="chip" data-filter="湖山">湖山 <b>4</b></button>
+        <button class="chip" data-filter="湖山">湖山 <b>5</b></button>
         <button class="chip" data-filter="山岳">山岳 <b>7</b></button>
         <button class="chip" data-filter="古城">古城 <b>3</b></button>
-        <button class="chip" data-filter="河山">河山 <b>2</b></button>
+        <button class="chip" data-filter="河山">河山 <b>3</b></button>
         <button class="chip" data-filter="水乡">水乡 <b>1</b></button>
         <button class="chip" data-filter="石窟">石窟 <b>1</b></button>
       </div>
@@ -902,6 +906,36 @@
           <p class="en">QINGHAI LAKE · QINGHAI</p>
           <p class="desc">雪山环抱的高原大湖，碧蓝水面铺向天际。盛夏油菜花沿湖铺成金带，牦牛、骏马与经幡散落在青绿草场上。</p>
           <div class="tags"><i>第一人称漫游</i><i>油菜花</i><i>牦牛</i><i>经幡</i></div>
+        </div>
+      </a>
+
+      <a class="card" href="chaka-salt-lake/" data-cat="湖山" style="--accent:#b6cfd6">
+        <img src="assets/chaka.jpg?v=12" alt="茶卡盐湖 3D 鸟瞰" />
+        <div class="card-top">
+          <span class="num">22 / MIRROR</span>
+          <span class="corner">↗</span>
+        </div>
+        <div class="card-body">
+          <div class="card-kicker"><span></span>天空之镜</div>
+          <h3>茶卡盐湖</h3>
+          <p class="en">CHAKA SALT LAKE · QINGHAI</p>
+          <p class="desc">白色盐原铺向雪山，浅水把天空与云影收进湖面。盐雕、木栈道、小火车与红衣游客，构成高原上的一面巨大镜子。</p>
+          <div class="tags"><i>第一人称漫游</i><i>天空之镜</i><i>小火车</i><i>盐雕</i></div>
+        </div>
+      </a>
+
+      <a class="card" href="dujiangyan/" data-cat="河山" style="--accent:#8fb3a5">
+        <img src="assets/dujiangyan.jpg?v=12" alt="都江堰 3D 鸟瞰" />
+        <div class="card-top">
+          <span class="num">23 / WATERWORKS</span>
+          <span class="corner">↗</span>
+        </div>
+        <div class="card-body">
+          <div class="card-kicker"><span></span>千年水利</div>
+          <h3>都江堰</h3>
+          <p class="en">DUJIANGYAN · SICHUAN</p>
+          <p class="desc">岷江出山，鱼嘴分水、飞沙堰泄洪、宝瓶口引水。安澜索桥横跨江面，二王庙依山而立，千年灌区润泽天府。</p>
+          <div class="tags"><i>第一人称漫游</i><i>鱼嘴</i><i>安澜桥</i><i>二王庙</i></div>
         </div>
       </a>
     </main>

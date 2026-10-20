@@ -1,6 +1,6 @@
 # 3d-world
 
-二十一座中国地标的可交互 Three.js 3D 场景。全部资源本地化，无需构建步骤。
+二十三座中国地标的可交互 Three.js 3D 场景。全部资源本地化，无需构建步骤。
 
 ## 场景
 
@@ -25,6 +25,8 @@
 - **天山天池**：博格达雪峰、云杉林、高山草甸、毡房与马群。
 - **雁荡山 · 灵峰**：大龙湫瀑布、灵岩、观音洞与夜景。
 - **青海湖**：高原大湖、油菜花田、雪山、牦牛、骏马与经幡。
+- **茶卡盐湖 · 天空之镜**：盐原镜面、盐雕、小火车、雪山与红衣游客。
+- **都江堰**：鱼嘴分水堤、飞沙堰、宝瓶口、安澜索桥与二王庙。
 
 ## 交互
 
@@ -68,7 +70,7 @@ python3 -m http.server 8123
 
 ```text
 .
-├── index.html                  # 二十一场景选择页
+├── index.html                  # 二十三场景选择页
 ├── assets/                     # 缩略图
 ├── shared/interactions.js      # 地标索引、巡游、天气、摄影、音景
 ├── forbidden-city-3d/
@@ -91,7 +93,9 @@ python3 -m http.server 8123
 ├── hongcun/
 ├── tianshan-tianchi/
 ├── yandangshan/
-└── qinghai-lake/
+├── qinghai-lake/
+├── chaka-salt-lake/
+└── dujiangyan/
 ```
 
 ## 部署
