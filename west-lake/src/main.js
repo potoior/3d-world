@@ -3,6 +3,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { buildWestLakeScene } from './layout.js';
 import { createFirstPerson } from './firstperson.js';
 import { updateFoliageSway } from './materials.js';
+import { initInteractions } from '../../shared/interactions.js';
 
 const isCompact = window.innerWidth < 820 || /Mobi|Android/i.test(navigator.userAgent);
 const canvas = document.getElementById('scene');
@@ -230,6 +231,20 @@ duskBtn.addEventListener('click', () => {
 controls.addEventListener('start', () => {
   tour.active = false;
 });
+
+const interactions = initInteractions({
+  views,
+  notes,
+  camera,
+  controls,
+  renderer,
+  scene,
+  canvas,
+  fp,
+  travelTo,
+  setCaption,
+});
+window.__interactions = interactions;
 
 window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth / window.innerHeight;

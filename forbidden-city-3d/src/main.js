@@ -4,6 +4,7 @@ import { buildForbiddenCity } from './layout.js';
 import { createFirstPerson } from './firstperson.js';
 import { createAmbient } from './ambient.js';
 import { mats } from './materials.js';
+import { initInteractions } from '../../shared/interactions.js';
 
 const isCompact = window.innerWidth < 820 || /Mobi|Android/i.test(navigator.userAgent);
 const canvas = document.getElementById('scene');
@@ -289,6 +290,7 @@ function animate() {
   updateEnvironment(Math.min(rawDt, 0.2));
   waterMaterial.uniforms.uTime.value = time;
   ambient.update(time);
+  if (world.life) world.life.update(time, dt);
 
   if (tour.active) {
     tour.t += rawDt / tour.duration;
@@ -306,6 +308,21 @@ function animate() {
   renderer.render(scene, camera);
   requestAnimationFrame(animate);
 }
+
+
+const interactions = initInteractions({
+  views: views,
+  notes: notes,
+  camera,
+  controls,
+  renderer,
+  scene,
+  canvas,
+  fp,
+  travelTo,
+  setCaption,
+});
+window.__interactions = interactions;
 
 updateEnvironment(1);
 animate();

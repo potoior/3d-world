@@ -415,6 +415,8 @@ export function createTowerAt(curve, t, options = {}) {
     frame,
     flagWorld,
     beaconWorld,
+    roof,
+    sizes: { W, D, upperH, yUpper, capY, baseH, baseBottom },
     roofY: baseBottom + capY + (roof ? 2.4 : 0.3),
   };
 }

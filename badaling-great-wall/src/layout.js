@@ -5,6 +5,8 @@ import { createWall } from './wall.js';
 import { createTowerAt } from './towers.js';
 import { createVegetation } from './vegetation.js';
 import { createDistantWalls, createDetailStatics, createDetailDynamics } from './detail.js';
+import { addBadalingRefinement } from './refineDetails.js';
+import { createBadalingRefinementLife } from './refineLife.js';
 import { mergeStaticGroup } from './geometry.js';
 
 const northTowerSpecs = [
@@ -233,6 +235,7 @@ export function buildBadaling() {
   staticRoot.add(createDistantWalls());
   const allTowers = northTowers.concat(southTowers);
   staticRoot.add(createDetailStatics(allTowers));
+  addBadalingRefinement(staticRoot, mainWall, southWall, allTowers);
 
   const merged = mergeStaticGroup(staticRoot);
   merged.name = 'merged-static-scene';
@@ -244,6 +247,8 @@ export function buildBadaling() {
   const mists = addMist(root);
   const dynamics = createDetailDynamics(allTowers, mists);
   root.add(dynamics.group);
+  const refinementLife = createBadalingRefinementLife(allTowers);
+  root.add(refinementLife.group);
 
   const towerByT = (list, t) => list.reduce((best, tw) => (Math.abs(tw.t - t) < Math.abs(best.t - t) ? tw : best), list[0]);
   const n1 = towerByT(northTowers, 0.062);
@@ -279,7 +284,10 @@ export function buildBadaling() {
     labels,
     mists,
     dynamics,
-    update: (elapsed, dt) => dynamics.update(elapsed, dt),
+    update: (elapsed, dt) => {
+      dynamics.update(elapsed, dt);
+      refinementLife.update(elapsed, dt);
+    },
     views,
     notes,
     vegetation: vegetation.counts,

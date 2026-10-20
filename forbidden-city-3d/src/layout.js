@@ -6,6 +6,8 @@ import { buildAxis } from './axis.js';
 import { buildGarden, buildSidePalaces } from './garden.js';
 import { createTree } from './props.js';
 import { mergeStaticGroup } from './geometry.js';
+import { createImperialStatic } from './imperialDetail.js';
+import { createImperialLife } from './imperialLife.js';
 
 function waterPlane(w, d, x, z, material, y = -1.2) {
   const geo = new THREE.PlaneGeometry(w, d, Math.max(8, Math.round(w / 12)), Math.max(4, Math.round(d / 12)));
@@ -121,6 +123,7 @@ export function buildForbiddenCity() {
   root.add(buildAxis(waterMaterial));
   root.add(buildSidePalaces());
   root.add(buildGarden());
+  root.add(createImperialStatic());
 
   const forest = new THREE.Group();
   let seed = 31;
@@ -168,5 +171,8 @@ export function buildForbiddenCity() {
   }
   root.add(forest);
 
-  return { group: mergeStaticGroup(root), waterMaterial };
+  const merged = mergeStaticGroup(root);
+  const life = createImperialLife();
+  merged.add(life.group);
+  return { group: merged, waterMaterial, life };
 }

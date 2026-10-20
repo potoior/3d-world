@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { buildBadaling } from './layout.js';
 import { createFirstPerson } from './firstperson.js';
+import { initInteractions } from '../../shared/interactions.js';
 
 const isCompact = window.innerWidth < 900 || /Mobi|Android/i.test(navigator.userAgent);
 const canvas = document.getElementById('scene');
@@ -296,6 +297,21 @@ function animate() {
   renderer.render(scene, camera);
   requestAnimationFrame(animate);
 }
+
+
+const interactions = initInteractions({
+  views: world.views,
+  notes: world.notes,
+  camera,
+  controls,
+  renderer,
+  scene,
+  canvas,
+  fp,
+  travelTo,
+  setCaption,
+});
+window.__interactions = interactions;
 
 updateEnvironment(1);
 animate();

@@ -140,6 +140,7 @@ function addRoofDetail(group, width, depth, height, cornerLift, curve, ridgeRati
       c.rotateX(Math.PI / 2);
       c.translate(x, y, sz * (D / 2 + 0.02));
       caps.push(c);
+      addBox(caps, 0.2, 0.2, 0.045, x, y, sz * (D / 2 + 0.13));
     }
   }
   const nz = Math.max(3, Math.round(D / 1.8));
@@ -151,6 +152,7 @@ function addRoofDetail(group, width, depth, height, cornerLift, curve, ridgeRati
       c.rotateZ(Math.PI / 2);
       c.translate(sx * (W / 2 + 0.02), y, z);
       caps.push(c);
+      addBox(caps, 0.045, 0.2, 0.2, sx * (W / 2 + 0.13), y, z);
     }
   }
   for (const v of [0.34, 0.56, 0.78]) {
@@ -191,6 +193,25 @@ function addRoofDetail(group, width, depth, height, cornerLift, curve, ridgeRati
   if (rm) group.add(rm);
   const gm = mergedMesh(gold, mats.gold, false, false);
   if (gm) group.add(gm);
+}
+
+function addEaveRafters(list, width, depth, y = -0.66) {
+  if (width < 10) return;
+  const step = 1.72;
+  const nx = Math.max(3, Math.round(width / step));
+  for (let i = 0; i <= nx; i++) {
+    const x = -width / 2 + (i * width) / nx;
+    for (const sz of [-1, 1]) {
+      addBox(list, 0.11, 0.17, 0.58, x, y, sz * (depth / 2 - 0.06));
+    }
+  }
+  const nz = Math.max(3, Math.round(depth / step));
+  for (let i = 1; i < nz; i++) {
+    const z = -depth / 2 + (i * depth) / nz;
+    for (const sx of [-1, 1]) {
+      addBox(list, 0.58, 0.17, 0.11, sx * (width / 2 - 0.06), y, z);
+    }
+  }
 }
 
 function addEaveTrim(group, width, depth, y = -0.18, scale = 1) {
@@ -246,6 +267,14 @@ export function createRoof({
         5
       )
     );
+    for (let p = -ridgeHalf + 0.5; p <= ridgeHalf - 0.4; p += 1.35) {
+      addBox(darkList, 0.4, 0.18, 0.72, p, height + 0.52, 0);
+    }
+    for (const p of [-ridgeHalf * 0.55, ridgeHalf * 0.55]) {
+      const jewel = new THREE.SphereGeometry(0.13, 6, 4);
+      jewel.translate(p, height + 0.7, 0);
+      goldList.push(jewel);
+    }
     for (const sx of [-1, 1]) {
       const lip = new THREE.BoxGeometry(1.0, 2.2, 1.2);
       lip.translate(sx * (ridgeHalf + 0.18), height + 1.0, 0);
@@ -278,7 +307,23 @@ export function createRoof({
   }
 
   if (fascia) addEaveTrim(group, width, depth);
+  addEaveRafters(darkList, width, depth);
   addRoofDetail(group, width, depth, height, cornerLift, curve, ridgeRatio);
+  if (width >= 12) {
+    for (const sx of [-1, 1]) {
+      for (const sz of [-1, 1]) {
+        const x = sx * (width * 0.5 - 0.04);
+        const z = sz * (depth * 0.5 - 0.04);
+        const bell = new THREE.ConeGeometry(0.15, 0.34, 5);
+        bell.rotateX(Math.PI);
+        bell.translate(x, cornerLift - 0.42, z);
+        goldList.push(bell);
+        const clapper = new THREE.SphereGeometry(0.05, 5, 4);
+        clapper.translate(x, cornerLift - 0.6, z);
+        goldList.push(clapper);
+      }
+    }
+  }
 
   const darkMesh = mergedMesh(darkList, mats.roofDark, true, false);
   if (darkMesh) group.add(darkMesh);

@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { mats } from './materials.js';
 import { addBox, addCylinder, addBar, mergedMesh } from './geometry.js';
-import { getPlaqueMaterial } from './gardenBuild.js';
+import { getPlaqueMaterial, applyPlaqueUV } from './materials.js';
 import { createLotus } from './gardenDetails.js';
 import { terrainHeight, WATER_Y } from './terrain.js';
 
@@ -20,7 +20,8 @@ export function orientedBox(list, w, h, d, x, y, z, ry, ox = 0, oz = 0) {
 }
 
 export function addPlaque(root, text, w, h, x, y, z, ry = 0) {
-  const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), getPlaqueMaterial(text));
+  const geo = applyPlaqueUV(new THREE.PlaneGeometry(w, h), text);
+  const m = new THREE.Mesh(geo, getPlaqueMaterial(text));
   m.position.set(x, y, z);
   m.rotation.y = ry;
   root.add(m);

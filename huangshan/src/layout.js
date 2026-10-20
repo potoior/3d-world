@@ -5,6 +5,7 @@ import { createGraniteOutcrops, createFeilaiStone, createYingkePine, createStone
 import { createVegetation } from './vegetation.js';
 import { createCloudSea } from './clouds.js';
 import { createFineDetail, createSkyDetail } from './details.js';
+import { createHuangshanRefineStatic, createHuangshanRefineLife } from './refineDetail.js';
 import { mergeStaticGroup } from './geometry.js';
 import { makeLabelTexture } from './textures.js';
 
@@ -42,6 +43,7 @@ export function buildHuangshan() {
   staticRoot.add(createPlatforms());
   staticRoot.add(createTrailMarkers());
   staticRoot.add(createFineDetail());
+  staticRoot.add(createHuangshanRefineStatic());
   const vegetation = createVegetation();
   staticRoot.add(vegetation.group);
 
@@ -57,7 +59,9 @@ export function buildHuangshan() {
   labels.forEach((l) => root.add(l));
 
   const clouds = createCloudSea();
+  const refineLife = createHuangshanRefineLife();
   root.add(clouds.group);
+  root.add(refineLife.group);
   root.add(createSkyDetail());
 
   function view(p, t) {
@@ -86,7 +90,10 @@ export function buildHuangshan() {
     labels,
     clouds,
     vegetation: vegetation.counts,
-    update: (elapsed) => clouds.update(elapsed),
+    update: (elapsed, dt) => {
+      clouds.update(elapsed, dt);
+      refineLife.update(elapsed, dt);
+    },
     views,
     notes,
     heightAt,

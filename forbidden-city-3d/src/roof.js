@@ -240,6 +240,59 @@ function addCoffers(list, width, depth) {
   addBox(list, cw + 0.2, 0.13, 0.16, 0, -0.48, -cd / 2);
   addBox(list, 0.16, 0.13, cd + 0.2, cw / 2, -0.48, 0);
   addBox(list, 0.16, 0.13, cd + 0.2, -cw / 2, -0.48, 0);
+  if (width >= 30 && depth >= 20) {
+    for (let x = -cw / 2 + step; x <= cw / 2 - step + 0.01; x += step * 2) {
+      for (let z = -cd / 2 + step; z <= cd / 2 - step + 0.01; z += step * 2) {
+        addBox(list, 0.34, 0.04, 0.34, x, -0.445, z);
+      }
+    }
+  }
+}
+
+function addEaveRafters(list, width, depth, y = -0.82) {
+  if (width < 38 || depth < 22) return;
+  const step = 2.95;
+  const nx = Math.round(width / step);
+  const nz = Math.round(depth / step);
+  for (let i = 0; i <= nx; i++) {
+    const x = -width / 2 + (i * width) / nx;
+    for (const sz of [-1, 1]) {
+      addBox(list, 0.2, 0.2, 0.92, x, y, sz * (depth / 2 - 0.18));
+      addBox(list, 0.14, 0.14, 0.12, x, y, sz * (depth / 2 + 0.3));
+    }
+  }
+}
+
+function addTileCourses(list, width, depth, height, curve, ridgeHalf) {
+  if (width < 26) return;
+  for (const v of [0.36, 0.64]) {
+    const span = ridgeHalf + (width / 2 - ridgeHalf) * v;
+    const yy = height * Math.pow(1 - v, curve) + 0.035;
+    const zz = depth * 0.5 * (1 - v);
+    for (const sz of [-1, 1]) {
+      addBox(list, span * 2, 0.045, 0.1, 0, yy, sz * zz);
+    }
+    for (const sx of [-1, 1]) {
+      addBox(list, 0.1, 0.045, depth * (1 - v), sx * span, yy, 0);
+    }
+  }
+}
+
+function addCornerBells(list, width, depth, cornerLift) {
+  if (width < 22) return;
+  for (const sx of [-1, 1]) {
+    for (const sz of [-1, 1]) {
+      const x = sx * (width * 0.5 - 0.1);
+      const z = sz * (depth * 0.5 - 0.1);
+      const bell = new THREE.ConeGeometry(0.22, 0.42, 6);
+      bell.rotateX(Math.PI);
+      bell.translate(x, cornerLift - 0.5, z);
+      list.push(bell);
+      const clapper = new THREE.SphereGeometry(0.07, 5, 4);
+      clapper.translate(x, cornerLift - 0.74, z);
+      list.push(clapper);
+    }
+  }
 }
 
 export function createRoof({
@@ -275,6 +328,9 @@ export function createRoof({
 
   addEaveTiles(darkList, width, depth, cornerLift, rich);
   addCornerTips(darkList, width, depth, cornerLift, rich);
+  addEaveRafters(darkList, width, depth);
+  addTileCourses(darkList, width, depth, height, curve, ridgeHalf);
+  addCornerBells(goldList, width, depth, cornerLift);
   addCoffers(goldList, width, depth);
 
   if (hasRidge && ridgeHalf > 0.5) {

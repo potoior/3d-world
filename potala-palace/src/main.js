@@ -3,7 +3,9 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { buildPotala } from './layout.js';
 import { createFirstPerson } from './firstperson.js';
 import { createAmbient } from './ambient.js';
+import { createRefineAmbient } from './refine.js';
 import { makeSkyMaterial } from './materials.js';
+import { initInteractions } from '../../shared/interactions.js';
 
 const isCompact = window.innerWidth < 820 || /Mobi|Android/i.test(navigator.userAgent);
 const canvas = document.getElementById('scene');
@@ -67,6 +69,8 @@ const world = buildPotala();
 scene.add(world.group);
 const ambient = createAmbient();
 scene.add(ambient.group);
+const refine = createRefineAmbient();
+scene.add(refine.group);
 
 let fp = null;
 
@@ -188,6 +192,20 @@ controls.addEventListener('start', () => {
   tour.active = false;
 });
 
+const interactions = initInteractions({
+  views,
+  notes,
+  camera,
+  controls,
+  renderer,
+  scene,
+  canvas,
+  fp,
+  travelTo,
+  setCaption,
+});
+window.__interactions = interactions;
+
 window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
@@ -222,6 +240,7 @@ function animate() {
   const time = clock.elapsedTime;
   updateEnvironment(Math.min(rawDt, 0.2));
   ambient.update(time);
+  refine.update(time, envMix);
   if (tour.active) {
     tour.t += rawDt / tour.duration;
     const t = Math.min(1, tour.t);
@@ -248,6 +267,7 @@ window.__potala = {
   controls,
   world,
   ambient,
+  refine,
   fp,
   tour,
   views,

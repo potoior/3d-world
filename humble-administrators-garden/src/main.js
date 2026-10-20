@@ -3,6 +3,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { buildGardenScene } from './layout.js';
 import { createFirstPerson } from './firstperson.js';
 import { updateFoliageSway } from './materials.js';
+import { initInteractions } from '../../shared/interactions.js';
 
 const isCompact = window.innerWidth < 820 || /Mobi|Android/i.test(navigator.userAgent);
 const canvas = document.getElementById('scene');
@@ -79,7 +80,7 @@ const sky = new THREE.Mesh(
 );
 scene.add(sky);
 
-const hemi = new THREE.HemisphereLight(0xeaf2ec, 0x91a078, 1.7);
+const hemi = new THREE.HemisphereLight(0xeaf2ec, 0x91a078, 1.82);
 scene.add(hemi);
 
 const sun = new THREE.DirectionalLight(0xfff5e4, 2.15);
@@ -99,10 +100,10 @@ sun.shadow.needsUpdate = true;
 scene.add(sun);
 scene.add(sun.target);
 
-const fill = new THREE.DirectionalLight(0xb8d2d8, 0.7);
+const fill = new THREE.DirectionalLight(0xb8d2d8, 0.76);
 fill.position.set(-120, 90, -140);
 scene.add(fill);
-scene.add(new THREE.AmbientLight(0xdde7da, 0.42));
+scene.add(new THREE.AmbientLight(0xdde7da, 0.5));
 
 const world = buildGardenScene();
 scene.add(world.group);
@@ -136,7 +137,7 @@ const dayState = {
   waterSky: new THREE.Color(0xc4d6cc),
   sunPos: new THREE.Vector3(90, 160, 110),
   sunIntensity: 2.15,
-  hemiIntensity: 1.7,
+  hemiIntensity: 1.82,
   exposure: 1.08,
 };
 
@@ -305,6 +306,21 @@ function animate() {
   renderer.render(scene, camera);
   requestAnimationFrame(animate);
 }
+
+
+const interactions = initInteractions({
+  views: views,
+  notes: notes,
+  camera,
+  controls,
+  renderer,
+  scene,
+  canvas,
+  fp,
+  travelTo,
+  setCaption,
+});
+window.__interactions = interactions;
 
 updateEnvironment(1);
 animate();

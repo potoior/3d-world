@@ -600,5 +600,5 @@ export function createLakeLife() {
     gardenLife.update(t, dt || 0.016);
   }
   updateAll(0, 0.016);
-  return { group, update: updateAll };
+  return { group, update: updateAll, boats };
 }

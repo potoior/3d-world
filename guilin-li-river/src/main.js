@@ -3,6 +3,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { buildGuilinScene } from './scene.js';
 import { createFirstPerson } from './firstperson.js';
 import { updateRafts } from './life.js';
+import { initInteractions } from '../../shared/interactions.js';
 
 const isCompact = window.innerWidth < 820 || /Mobi|Android/i.test(navigator.userAgent);
 const canvas = document.getElementById('scene');
@@ -222,7 +223,7 @@ fp = createFirstPerson({
   },
 });
 
-window.__guilin = { scene, camera, renderer, controls, world, fp };
+window.__guilin = { scene, camera, renderer, controls, world, fp, env: () => ({ mix: envMix, target: envTarget }) };
 window.__eastlake = window.__guilin;
 window.__fp = fp;
 window.__stats = () => ({
@@ -244,6 +245,7 @@ const clock = new THREE.Clock();
 const tmpSunPos = new THREE.Vector3();
 const rafts = world.extras.userData.rafts;
 const birds = world.extras.userData.birds;
+const refineLife = world.extras.userData.refineLife;
 
 function updateEnvironment(dt) {
   envMix += (envTarget - envMix) * Math.min(1, dt * 1.4);
@@ -290,6 +292,7 @@ function animate() {
     if (t >= 1) tour.active = false;
   }
   if (rafts) updateRafts(rafts, time);
+  if (refineLife) refineLife.update(time);
   if (birds) {
     birds.rotation.y = Math.sin(time * 0.04) * 0.18;
     birds.position.y = Math.sin(time * 0.2) * 2.4;
@@ -299,6 +302,21 @@ function animate() {
   renderer.render(scene, camera);
   requestAnimationFrame(animate);
 }
+
+
+const interactions = initInteractions({
+  views: views,
+  notes: notes,
+  camera,
+  controls,
+  renderer,
+  scene,
+  canvas,
+  fp,
+  travelTo,
+  setCaption,
+});
+window.__interactions = interactions;
 
 updateEnvironment(1);
 animate();

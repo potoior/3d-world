@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { mats, getPlaqueMaterial } from './materials.js';
+import { mats, getPlaqueMaterial, applyPlaqueUV } from './materials.js';
 import { addBox, addCylinder, mergedMesh, createPlinth } from './geometry.js';
 import { createRoof, createSkirtRoof } from './roof.js';
 
@@ -80,7 +80,8 @@ function addColumns(group, { w, d, baseY, wallH, bays }) {
 
 function addPlaque(group, { name, d, y, zOffset = 0.5, width = 3.8 }) {
   if (!name) return;
-  const plaque = new THREE.Mesh(new THREE.PlaneGeometry(width, width * 0.375), getPlaqueMaterial(name));
+  const plaqueGeo = applyPlaqueUV(new THREE.PlaneGeometry(width, width * 0.375), name);
+  const plaque = new THREE.Mesh(plaqueGeo, getPlaqueMaterial(name));
   plaque.position.set(0, y, d / 2 + zOffset);
   group.add(plaque);
   const frame = [];

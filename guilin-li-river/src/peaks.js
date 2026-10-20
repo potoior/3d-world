@@ -66,6 +66,8 @@ export function makePeakGeometry(x, z, r, h, base, tone, seg = 9, rings = 7) {
   return geo;
 }
 
+export const peakDefs = [];
+
 const RESERVED = [
   [55, 250, 95],
   [-130, -105, 105],
@@ -84,6 +86,7 @@ function blocked(x, z, r) {
 export function createPeaks() {
   const root = new THREE.Group();
   const defs = [];
+  peakDefs.length = 0;
   const tones = [0x7f8a7d, 0x869184, 0x778675, 0x8a9284, 0x71806f];
   const add = (x, z, r, h, tone) => {
     const base = Math.max(0.4, terrainHeight(x, z)) - 2;
@@ -120,6 +123,7 @@ export function createPeaks() {
     add(x, z, 28 + rnd() * 65, 100 + rnd() * 190, tones[i % tones.length]);
   }
   addPeakDetails(root, defs);
+  peakDefs.push(...defs);
   return root;
 }
 

@@ -300,6 +300,13 @@ export function createLantern() {
   tassel.rotateX(Math.PI);
   tassel.translate(0, 2.4, 0);
   trim.push(tassel);
+  for (let i = 0; i < 6; i++) {
+    const a = (i / 6) * Math.PI * 2 + 0.26;
+    addBox(trim, 0.02, 0.36, 0.02, Math.cos(a) * 0.06, 2.2, Math.sin(a) * 0.06);
+  }
+  const finial = new THREE.SphereGeometry(0.09, 6, 5);
+  finial.translate(0, 3.52, 0);
+  trim.push(finial);
   const tm = mergedMesh(trim, mats.gold, false, false);
   if (tm) group.add(tm);
   return group;
@@ -371,6 +378,13 @@ export function createHangingLantern(scale = 1) {
   const tassel = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.05, 0.5, 5), mats.gold);
   tassel.position.y = -2.0;
   group.add(tassel);
+  const strands = [];
+  for (let i = 0; i < 6; i++) {
+    const a = (i / 6) * Math.PI * 2;
+    addBox(strands, 0.018, 0.4, 0.018, Math.cos(a) * 0.07, -2.24, Math.sin(a) * 0.07);
+  }
+  const sm = mergedMesh(strands, mats.gold, false, false);
+  if (sm) group.add(sm);
   group.scale.setScalar(scale);
   return group;
 }

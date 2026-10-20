@@ -4,6 +4,7 @@ import { buildEastLakeScene } from './layout.js';
 import { createFirstPerson } from './firstperson.js';
 import { updateLakeLife } from './lakeLife.js';
 import { mats } from './materials.js';
+import { initInteractions } from '../../shared/interactions.js';
 
 const isCompact = window.innerWidth < 820 || /Mobi|Android/i.test(navigator.userAgent);
 const canvas = document.getElementById('scene');
@@ -327,11 +328,28 @@ function animate() {
   }
   const life = world.extras.userData.life;
   if (life) updateLakeLife(life, time);
+  const refineLife = world.extras.userData.refineLife;
+  if (refineLife) refineLife.update(time);
   if (fp.isActive()) fp.update(dt);
   else controls.update();
   renderer.render(scene, camera);
   requestAnimationFrame(animate);
 }
+
+
+const interactions = initInteractions({
+  views: views,
+  notes: notes,
+  camera,
+  controls,
+  renderer,
+  scene,
+  canvas,
+  fp,
+  travelTo,
+  setCaption,
+});
+window.__interactions = interactions;
 
 updateEnvironment(1);
 animate();

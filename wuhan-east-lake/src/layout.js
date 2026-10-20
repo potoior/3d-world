@@ -32,6 +32,8 @@ import {
 import { addTingtaoDetails } from './tingtaoDetails.js';
 import { addGreenwayDetails } from './greenwayDetails.js';
 import { addWaterDetails } from './waterDetails.js';
+import { addEastLakeRefinement } from './refineDetails.js';
+import { createEastLakeRefinementLife } from './refineLife.js';
 import { addXingyinDetails, addMoshanDetails, addCherryDetails } from './landmarkDetails.js';
 import { createLakeLife } from './lakeLife.js';
 import { createInstancedForest } from './instancedTrees.js';
@@ -456,6 +458,7 @@ export function buildEastLakeScene() {
   addGreenwayDetails(root);
   addCherryDetails(root);
   addWaterDetails(root);
+  addEastLakeRefinement(root);
 
   for (const [px, pz, ry, seed] of [
     [-440, -600, 0.2, 7101], [-460, -340, 1.3, 7102],
@@ -490,6 +493,9 @@ export function buildEastLakeScene() {
   const life = createLakeLife();
   extras.add(life);
   extras.userData.life = life;
+  const refineLife = createEastLakeRefinementLife();
+  extras.add(refineLife.group);
+  extras.userData.refineLife = refineLife;
 
   const rockSpots = [
     [468, -120, 2.2], [486, -150, 1.8], [-430, 20, 1.8], [-360, 22, 1.6],

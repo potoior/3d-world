@@ -1,46 +1,15 @@
 import * as THREE from 'three';
-import { mats } from './materials.js';
+import { mats, getPlaqueMaterial, applyPlaqueUV } from './materials.js';
 import { addBox, addCylinder, mergedMesh, createStairs } from './geometry.js';
 import { createRoof, createSkirtRoof } from './roof.js';
 
-const plaqueCache = new Map();
-
-export function getPlaqueMaterial(text) {
-  if (plaqueCache.has(text)) return plaqueCache.get(text);
-  const c = document.createElement('canvas');
-  c.width = 512;
-  c.height = 160;
-  const ctx = c.getContext('2d');
-  ctx.fillStyle = '#2b2620';
-  ctx.fillRect(0, 0, 512, 160);
-  ctx.strokeStyle = '#a89c82';
-  ctx.lineWidth = 8;
-  ctx.strokeRect(7, 7, 498, 146);
-  ctx.strokeStyle = 'rgba(200,190,168,0.4)';
-  ctx.lineWidth = 2;
-  ctx.strokeRect(20, 20, 472, 120);
-  ctx.fillStyle = '#e9e1d0';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  const chars = text.split('');
-  const size = Math.min(84, 360 / Math.max(1, chars.length));
-  ctx.font = size + 'px "Noto Serif CJK SC", "Songti SC", "STSong", serif';
-  const total = size * chars.length;
-  chars.forEach((ch, i) => {
-    ctx.fillText(ch, 256 - total / 2 + size * (i + 0.5), 82);
-  });
-  const tex = new THREE.CanvasTexture(c);
-  tex.colorSpace = THREE.SRGBColorSpace;
-  tex.anisotropy = 8;
-  const mat = new THREE.MeshBasicMaterial({ map: tex, toneMapped: false });
-  plaqueCache.set(text, mat);
-  return mat;
-}
+export { getPlaqueMaterial } from './materials.js';
 
 function addPlaque(group, text, y, z, width = 2.6) {
   if (!text) return;
   const mat = getPlaqueMaterial(text);
-  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(width, width * 0.3125), mat);
+  const plaqueGeo = applyPlaqueUV(new THREE.PlaneGeometry(width, width * 0.3125), text);
+  const mesh = new THREE.Mesh(plaqueGeo, mat);
   mesh.position.set(0, y, z);
   mesh.castShadow = false;
   group.add(mesh);

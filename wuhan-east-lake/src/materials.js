@@ -241,17 +241,85 @@ export const mats = {
   }),
 };
 
-export function getPlaqueMaterial(text) {
-  if (!plaqueCache.has(text)) {
-    plaqueCache.set(
-      text,
-      new THREE.MeshBasicMaterial({
-        map: makePlaqueTexture(text),
-        toneMapped: false,
-      })
-    );
+const PLAQUE_SLOT_W = 512;
+const PLAQUE_SLOT_H = 160;
+const PLAQUE_COLS = 4;
+const PLAQUE_ROWS = 16;
+const plaqueAtlasCanvas = document.createElement('canvas');
+plaqueAtlasCanvas.width = PLAQUE_SLOT_W * PLAQUE_COLS;
+plaqueAtlasCanvas.height = PLAQUE_SLOT_H * PLAQUE_ROWS;
+const plaqueAtlasCtx = plaqueAtlasCanvas.getContext('2d');
+plaqueAtlasCtx.fillStyle = '#171511';
+plaqueAtlasCtx.fillRect(0, 0, plaqueAtlasCanvas.width, plaqueAtlasCanvas.height);
+const plaqueAtlasTexture = new THREE.CanvasTexture(plaqueAtlasCanvas);
+plaqueAtlasTexture.colorSpace = THREE.SRGBColorSpace;
+plaqueAtlasTexture.anisotropy = 8;
+export const plaqueAtlasMaterial = new THREE.MeshBasicMaterial({
+  map: plaqueAtlasTexture,
+  toneMapped: false,
+});
+const plaqueSlots = new Map();
+
+function drawPlaqueSlot(text, slot) {
+  const ctx = plaqueAtlasCtx;
+  const ox = (slot % PLAQUE_COLS) * PLAQUE_SLOT_W;
+  const oy = Math.floor(slot / PLAQUE_COLS) * PLAQUE_SLOT_H;
+  ctx.save();
+  ctx.translate(ox, oy);
+  ctx.fillStyle = '#2b2620';
+  ctx.fillRect(0, 0, PLAQUE_SLOT_W, PLAQUE_SLOT_H);
+  ctx.strokeStyle = '#a89c82';
+  ctx.lineWidth = 8;
+  ctx.strokeRect(7, 7, PLAQUE_SLOT_W - 14, PLAQUE_SLOT_H - 14);
+  ctx.strokeStyle = 'rgba(200,190,168,0.4)';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(20, 20, PLAQUE_SLOT_W - 40, PLAQUE_SLOT_H - 40);
+  ctx.fillStyle = '#e9e1d0';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  const chars = text.split('');
+  const size = Math.min(84, 360 / Math.max(1, chars.length));
+  ctx.font = size + 'px "Noto Serif CJK SC", "Songti SC", "STSong", serif';
+  const total = size * chars.length;
+  chars.forEach((ch, i) => {
+    ctx.fillText(ch, PLAQUE_SLOT_W / 2 - total / 2 + size * (i + 0.5), 82);
+  });
+  ctx.restore();
+  plaqueAtlasTexture.needsUpdate = true;
+}
+
+export function getPlaqueUVs(text) {
+  if (!plaqueSlots.has(text)) {
+    const slot = plaqueSlots.size;
+    if (slot >= PLAQUE_COLS * PLAQUE_ROWS) return [0, 0, 1, 1];
+    plaqueSlots.set(text, slot);
+    drawPlaqueSlot(text, slot);
   }
-  return plaqueCache.get(text);
+  const slot = plaqueSlots.get(text);
+  const col = slot % PLAQUE_COLS;
+  const row = Math.floor(slot / PLAQUE_COLS);
+  const inset = 2;
+  const u0 = (col * PLAQUE_SLOT_W + inset) / plaqueAtlasCanvas.width;
+  const u1 = ((col + 1) * PLAQUE_SLOT_W - inset) / plaqueAtlasCanvas.width;
+  const v1 = 1 - (row * PLAQUE_SLOT_H + inset) / plaqueAtlasCanvas.height;
+  const v0 = 1 - ((row + 1) * PLAQUE_SLOT_H - inset) / plaqueAtlasCanvas.height;
+  return [u0, v0, u1, v1];
+}
+
+export function applyPlaqueUV(geometry, text) {
+  const uv = geometry.attributes.uv;
+  if (!uv) return geometry;
+  const [u0, v0, u1, v1] = getPlaqueUVs(text);
+  for (let i = 0; i < uv.count; i++) {
+    uv.setXY(i, u0 + uv.getX(i) * (u1 - u0), v0 + uv.getY(i) * (v1 - v0));
+  }
+  uv.needsUpdate = true;
+  return geometry;
+}
+
+export function getPlaqueMaterial(text) {
+  getPlaqueUVs(text);
+  return plaqueAtlasMaterial;
 }
 
 export function makeWaterMaterial() {

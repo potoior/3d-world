@@ -20,6 +20,8 @@ import {
 } from './gardenDetails.js';
 import { createRichStatic } from './richPlacement.js';
 import { createGardenLife } from './richLife.js';
+import { createGardenRefineStatic } from './gardenRefine.js';
+import { createGardenRefineLife } from './gardenRefineLife.js';
 
 export const POND = [
   [10, 52],
@@ -624,9 +626,17 @@ export function buildGardenScene() {
     root.add(glow);
   }
 
+  root.add(createGardenRefineStatic(POND));
   root.add(createRichStatic());
   const merged = mergeStaticGroup(root);
   const life = createGardenLife();
-  merged.add(life.group);
-  return { group: merged, waterMaterial, life, lanternMaterial: mats.lantern };
+  const refineLife = createGardenRefineLife();
+  merged.add(life.group, refineLife.group);
+  const combinedLife = {
+    update(time, dt) {
+      life.update(time, dt);
+      refineLife.update(time, dt);
+    },
+  };
+  return { group: merged, waterMaterial, life: combinedLife, lanternMaterial: mats.lantern };
 }

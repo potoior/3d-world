@@ -82,6 +82,19 @@ export function makeRoofTexture() {
     ctx.lineTo(256, y + 2.5);
     ctx.stroke();
   }
+  for (let i = 0; i < 14; i++) {
+    const x = rand() * 256;
+    const y = rand() * 256;
+    ctx.fillStyle = `rgba(54,66,38,${0.035 + rand() * 0.055})`;
+    ctx.beginPath();
+    ctx.ellipse(x, y, 1.5 + rand() * 4.5, 6 + rand() * 20, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  for (let i = 0; i < 26; i++) {
+    const x = (rand() * 4 | 0) * tile;
+    ctx.fillStyle = `rgba(46,34,12,${0.08 + rand() * 0.12})`;
+    ctx.fillRect(x + 1, rand() * 240, 1.4, 8 + rand() * 26);
+  }
   speckle(ctx, 256, 256, 700, rand, ['#8a5a12', '#f2c768', '#a06a1a'], 0.12);
   return finish(c);
 }
@@ -116,6 +129,38 @@ export function makeWallTexture() {
     const x = rand() * 256;
     ctx.fillStyle = `rgba(225,205,178,${0.03 + rand() * 0.06})`;
     ctx.fillRect(x, 120 + rand() * 100, 1 + rand() * 2, 14 + rand() * 52);
+  }
+  for (let i = 0; i < 9; i++) {
+    let x = rand() * 256;
+    let y = 18 + rand() * 120;
+    ctx.strokeStyle = `rgba(44,12,7,${0.12 + rand() * 0.11})`;
+    ctx.lineWidth = 0.55 + rand() * 0.55;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    for (let k = 0; k < 5; k++) {
+      x += rand() * 18 - 9;
+      y += 12 + rand() * 22;
+      ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+  }
+  for (let i = 0; i < 7; i++) {
+    const x = rand() * 256;
+    const y = 168 + rand() * 72;
+    const r = 8 + rand() * 24;
+    const stain = ctx.createRadialGradient(x, y, 1, x, y, r);
+    stain.addColorStop(0, 'rgba(64,34,24,0.13)');
+    stain.addColorStop(0.7, 'rgba(64,34,24,0.05)');
+    stain.addColorStop(1, 'rgba(64,34,24,0)');
+    ctx.fillStyle = stain;
+    ctx.fillRect(x - r, y - r, r * 2, r * 2);
+  }
+  for (let i = 0; i < 18; i++) {
+    const x = rand() * 256;
+    ctx.fillStyle = `rgba(62,44,30,${0.03 + rand() * 0.05})`;
+    ctx.beginPath();
+    ctx.ellipse(x, 190 + rand() * 58, 3 + rand() * 9, 1.2 + rand() * 3.4, rand() * 3.1, 0, Math.PI * 2);
+    ctx.fill();
   }
   speckle(ctx, 256, 256, 420, rand, ['#6b1a10', '#d18464', '#8a3324'], 0.14);
   return finish(c);
@@ -178,7 +223,35 @@ export function makePavingTexture() {
     ctx.lineTo(S, i + 0.5);
     ctx.stroke();
   }
+  for (let i = 0; i < 12; i++) {
+    const x = (rand() * 8 | 0) * size;
+    const y = (rand() * 8 | 0) * size;
+    ctx.strokeStyle = `rgba(64,58,50,${0.12 + rand() * 0.16})`;
+    ctx.lineWidth = 0.6;
+    ctx.beginPath();
+    ctx.moveTo(x + 2, y + 2 + rand() * 12);
+    let cx = x + 2;
+    let cy = y + 4 + rand() * 12;
+    for (let k = 0; k < 4; k++) {
+      cx += 4 + rand() * 8;
+      cy += rand() * 16 - 4;
+      ctx.lineTo(Math.min(x + size - 2, cx), Math.min(y + size - 2, Math.max(y + 2, cy)));
+    }
+    ctx.stroke();
+    ctx.fillStyle = `rgba(72,68,60,${0.04 + rand() * 0.05})`;
+    ctx.fillRect(x + 4, y + 4, size - 8, size - 8);
+  }
+  for (let i = 0; i < 8; i++) {
+    const x = (rand() * 8 | 0) * size;
+    const y = (rand() * 8 | 0) * size;
+    const wear = ctx.createRadialGradient(x + 12, y + 18, 1, x + 12, y + 18, 18);
+    wear.addColorStop(0, 'rgba(230,226,214,0.1)');
+    wear.addColorStop(1, 'rgba(230,226,214,0)');
+    ctx.fillStyle = wear;
+    ctx.fillRect(x, y, size, size);
+  }
   speckle(ctx, S, S, 900, rand, ['#8e8b82', '#d4d0c7', '#a3a097'], 0.2);
+  speckle(ctx, S, S, 180, rand, ['#6f7a62', '#5f6b55'], 0.09);
   return finish(c);
 }
 
@@ -580,4 +653,24 @@ export function makeWaterNormalTexture() {
   }
   ctx.putImageData(img, 0, 0);
   return finish(c, { srgb: false });
+}
+
+export function makePatinaTexture() {
+  const [c, ctx] = makeCanvas(256, 256);
+  const rand = mulberry32(211);
+  ctx.fillStyle = '#6f7b58';
+  ctx.fillRect(0, 0, 256, 256);
+  for (let i = 0; i < 90; i++) {
+    const x = rand() * 256;
+    const y = rand() * 256;
+    const r = 3 + rand() * 16;
+    const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+    g.addColorStop(0, `rgba(${44 + (rand() * 30) | 0},${86 + (rand() * 46) | 0},${64 + (rand() * 30) | 0},0.34)`);
+    g.addColorStop(0.65, 'rgba(74,104,72,0.13)');
+    g.addColorStop(1, 'rgba(74,104,72,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(x - r, y - r, r * 2, r * 2);
+  }
+  speckle(ctx, 256, 256, 900, rand, ['#3f5a42', '#8a8b60', '#59684a', '#a59a72'], 0.22);
+  return finish(c);
 }

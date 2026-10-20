@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { mats } from './materials.js';
+import { mats, applyPlaqueUV } from './materials.js';
 import { addBox, addCylinder, addBar, mergedMesh, createStairs } from './geometry.js';
 import { createRoof } from './roof.js';
 import { createHexPavilion, getPlaqueMaterial } from './gardenBuild.js';
@@ -14,7 +14,8 @@ function greenRoof(opts) {
 }
 
 function plaque(text, w, h, x, y, z, ry = 0) {
-  const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), getPlaqueMaterial(text));
+  const geo = applyPlaqueUV(new THREE.PlaneGeometry(w, h), text);
+  const m = new THREE.Mesh(geo, getPlaqueMaterial(text));
   m.position.set(x, y, z);
   m.rotation.y = ry;
   return m;

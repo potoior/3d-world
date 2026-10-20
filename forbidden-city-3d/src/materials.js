@@ -20,6 +20,7 @@ import {
   makePavingNormalTexture,
   makeStoneNormalTexture,
   makeRoughnessTexture,
+  makePatinaTexture,
 } from './textures.js';
 
 const roofMap = makeRoofTexture();
@@ -43,6 +44,8 @@ const stoneNormalMap = makeStoneNormalTexture();
 const wallRoughMap = makeRoughnessTexture(7, 202, 46);
 const stoneRoughMap = makeRoughnessTexture(17, 198, 52);
 const metalRoughMap = makeRoughnessTexture(29, 168, 70);
+const patinaMap = makePatinaTexture();
+patinaMap.repeat.set(2, 2);
 
 roofMap.repeat.set(1, 1);
 roofNormalMap.repeat.set(1, 1);
@@ -159,7 +162,8 @@ export const mats = {
     metalness: 0.85,
   }),
   bronze: new THREE.MeshStandardMaterial({
-    color: 0x5c5138,
+    map: patinaMap,
+    color: 0xa7a88e,
     normalMap: stoneNormalMap,
     normalScale: new THREE.Vector2(0.25, 0.25),
     roughnessMap: metalRoughMap,
@@ -250,6 +254,18 @@ export const mats = {
   ash: new THREE.MeshStandardMaterial({
     color: 0x49443a,
     roughness: 1.0,
+  }),
+  koi: new THREE.MeshStandardMaterial({
+    color: 0xffffff,
+    roughness: 0.5,
+    metalness: 0.05,
+  }),
+  ripple: new THREE.MeshBasicMaterial({
+    color: 0xdfeef0,
+    transparent: true,
+    opacity: 0.16,
+    depthWrite: false,
+    side: THREE.DoubleSide,
   }),
 };
 

@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { mats } from './materials.js';
+import { mats, applyPlaqueUV } from './materials.js';
 import { addBox, addCylinder, addBar, mergedMesh } from './geometry.js';
 import { createRoof } from './roof.js';
 import { getPlaqueMaterial } from './gardenBuild.js';
@@ -355,7 +355,8 @@ export function createFanPavilion({ radius = 3.6, wallH = 2.7, roofH = 2.6, base
   roof.castShadow = true;
   group.add(roof);
 
-  const plaque = new THREE.Mesh(new THREE.PlaneGeometry(1.8, 0.56), getPlaqueMaterial(name || '与谁同坐轩'));
+  const plaqueGeo = applyPlaqueUV(new THREE.PlaneGeometry(1.8, 0.56), name || '与谁同坐轩');
+  const plaque = new THREE.Mesh(plaqueGeo, getPlaqueMaterial(name || '与谁同坐轩'));
   plaque.position.set(0, baseH + wallH - 0.45, radius * 0.55);
   plaque.rotation.y = 0;
   group.add(plaque);
@@ -413,7 +414,8 @@ export function createBoatPavilion({ x = 0, z = 0, rot = 0, name = '香洲' }) {
   roof.position.set(-1.0, 4.0, 0);
   group.add(roof);
 
-  const plaque = new THREE.Mesh(new THREE.PlaneGeometry(2.0, 0.62), getPlaqueMaterial(name));
+  const plaqueGeo = applyPlaqueUV(new THREE.PlaneGeometry(2.0, 0.62), name);
+  const plaque = new THREE.Mesh(plaqueGeo, getPlaqueMaterial(name));
   plaque.position.set(-1.0, 3.55, 1.98);
   group.add(plaque);
 

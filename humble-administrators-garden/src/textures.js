@@ -82,6 +82,19 @@ export function makeRoofTexture() {
     ctx.lineTo(256, y + 2.5);
     ctx.stroke();
   }
+  for (let i = 0; i < 18; i++) {
+    const x = rand() * 256;
+    const y = rand() * 256;
+    ctx.fillStyle = `rgba(62,76,58,${0.035 + rand() * 0.06})`;
+    ctx.beginPath();
+    ctx.ellipse(x, y, 1.4 + rand() * 4.5, 5 + rand() * 17, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  for (let i = 0; i < 20; i++) {
+    const x = (rand() * 4 | 0) * tile;
+    ctx.fillStyle = `rgba(28,34,30,${0.08 + rand() * 0.12})`;
+    ctx.fillRect(x + 1, rand() * 240, 1.3, 7 + rand() * 24);
+  }
   speckle(ctx, 256, 256, 700, rand, ['#4e5658', '#aab2b0', '#626a6c'], 0.12);
   return finish(c);
 }
@@ -106,6 +119,38 @@ export function makeWallTexture() {
     ctx.moveTo(x, 0);
     ctx.bezierCurveTo(x + rand() * 12 - 6, 80, x + rand() * 16 - 8, 170, x + rand() * 10 - 5, 256);
     ctx.stroke();
+  }
+  for (let i = 0; i < 8; i++) {
+    let x = rand() * 256;
+    let y = 10 + rand() * 110;
+    ctx.strokeStyle = `rgba(142,138,126,${0.1 + rand() * 0.1})`;
+    ctx.lineWidth = 0.5 + rand() * 0.4;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    for (let k = 0; k < 5; k++) {
+      x += rand() * 16 - 8;
+      y += 10 + rand() * 20;
+      ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+  }
+  for (let i = 0; i < 9; i++) {
+    const x = rand() * 256;
+    const y = 150 + rand() * 86;
+    const r = 7 + rand() * 22;
+    const damp = ctx.createRadialGradient(x, y, 1, x, y, r);
+    damp.addColorStop(0, 'rgba(86,92,74,0.1)');
+    damp.addColorStop(0.7, 'rgba(86,92,74,0.04)');
+    damp.addColorStop(1, 'rgba(86,92,74,0)');
+    ctx.fillStyle = damp;
+    ctx.fillRect(x - r, y - r, r * 2, r * 2);
+  }
+  for (let i = 0; i < 20; i++) {
+    const x = rand() * 256;
+    ctx.fillStyle = `rgba(92,104,82,${0.025 + rand() * 0.045})`;
+    ctx.beginPath();
+    ctx.ellipse(x, 186 + rand() * 58, 3 + rand() * 8, 1.2 + rand() * 3, rand() * 3.1, 0, Math.PI * 2);
+    ctx.fill();
   }
   return finish(c);
 }
@@ -166,7 +211,33 @@ export function makePavingTexture() {
     ctx.lineTo(512, i + 0.5);
     ctx.stroke();
   }
+  for (let i = 0; i < 20; i++) {
+    const x = (rand() * 8 | 0) * size;
+    const y = (rand() * 8 | 0) * size;
+    ctx.strokeStyle = `rgba(76,72,62,${0.1 + rand() * 0.14})`;
+    ctx.lineWidth = 0.55;
+    ctx.beginPath();
+    let cx = x + 3;
+    let cy = y + 5 + rand() * 12;
+    ctx.moveTo(cx, cy);
+    for (let k = 0; k < 4; k++) {
+      cx += 4 + rand() * 9;
+      cy += rand() * 18 - 5;
+      ctx.lineTo(Math.min(x + size - 3, cx), Math.min(y + size - 3, Math.max(y + 3, cy)));
+    }
+    ctx.stroke();
+  }
+  for (let i = 0; i < 14; i++) {
+    const x = (rand() * 8 | 0) * size;
+    const y = (rand() * 8 | 0) * size;
+    const wear = ctx.createRadialGradient(x + 16, y + 14, 1, x + 16, y + 14, 22);
+    wear.addColorStop(0, 'rgba(226,222,208,0.1)');
+    wear.addColorStop(1, 'rgba(226,222,208,0)');
+    ctx.fillStyle = wear;
+    ctx.fillRect(x, y, size, size);
+  }
   speckle(ctx, 512, 512, 2600, rand, ['#8f8778', '#d6cec0', '#a49b8b'], 0.2);
+  speckle(ctx, 512, 512, 240, rand, ['#6f7c64', '#62705a'], 0.08);
   return finish(c);
 }
 

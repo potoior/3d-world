@@ -152,12 +152,22 @@ export function createPavilion({
   const doorH = wallH * 0.62;
   const doorW = bayW * 0.74;
   const geo = new THREE.PlaneGeometry(1, 1);
+  const latticeBars = [];
+  const doorFace = open ? -d / 2 + 0.3 : d / 2 + 0.12;
   for (let i = 0; i < bays; i++) {
     const door = new THREE.Mesh(geo, mats.lattice);
     door.position.set(-w / 2 + bayW * (i + 0.5), baseH + doorH / 2 + 0.25, open ? -d / 2 + 0.34 : d / 2 + 0.06);
     door.scale.set(doorW, doorH, 1);
     if (open) door.rotation.y = Math.PI;
     group.add(door);
+    const dx = -w / 2 + bayW * (i + 0.5);
+    for (const off of [-doorW * 0.26, 0, doorW * 0.26]) {
+      addBox(latticeBars, 0.06, doorH * 0.92, 0.055, dx + off, baseH + doorH / 2 + 0.25, doorFace);
+    }
+    for (const oy of [0.24, 0.76]) {
+      addBox(latticeBars, doorW * 0.94, 0.055, 0.055, dx, baseH + 0.25 + doorH * oy, doorFace);
+    }
+    addBox(latticeBars, doorW * 0.98, 0.08, 0.14, dx, baseH + 0.21, doorFace + (open ? -0.03 : 0.03));
   }
   for (const sx of [-1, 1]) {
     for (let i = 0; i < 2; i++) {
@@ -166,8 +176,14 @@ export function createPavilion({
       win.rotation.y = sx * Math.PI / 2;
       win.scale.set(d * 0.32, doorH * 0.7, 1);
       group.add(win);
+      const wz = -d / 4 + i * (d / 2);
+      addBox(latticeBars, 0.055, doorH * 0.62, 0.06, sx * (w / 2 + 0.12), baseH + doorH * 0.6, wz);
+      addBox(latticeBars, 0.055, 0.055, d * 0.28, sx * (w / 2 + 0.12), baseH + doorH * 0.6, wz);
+      addBox(latticeBars, 0.09, 0.07, d * 0.36, sx * (w / 2 + 0.13), baseH + doorH * 0.6 - doorH * 0.34, wz);
     }
   }
+  const lbm = mergedMesh(latticeBars, mats.wallDark, false, false);
+  if (lbm) group.add(lbm);
 
   if (rail || open) addWoodRail(group, w + 1.2, d + 1.2, baseH, open ? w * 0.38 : 0);
 

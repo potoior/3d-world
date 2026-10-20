@@ -66,9 +66,14 @@ function addDoorRow(group, { w, d, baseY, wallH, bays, back = false, scale = 1 }
     front.castShadow = false;
     group.add(front);
     if (studly) {
-      for (let r = 0; r < 2; r++) {
-        for (let c = 0; c < 2; c++) {
-          addBox(gold, 0.09, 0.09, 0.055, x + (c - 0.5) * doorW * 0.3, baseY + 0.62 + doorH * (0.18 + r * 0.2), zf);
+      const rows = d >= 18 ? 3 : 2;
+      const cols = d >= 18 ? 3 : 2;
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          addBox(gold, 0.085, 0.085, 0.06, x + (c - (cols - 1) / 2) * doorW * 0.28, baseY + 0.6 + doorH * (0.16 + r * 0.18), zf);
+          if (r === rows - 1) {
+            addBox(gold, 0.05, 0.03, 0.075, x + (c - (cols - 1) / 2) * doorW * 0.28, baseY + 0.57 + doorH * (0.16 + r * 0.18), zf + 0.01);
+          }
         }
       }
     }
@@ -76,12 +81,14 @@ function addDoorRow(group, { w, d, baseY, wallH, bays, back = false, scale = 1 }
       addBox(wood, doorW * 0.018, doorH * 0.9, 0.035, x - doorW * 0.02, baseY + doorH * 0.5 + 0.25, zf);
       addBox(gold, doorW * 0.88, 0.11, 0.05, x, baseY + 0.18, zf);
       addBox(gold, doorW * 0.9, 0.06, 0.045, x, baseY + doorH * 0.93, zf);
-      if (d >= 18 && Math.abs(i - center) < 0.6) {
+      if (d >= 14 && Math.abs(i - center) < 0.6) {
         for (const sx of [-1, 1]) {
           const ring = ringGeo.clone();
-          ring.translate(x + sx * doorW * 0.13, baseY + 0.72, zf + 0.03);
+          ring.translate(x + sx * doorW * 0.13, baseY + 0.74, zf + 0.035);
           gold.push(ring);
-          addBox(gold, 0.2, 0.2, 0.035, x + sx * doorW * 0.13, baseY + 0.72, zf);
+          addBox(gold, 0.22, 0.22, 0.035, x + sx * doorW * 0.13, baseY + 0.74, zf);
+          addBox(gold, 0.3, 0.08, 0.06, x + sx * doorW * 0.13, baseY + 0.9, zf + 0.01);
+          addBox(gold, 0.08, 0.3, 0.06, x + sx * doorW * 0.13, baseY + 0.74, zf + 0.01);
         }
       }
     }
@@ -128,7 +135,13 @@ function addColumns(group, { w, d, baseY, wallH, bays }) {
     addCylinder(cols, radius, radius * 1.06, wallH, 10, x, baseY + 0.24 + wallH / 2, z);
     addCylinder(bases, 0.58, 0.66, 0.42, 8, x, baseY + 0.21, z);
     if (d >= 14) addBox(bases, 0.92, 0.14, 0.92, x, baseY + 0.07, z);
-    if (d >= 18) addCylinder(gold, 0.61, 0.61, 0.07, 8, x, baseY + 0.38, z);
+    if (w >= 40 && d >= 24) {
+      for (let k = 0; k < 8; k++) {
+        const a = (k / 8) * Math.PI * 2;
+        addBox(bases, 0.24, 0.16, 0.12, x + Math.cos(a) * 0.59, baseY + 0.34, z + Math.sin(a) * 0.59, a);
+      }
+    }
+    if (d >= 18) addCylinder(gold, 0.61, 0.61, 0.07, 8, x, baseY + 0.45, z);
   };
   for (let i = 0; i <= bays; i++) {
     const x = -w / 2 + i * bayW;
@@ -175,6 +188,16 @@ function addSideWindows(group, { w, d, baseY, wallH }) {
       for (const off of [-winH / 4, winH / 4]) {
         addBox(frames, 0.06, 0.055, winW * 0.92, sx * (w / 2 + 0.25), y + off, z);
       }
+      if (d >= 14) {
+        for (const off of [-winW / 6, winW / 6]) {
+          addBox(frames, 0.05, winH * 0.86, 0.05, sx * (w / 2 + 0.29), y, z + off);
+        }
+        addBox(frames, 0.24, 0.12, 0.09, sx * (w / 2 + 0.3), y + winH / 2 + 0.2, z - winW / 2);
+        addBox(frames, 0.24, 0.12, 0.09, sx * (w / 2 + 0.3), y + winH / 2 + 0.2, z + winW / 2);
+        addBox(frames, 0.3, 0.14, winW + 0.7, sx * (w / 2 + 0.28), y + winH / 2 + 0.28, z);
+        addBox(frames, 0.13, 0.42, 0.13, sx * (w / 2 + 0.32), y - winH / 2 - 0.4, z - winW / 2 - 0.18);
+        addBox(frames, 0.13, 0.42, 0.13, sx * (w / 2 + 0.32), y - winH / 2 - 0.4, z + winW / 2 + 0.18);
+      }
     }
   }
   const fm = mergedMesh(frames, mats.gold, false, false);
@@ -201,6 +224,14 @@ function addBeamBands(group, { w, d, baseY, wallH }) {
     for (let x = -w / 2 + 1; x <= w / 2 - 1; x += 3.4) {
       addBox(blue, 0.7, 0.12, 0.1, x, ys[0] + 0.19, d / 2 + 0.31);
       addBox(blue, 0.7, 0.12, 0.1, x, ys[0] + 0.19, -d / 2 - 0.31);
+    }
+    for (let x = -w / 2 + 2.4; x <= w / 2 - 1.7; x += 2.4) {
+      addBox(gold, 0.34, 0.1, 0.075, x, ys[0] + 0.19, d / 2 + 0.36);
+      addBox(gold, 0.34, 0.1, 0.075, x, ys[0] + 0.19, -d / 2 - 0.36);
+      if (Math.round(x) % 2 === 0) {
+        addBox(blue, 0.22, 0.15, 0.07, x, ys[0] + 0.02, d / 2 + 0.36);
+        addBox(blue, 0.22, 0.15, 0.07, x, ys[0] + 0.02, -d / 2 - 0.36);
+      }
     }
   }
   const tm = mergedMesh(teal, mats.teal, false, false);

@@ -98,9 +98,14 @@ export function createZigzagBridge({ points = [], width = 2.2 }) {
       b.rotateY(ang);
       b.translate((x0 + x1) / 2 + px, 0.85, (z0 + z1) / 2 + pz);
       rails.push(b);
+      addBar(rails, x0 + px, z0 + pz, x1 + px, z1 + pz, 1.3, 0.12, 0.28);
       for (let k = 0; k <= 3; k++) {
         const t = k / 3;
-        addBox(rails, 0.18, 0.95, 0.18, x0 + (x1 - x0) * t + px, 0.9, z0 + (z1 - z0) * t + pz);
+        const pxk = x0 + (x1 - x0) * t + px;
+        const pzk = z0 + (z1 - z0) * t + pz;
+        addBox(rails, 0.2, 0.95, 0.2, pxk, 0.9, pzk);
+        addBox(rails, 0.3, 0.12, 0.3, pxk, 1.4, pzk);
+        addBox(rails, 0.12, 0.16, 0.34, pxk, 1.24, pzk);
       }
     }
   }
@@ -357,6 +362,19 @@ export function createWillow({ height = 7.5, spread = 2.8, seed = 1 }) {
     );
     foliage.push(leaf);
   }
+  for (let i = 0; i < 9; i++) {
+    const a = rnd(i + 84) * Math.PI * 2;
+    const len = height * (0.26 + rnd(i + 85) * 0.2);
+    const strand = new THREE.ConeGeometry(0.075, len, 4);
+    strand.rotateX(Math.PI);
+    strand.rotateZ((rnd(i + 86) - 0.5) * 0.5);
+    strand.translate(
+      Math.cos(a) * spread * (0.7 + rnd(i + 87) * 0.75),
+      height * (0.5 + rnd(i + 88) * 0.1) - len * 0.5,
+      Math.sin(a) * spread * (0.7 + rnd(i + 89) * 0.75)
+    );
+    foliage.push(strand);
+  }
   const branches = [];
   for (let i = 0; i < 3; i++) {
     const a = rnd(i + 70) * Math.PI * 2;
@@ -430,9 +448,15 @@ export function createLotus({ x = 0, z = 0, radius = 3.2, count = 12, seed = 1 }
     leaf.rotateY(rnd(i + 2) * 3.1);
     leaf.translate(px, ly, pz);
     leaves.push(leaf);
-    for (let k = 0; k < 4; k++) {
-      const va = (k / 4) * Math.PI * 2 + rnd(i + 30) * 0.4;
+    for (let k = 0; k < 6; k++) {
+      const va = (k / 6) * Math.PI * 2 + rnd(i + 30) * 0.4;
       addBar(leaves, px, pz, px + Math.cos(va) * size * 0.86, pz + Math.sin(va) * size * 0.86, ly + 0.006, 0.008, 0.014);
+    }
+    if (size > 0.68) {
+      const rim = new THREE.TorusGeometry(size * 0.92, 0.012, 3, 9);
+      rim.rotateX(-Math.PI / 2);
+      rim.translate(px, ly + 0.004, pz);
+      leaves.push(rim);
     }
     const stem = new THREE.CylinderGeometry(0.025, 0.03, 0.34, 4);
     stem.translate(px, 0.15, pz);
@@ -734,11 +758,15 @@ export function createArchBridge({ span = 8, width = 2.4, rise = 1.8, x = 0, z =
     for (let i = 0; i <= 8; i++) {
       const t = -1 + (2 * i) / 8;
       addBox(rails, 0.14, 0.85, 0.14, sx * (width / 2 - 0.08), curveY(t) + 0.55, (t * span) / 2);
+      addBox(rails, 0.24, 0.13, 0.24, sx * (width / 2 - 0.08), curveY(t) + 1.02, (t * span) / 2);
+      addBox(rails, 0.1, 0.16, 0.28, sx * (width / 2 - 0.08), curveY(t) + 0.88, (t * span) / 2);
     }
     for (let i = 0; i < 8; i++) {
       const t0 = -1 + (2 * i) / 8;
       const t1 = -1 + (2 * (i + 1)) / 8;
       addBar(rails, sx * (width / 2 - 0.08), (t0 * span) / 2, sx * (width / 2 - 0.08), (t1 * span) / 2, (curveY(t0) + curveY(t1)) / 2 + 0.95, 0.1, 0.12);
+      addBar(rails, sx * (width / 2 - 0.05), (t0 * span) / 2, sx * (width / 2 - 0.05), (t1 * span) / 2, (curveY(t0) + curveY(t1)) / 2 + 1.06, 0.11, 0.24);
+      addBar(rails, sx * (width / 2 - 0.06), (t0 * span) / 2, sx * (width / 2 - 0.06), (t1 * span) / 2, (curveY(t0) + curveY(t1)) / 2 + 0.45, 0.07, 0.08);
     }
   }
   const rm = mergedMesh(rails, mats.stone, true, true);
