@@ -35,6 +35,16 @@ function addCloth(list, w, h, x, y, z, rz = 0) {
   list.push(g);
 }
 
+function coupletGeo(w, h, uvIndex, x, y, z) {
+  const g = new THREE.PlaneGeometry(w, h);
+  const uv = g.attributes.uv;
+  const u0 = (uvIndex % 2) * 0.5;
+  const v0 = uvIndex < 2 ? 0.5 : 0;
+  for (let i = 0; i < uv.count; i++) uv.setXY(i, u0 + uv.getX(i) * 0.5, v0 + uv.getY(i) * 0.5);
+  g.translate(x, y, z);
+  return g;
+}
+
 export function createPingyaoHouse({
   x = 0,
   z = 0,
@@ -63,6 +73,8 @@ export function createPingyaoHouse({
   const cloth = [];
   const bannerPaper = [];
   const goods = [];
+  const studs = [];
+  const couplets = [];
   const spots = [];
 
   const baseH = 0.5;
@@ -82,12 +94,25 @@ export function createPingyaoHouse({
 
   if (shop) {
     addBox(timberDark, w * 0.66, 2.35, 0.16, 0, 1.55, d * 0.5 + 0.05);
+    for (let row = 0; row < 3; row++) {
+      for (let col = 0; col < 4; col++) {
+        const sx = -w * 0.22 + col * (w * 0.44) / 3;
+        const sy = 0.94 + row * 0.62;
+        const g = new THREE.SphereGeometry(0.072, 6, 4);
+        g.translate(sx, sy, d * 0.5 + 0.16);
+        studs.push(g);
+      }
+    }
     addBox(timber, w * 0.72, 0.92, 0.62, 0, 0.9, d * 0.5 + 0.44);
     for (let i = 0; i < 4; i++) {
       addBox(timber, 0.12, 2.24, 0.12, -w * 0.27 + i * w * 0.18, 1.6, d * 0.5 + 0.15);
     }
     for (let i = 0; i < 3; i++) {
       addCylinder(goods, 0.16, 0.2, 0.42 + (i % 2) * 0.22, 7, -w * 0.2 + i * w * 0.2, 0.45, d * 0.5 + 0.64);
+    }
+    for (let i = 0; i < 2; i++) {
+      addCylinder(goods, 0.25, 0.21, 0.4, 8, -w * 0.32 + i * w * 0.64, 0.24, d * 0.5 + 0.94);
+      addCylinder(goods, 0.28, 0.28, 0.06, 8, -w * 0.32 + i * w * 0.64, 0.46, d * 0.5 + 0.94);
     }
     addBox(timberDark, w * 0.5, 0.16, 0.76, 0, 3.0, d * 0.5 + 0.38);
   }
@@ -98,6 +123,12 @@ export function createPingyaoHouse({
     const wx = -w * 0.25 + (i * w * 0.5) / (winCount - 1);
     addBox(timberDark, w * 0.2, 1.1, 0.1, wx, winY, d * 0.5 + 0.03);
     addBox(lattice, w * 0.18, 1.0, 0.06, wx, winY, d * 0.5 + 0.09);
+    addBox(timberDark, 0.045, 1.02, 0.045, wx, winY, d * 0.5 + 0.14);
+    addBox(timberDark, w * 0.18, 0.045, 0.045, wx, winY - 0.34, d * 0.5 + 0.14);
+    addBox(timberDark, w * 0.18, 0.045, 0.045, wx, winY + 0.34, d * 0.5 + 0.14);
+    for (const sx of [-1, 1]) {
+      addBox(timberDark, 0.045, 0.16, 0.045, wx + sx * w * 0.09, winY, d * 0.5 + 0.14);
+    }
   }
   if (storeys > 1) {
     for (const sx of [-1, 1]) {
@@ -135,6 +166,13 @@ export function createPingyaoHouse({
     const plaque = new THREE.Mesh(new THREE.PlaneGeometry(signW, signW * 0.3125), getPlaqueMaterial(name));
     plaque.position.set(0, signY, d * 0.5 + 0.29);
     group.add(plaque);
+    const cx = w * 0.34;
+    for (let i = 0; i < 2; i++) {
+      const px = i === 0 ? -cx : cx;
+      addBox(timberDark, 0.34, 2.0, 0.08, px, 1.96, d * 0.5 + 0.17);
+      addBox(timberDark, 0.44, 0.08, 0.12, px, 2.98, d * 0.5 + 0.17);
+      couplets.push(coupletGeo(0.27, 1.82, i === 0 ? 0 : 1, px, 1.96, d * 0.5 + 0.22));
+    }
   }
 
   if (banner) {
@@ -169,6 +207,8 @@ export function createPingyaoHouse({
     [cloth, mats.cloth],
     [bannerPaper, mats.bannerPaper],
     [goods, mats.terracotta],
+    [studs, mats.gold],
+    [couplets, mats.couplet],
   ];
   for (const [list, mat] of mods) {
     const m = mergedMesh(list, mat, true, true);

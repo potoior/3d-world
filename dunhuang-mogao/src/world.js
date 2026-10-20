@@ -4,6 +4,7 @@ import { buildLake, inLake, LAKE_POLYGON } from './lake.js';
 import { buildMogao } from './mogao.js';
 import { buildDunes } from './dunes.js';
 import { buildLife } from './life.js';
+import { buildDunhuangDetail } from './detail.js';
 
 export const SPAWN = { x: -38, z: 72, yaw: 0.32 };
 export const BOUNDS = { minX: -228, maxX: 300, minZ: -126, maxZ: 320 };
@@ -40,7 +41,9 @@ export function buildDunhuangScene(materials) {
   group.add(mogao.group);
   const dunes = buildDunes(materials);
   group.add(dunes.group);
-  const life = buildLife(materials, { lake, mogao, dunes });
+  const detail = buildDunhuangDetail(materials, { lake, mogao, dunes });
+  group.add(detail.group);
+  const life = buildLife(materials, { lake, mogao, dunes, detail });
   group.add(life.group);
   return {
     group,
@@ -48,6 +51,7 @@ export function buildDunhuangScene(materials) {
     lake,
     mogao,
     dunes,
+    detail,
     life,
     waterMaterial: lake.waterMaterial,
     fpWorld: FP_WORLD,
@@ -57,7 +61,9 @@ export function buildDunhuangScene(materials) {
       reeds: lake.reedCount,
       shrubs: dunes.shrubCount,
       rocks: dunes.rockCount,
-      flags: mogao.flags.data.length,
+      flags: mogao.flags.data.length + detail.flags.data.length,
+      caves: detail.caveCount,
+      detailReeds: detail.reedCount,
     },
   };
 }

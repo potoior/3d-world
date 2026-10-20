@@ -54,12 +54,6 @@ function cartGeometry() {
     const side = new THREE.BoxGeometry(0.1, 0.42, 2.8);
     side.translate(sx * 0.82, 1.2, 0);
     parts.push(colored(side, 0x6a492e));
-    for (const sz of [-1, 1]) {
-      const wheel = new THREE.CylinderGeometry(0.56, 0.56, 0.12, 12);
-      wheel.rotateZ(Math.PI / 2);
-      wheel.translate(sx * 0.92, 0.56, sz * 0.95);
-      parts.push(colored(wheel, 0x3f2e20));
-    }
   }
   const canopy = new THREE.CylinderGeometry(0.95, 1.05, 1.5, 8, 1, true, 0, Math.PI);
   canopy.rotateZ(Math.PI / 2);
@@ -72,6 +66,32 @@ function cartGeometry() {
   const shafts2 = shafts.clone();
   shafts2.translate(0.84, 0, 0);
   parts.push(colored(shafts2, 0x5b422c));
+  const cargo = new THREE.BoxGeometry(0.62, 0.55, 0.9);
+  cargo.translate(-0.45, 1.38, -0.5);
+  parts.push(colored(cargo, 0xb59a6a));
+  const cargo2 = new THREE.BoxGeometry(0.58, 0.44, 0.75);
+  cargo2.rotateY(0.2);
+  cargo2.translate(0.42, 1.32, -0.35);
+  parts.push(colored(cargo2, 0x8e764e));
+  const barrel = new THREE.CylinderGeometry(0.24, 0.26, 0.62, 8);
+  barrel.rotateZ(Math.PI / 2);
+  barrel.translate(0, 1.4, 0.64);
+  parts.push(colored(barrel, 0x7d5c39));
+  const driver = new THREE.CylinderGeometry(0.17, 0.21, 0.68, 6);
+  driver.translate(0, 1.47, 1.05);
+  parts.push(colored(driver, 0x47606b));
+  const dHead = new THREE.SphereGeometry(0.14, 6, 5);
+  dHead.translate(0, 1.92, 1.05);
+  parts.push(colored(dHead, 0xd8ac86));
+  const dHat = new THREE.ConeGeometry(0.22, 0.13, 7);
+  dHat.translate(0, 2.06, 1.05);
+  parts.push(colored(dHat, 0x8d6c45));
+  for (const sx of [-1, 1]) {
+    const arm = new THREE.BoxGeometry(0.08, 0.42, 0.09);
+    arm.rotateX(-0.5);
+    arm.translate(sx * 0.22, 1.62, 1.32);
+    parts.push(colored(arm, 0x47606b));
+  }
   const mule = new THREE.SphereGeometry(0.45, 7, 6);
   mule.scale(0.85, 0.8, 1.7);
   mule.translate(0, 1.05, 3.2);
@@ -105,13 +125,44 @@ function birdGeometry() {
   return mergeGeometries([body, left, right], false);
 }
 
+function wheelGeometry() {
+  const parts = [];
+  const tire = new THREE.CylinderGeometry(0.56, 0.56, 0.13, 14);
+  tire.rotateZ(Math.PI / 2);
+  parts.push(colored(tire, 0x3f2e20));
+  const hub = new THREE.CylinderGeometry(0.14, 0.14, 0.2, 8);
+  hub.rotateZ(Math.PI / 2);
+  parts.push(colored(hub, 0x59422d));
+  for (let i = 0; i < 4; i++) {
+    const spoke = new THREE.BoxGeometry(0.085, 1.02, 0.07);
+    spoke.rotateX((i / 4) * Math.PI);
+    parts.push(colored(spoke, 0x58402a));
+  }
+  return mergeGeometries(parts, false);
+}
+
 function lanternGeometry() {
+  const parts = [];
   const body = new THREE.SphereGeometry(0.24, 9, 7);
   body.scale(1, 1.28, 1);
-  const tassel = new THREE.ConeGeometry(0.07, 0.34, 5);
+  parts.push(body);
+  const capBottom = new THREE.CylinderGeometry(0.15, 0.1, 0.07, 8);
+  capBottom.translate(0, -0.28, 0);
+  parts.push(capBottom);
+  const tassel = new THREE.ConeGeometry(0.07, 0.36, 5);
   tassel.rotateX(Math.PI);
-  tassel.translate(0, -0.42, 0);
-  return mergeGeometries([body, tassel], false);
+  tassel.translate(0, -0.45, 0);
+  parts.push(tassel);
+  for (let i = 0; i < 2; i++) {
+    const a = (i / 2) * Math.PI * 2;
+    const strand = new THREE.CylinderGeometry(0.014, 0.014, 0.38, 4);
+    strand.translate(Math.cos(a) * 0.1, -0.68, Math.sin(a) * 0.1);
+    parts.push(strand);
+  }
+  const knot = new THREE.SphereGeometry(0.045, 5, 4);
+  knot.translate(0, -0.62, 0);
+  parts.push(knot);
+  return mergeGeometries(parts, false);
 }
 
 const PATHS = [
@@ -203,6 +254,13 @@ export function createTownLife({ lanternSpots = [], chimneys = [] }) {
   }
   carts.instanceColor.needsUpdate = true;
   group.add(carts);
+
+  const wheels = new THREE.InstancedMesh(wheelGeometry(), mats.visitor, cartData.length * 4);
+  wheels.frustumCulled = false;
+  wheels.castShadow = true;
+  group.add(wheels);
+  const baseMatrix = new THREE.Matrix4();
+  const wheelMatrix = new THREE.Matrix4();
 
   const birds = new THREE.InstancedMesh(birdGeometry(), mats.bird, 18);
   birds.frustumCulled = false;
@@ -310,13 +368,30 @@ export function createTownLife({ lanternSpots = [], chimneys = [] }) {
     cartData.forEach((p, i) => {
       const dist = (time * p.speed + p.offset) % p.path.total;
       const pos = samplePath(p.path, dist);
-      dummy.position.set(pos.x, Math.abs(Math.sin(time * 5 + p.phase)) * 0.02, pos.z);
+      const bounce = Math.abs(Math.sin(time * 5 + p.phase)) * 0.02;
+      dummy.position.set(pos.x, bounce, pos.z);
       dummy.rotation.set(0, pos.yaw, Math.sin(time * 5 + p.phase) * 0.006);
       dummy.scale.setScalar(1);
       dummy.updateMatrix();
       carts.setMatrixAt(i, dummy.matrix);
+      baseMatrix.makeRotationY(pos.yaw);
+      baseMatrix.setPosition(pos.x, bounce, pos.z);
+      const spin = dist / 0.56;
+      let w = 0;
+      for (const sx of [-1, 1]) {
+        for (const sz of [-1, 1]) {
+          dummy.position.set(sx * 0.92, 0.56, sz * 0.95);
+          dummy.rotation.set(spin, 0, 0);
+          dummy.scale.setScalar(1);
+          dummy.updateMatrix();
+          wheelMatrix.multiplyMatrices(baseMatrix, dummy.matrix);
+          wheels.setMatrixAt(i * 4 + w, wheelMatrix);
+          w++;
+        }
+      }
     });
     carts.instanceMatrix.needsUpdate = true;
+    wheels.instanceMatrix.needsUpdate = true;
 
     birdData.forEach((b, i) => {
       const t = time * b.speed + b.phase;

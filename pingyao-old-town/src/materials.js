@@ -13,6 +13,7 @@ import {
   makeLeakWindowTexture,
   makeBrickTexture,
   makeStoneLaneTexture,
+  makeCoupletAtlas,
 } from './textures.js';
 
 const roofMap = makeRoofTexture();
@@ -28,6 +29,7 @@ const waterNormalMap = makeWaterNormalTexture();
 const leakMap = makeLeakWindowTexture();
 const brickMap = makeBrickTexture();
 const stoneLaneMap = makeStoneLaneTexture();
+const coupletMap = makeCoupletAtlas();
 
 roofMap.repeat.set(1, 1);
 marbleMap.repeat.set(1, 1);
@@ -438,6 +440,10 @@ export const mats = {
     opacity: 0.06,
     blending: THREE.AdditiveBlending,
     depthWrite: false,
+    toneMapped: false,
+  }),
+  couplet: new THREE.MeshBasicMaterial({
+    map: coupletMap,
     toneMapped: false,
   }),
   waterStone: new THREE.MeshStandardMaterial({

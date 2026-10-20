@@ -6,6 +6,8 @@ import { createWell } from './richProps.js';
 import { createPingyaoHouse, createElmTree, createLanternString, createShopStall } from './houses.js';
 import { createCityWall, createMarketTower } from './citywall.js';
 import { createTownLife } from './townLife.js';
+import { createCloseDetail } from './closeDetail.js';
+import { createDetailLife } from './detailLife.js';
 
 export const SPAWN = { x: 0, z: -158, yaw: Math.PI };
 export const BOUNDS = { minX: -170, maxX: 170, minZ: -190, maxZ: 190 };
@@ -125,6 +127,13 @@ const WELLS = [
   [30, 29, 1.0], [-31, -63, 1.0], [86, -36, 0.92], [-90, 86, 0.95],
 ];
 
+const COMPOUNDS = [
+  { x: -100, z: -100, w: 30, d: 24, seed: 711 },
+  { x: 100, z: -100, w: 30, d: 24, seed: 713 },
+  { x: -100, z: 100, w: 30, d: 24, seed: 715 },
+  { x: 100, z: 100, w: 30, d: 24, seed: 717 },
+];
+
 const STALLS = [
   { x: -12, z: 62, rot: 0.2, accent: 'rust' },
   { x: 13, z: 62, rot: -0.3, accent: 'indigo' },
@@ -178,6 +187,18 @@ export function buildPingyaoScene() {
 
   const wall = createCityWall({ halfX: HALF_X, halfZ: HALF_Z, height: WALL_H, thickness: WALL_T, gateWidth: 15 });
   root.add(wall.group);
+  const closeDetail = createCloseDetail({
+    halfX: HALF_X,
+    halfZ: HALF_Z,
+    wallH: WALL_H,
+    wallT: WALL_T,
+    gateWidth: 15,
+    gates: wall.gates,
+    watches: wall.watches,
+    wells: WELLS,
+    compounds: COMPOUNDS,
+  });
+  root.add(closeDetail.group);
   addBoxCollider(-(HALF_X + 7.5) * 0.5, -HALF_Z, HALF_X - 7.5, WALL_T, '南城墙');
   addBoxCollider((HALF_X + 7.5) * 0.5, -HALF_Z, HALF_X - 7.5, WALL_T, '南城墙');
   addBoxCollider(-(HALF_X + 7.5) * 0.5, HALF_Z, HALF_X - 7.5, WALL_T, '北城墙');
@@ -241,11 +262,8 @@ export function buildPingyaoScene() {
   market.colliders.forEach((c) => COLLIDERS.boxes.push(c));
   spots.push(...market.spots);
 
-  for (const [x, z, w, d, seed] of [
-    [-100, -100, 30, 24, 711], [100, -100, 30, 24, 713],
-    [-100, 100, 30, 24, 715], [100, 100, 30, 24, 717],
-  ]) {
-    compound(root, { x, z, w, d, seed });
+  for (const c of COMPOUNDS) {
+    compound(root, c);
   }
 
   for (let i = 0; i < STREET_LANTERNS.length; i++) {
@@ -287,18 +305,31 @@ export function buildPingyaoScene() {
   }
 
   const merged = mergeStaticGroup(root);
-  const life = createTownLife({
+  const detailLife = createDetailLife({ gates: wall.gates, wells: WELLS });
+  merged.add(detailLife.group);
+  const townLife = createTownLife({
     lanternSpots: spots,
     chimneys: [
       [-100, -100], [100, -100], [-100, 100], [100, 100],
       [21, 66], [-21, -44], [30, -52], [-82, 21],
     ],
   });
-  merged.add(life.group);
+  merged.add(townLife.group);
+  const life = {
+    group: townLife.group,
+    update(time, dt) {
+      townLife.update(time, dt);
+      detailLife.update(time, dt);
+    },
+    glowMaterial: townLife.glowMaterial,
+    detailLife,
+  };
 
   return {
     group: merged,
     life,
+    closeDetail,
+    detailLife,
     lanternMaterial: mats.lanternRed,
     glowMaterial: life.glowMaterial,
     spawn: SPAWN,

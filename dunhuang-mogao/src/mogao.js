@@ -57,6 +57,7 @@ function buildCliff(materials) {
   const goldParts = [];
   const r = seeded(2209);
   const fronts = [];
+  const caves = [];
 
   for (let i = 0; i < NSEG; i++) {
     const x = X0 + SEG_W * (i + 0.5);
@@ -99,6 +100,7 @@ function buildCliff(materials) {
       const h = 2.8 + r() * 1.5;
       const z = frontAt(x) + 0.16;
       const y = caveRows[row] + (r() - 0.5) * 1.6;
+      caves.push({ x, y, z, w, h, row, k });
       const inner = archGeo(w, h, '#1a120c');
       inner.translate(x, y, z);
       darkParts.push(inner);
@@ -197,6 +199,7 @@ function buildCliff(materials) {
     wood: merge(woodParts),
     gold: merge(goldParts),
     frontAt,
+    caves,
     facade: { x: fx, z: fz, baseY, levelH },
   };
 }
@@ -315,7 +318,8 @@ export function buildMogao(materials) {
     flags,
     facade: c.facade,
     frontAt: c.frontAt,
-    caveCount: 1,
+    caves: c.caves,
+    caveCount: c.caves.length,
   };
 }
 

@@ -62,8 +62,10 @@ function buildSand(materials) {
 
 function buildStars() {
   const r = seeded(9012);
-  const n = 850;
+  const n = 980;
   const pos = new Float32Array(n * 3);
+  const phase = new Float32Array(n);
+  const size = new Float32Array(n);
   for (let i = 0; i < n; i++) {
     const a = r() * Math.PI * 2;
     const y = 0.1 + Math.pow(r(), 0.65) * 0.9;
@@ -71,16 +73,40 @@ function buildStars() {
     pos[i * 3] = Math.cos(a) * rad * 1250;
     pos[i * 3 + 1] = y * 1250;
     pos[i * 3 + 2] = Math.sin(a) * rad * 1250;
+    phase[i] = r() * 6.3;
+    size[i] = 1.3 + Math.pow(r(), 2.2) * 2.5;
   }
   const geo = new THREE.BufferGeometry();
   geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-  const mat = new THREE.PointsMaterial({
-    color: 0xf7f0d8,
-    size: 2.2,
-    sizeAttenuation: false,
+  geo.setAttribute('aPhase', new THREE.BufferAttribute(phase, 1));
+  geo.setAttribute('aSize', new THREE.BufferAttribute(size, 1));
+  const mat = new THREE.ShaderMaterial({
+    uniforms: { uTime: { value: 0 }, uOpacity: { value: 0 } },
     transparent: true,
-    opacity: 0,
     depthWrite: false,
+    vertexShader: `
+      attribute float aPhase;
+      attribute float aSize;
+      uniform float uTime;
+      varying float vTw;
+      void main() {
+        vec4 mv = modelViewMatrix * vec4(position, 1.0);
+        float tw = 0.66 + 0.34 * sin(uTime * (0.7 + fract(aPhase) * 1.2) + aPhase * 4.1);
+        vTw = tw;
+        gl_PointSize = aSize * (0.84 + tw * 0.42);
+        gl_Position = projectionMatrix * mv;
+      }
+    `,
+    fragmentShader: `
+      uniform float uOpacity;
+      varying float vTw;
+      void main() {
+        vec2 p = gl_PointCoord - 0.5;
+        float d = length(p);
+        float a = smoothstep(0.5, 0.05, d);
+        gl_FragColor = vec4(vec3(1.0, 0.96, 0.84), a * uOpacity * vTw);
+      }
+    `,
   });
   return new THREE.Points(geo, mat);
 }
@@ -200,6 +226,112 @@ function buildSmoke(materials) {
   geo.attributes.aSize.needsUpdate = true;
   return { points, meta, geo, count };
 }
+function buildCaravanDust(materials, camels) {
+  const r = seeded(4417);
+  const count = 150;
+  const pos = new Float32Array(count * 3);
+  const aAlpha = new Float32Array(count);
+  const aSize = new Float32Array(count);
+  const meta = [];
+  for (let i = 0; i < count; i++) {
+    const camel = i % camels.length;
+    const size = 0.55 + r() * 0.95;
+    aSize[i] = size * 20;
+    meta.push({
+      camel,
+      age: r(),
+      speed: 0.22 + r() * 0.3,
+      phase: r() * 6.3,
+      rad: 0.5 + r() * 1.7,
+      lift: 0.12 + r() * 0.45,
+      wob: 0.6 + r() * 1.4,
+    });
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  geo.setAttribute('aAlpha', new THREE.BufferAttribute(aAlpha, 1));
+  geo.setAttribute('aSize', new THREE.BufferAttribute(aSize, 1));
+  const mat = new THREE.ShaderMaterial({
+    uniforms: { uMap: { value: materials.tex.smoke } },
+    transparent: true,
+    depthWrite: false,
+    vertexShader: `
+      attribute float aAlpha;
+      attribute float aSize;
+      varying float vAlpha;
+      void main() {
+        vec4 mv = modelViewMatrix * vec4(position, 1.0);
+        gl_PointSize = aSize * (340.0 / max(1.0, -mv.z));
+        gl_Position = projectionMatrix * mv;
+        vAlpha = aAlpha;
+      }
+    `,
+    fragmentShader: `
+      uniform sampler2D uMap;
+      varying float vAlpha;
+      void main() {
+        vec4 t = texture2D(uMap, gl_PointCoord);
+        gl_FragColor = vec4(vec3(0.83, 0.68, 0.47), t.a * vAlpha);
+      }
+    `,
+  });
+  const points = new THREE.Points(geo, mat);
+  points.frustumCulled = false;
+  return { points, meta, geo, count };
+}
+
+function buildIncense(materials, sources) {
+  const r = seeded(8831);
+  const count = 84;
+  const pos = new Float32Array(count * 3);
+  const aAlpha = new Float32Array(count);
+  const aSize = new Float32Array(count);
+  const meta = [];
+  for (let i = 0; i < count; i++) {
+    const src = sources[i % sources.length];
+    const size = 1.3 + r() * 1.2;
+    aSize[i] = size * 13;
+    meta.push({
+      src,
+      age: r(),
+      speed: 0.055 + r() * 0.045,
+      phase: r() * 6.3,
+      drift: 0.25 + r() * 0.5,
+    });
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  geo.setAttribute('aAlpha', new THREE.BufferAttribute(aAlpha, 1));
+  geo.setAttribute('aSize', new THREE.BufferAttribute(aSize, 1));
+  const mat = new THREE.ShaderMaterial({
+    uniforms: { uMap: { value: materials.tex.smoke } },
+    transparent: true,
+    depthWrite: false,
+    vertexShader: `
+      attribute float aAlpha;
+      attribute float aSize;
+      varying float vAlpha;
+      void main() {
+        vec4 mv = modelViewMatrix * vec4(position, 1.0);
+        gl_PointSize = aSize * (300.0 / max(1.0, -mv.z));
+        gl_Position = projectionMatrix * mv;
+        vAlpha = aAlpha;
+      }
+    `,
+    fragmentShader: `
+      uniform sampler2D uMap;
+      varying float vAlpha;
+      void main() {
+        vec4 t = texture2D(uMap, gl_PointCoord);
+        gl_FragColor = vec4(vec3(0.76, 0.72, 0.64), t.a * vAlpha);
+      }
+    `,
+  });
+  const points = new THREE.Points(geo, mat);
+  points.frustumCulled = false;
+  return { points, meta, geo, count };
+}
+
 export function buildLife(materials, refs) {
   const group = new THREE.Group();
   const sand = buildSand(materials);
@@ -207,14 +339,21 @@ export function buildLife(materials, refs) {
   const haze = buildHaze(materials);
   const birds = buildBirds();
   const smoke = buildSmoke(materials);
+  const caravanDust = buildCaravanDust(materials, refs.dunes.camels);
+  const incense = buildIncense(materials, refs.detail.incenseSources);
   group.add(sand.points);
   group.add(stars);
   group.add(haze.group);
   group.add(birds.im);
   group.add(smoke.points);
+  group.add(caravanDust.points);
+  group.add(incense.points);
 
   const flagMesh = refs.mogao.flags.mesh;
   const flagData = refs.mogao.flags.data;
+  const detailFlagMesh = refs.detail.flags.mesh;
+  const detailFlagData = refs.detail.flags.data;
+  const camels = refs.dunes.camels;
   const lanternMesh = refs.lake.lanternMesh;
   const lanternItems = refs.lake.lanternItems;
 
@@ -236,6 +375,26 @@ export function buildLife(materials, refs) {
       flagMesh.setMatrixAt(i, tmpObj.matrix);
     }
     flagMesh.instanceMatrix.needsUpdate = true;
+
+    for (let i = 0; i < detailFlagData.length; i++) {
+      const f = detailFlagData[i];
+      tmpObj.position.set(f.p[0], f.p[1], f.p[2]);
+      tmpObj.rotation.set(
+        Math.sin(time * 2.0 + f.phase) * 0.22,
+        f.yaw,
+        Math.cos(time * 2.7 + f.phase * 1.4) * 0.34
+      );
+      tmpObj.scale.setScalar(1);
+      tmpObj.updateMatrix();
+      detailFlagMesh.setMatrixAt(i, tmpObj.matrix);
+    }
+    detailFlagMesh.instanceMatrix.needsUpdate = true;
+
+    for (let i = 0; i < camels.length; i++) {
+      const c = camels[i];
+      c.position.y = c.userData.baseY + Math.sin(time * 1.15 + c.userData.phase) * 0.035;
+      c.rotation.y = c.userData.baseYaw + Math.sin(time * 0.7 + c.userData.phase) * 0.012;
+    }
 
     for (let i = 0; i < lanternItems.length; i++) {
       const l = lanternItems[i];
@@ -279,14 +438,49 @@ export function buildLife(materials, refs) {
     smoke.geo.attributes.position.needsUpdate = true;
     smoke.geo.attributes.aAlpha.needsUpdate = true;
 
-    stars.material.opacity = envMix * envMix * 0.92;
+    const dp = caravanDust.geo.attributes.position.array;
+    const da = caravanDust.geo.attributes.aAlpha.array;
+    for (let i = 0; i < caravanDust.count; i++) {
+      const m = caravanDust.meta[i];
+      const c = camels[m.camel];
+      m.age += dt * m.speed;
+      if (m.age > 1) m.age -= 1;
+      const age = m.age;
+      const a = time * 1.6 + m.phase + m.camel * 0.9;
+      const rad = m.rad * (0.45 + age * 1.35);
+      dp[i * 3] = c.position.x + Math.cos(a) * rad + age * 0.8;
+      dp[i * 3 + 1] = c.position.y + m.lift + age * 1.05 + Math.sin(a * 1.7) * 0.12;
+      dp[i * 3 + 2] = c.position.z + Math.sin(a) * rad * 0.7 + age * 0.55;
+      da[i] = Math.min(1, age * 8) * (1 - age) * 0.3;
+    }
+    caravanDust.geo.attributes.position.needsUpdate = true;
+    caravanDust.geo.attributes.aAlpha.needsUpdate = true;
+
+    const ip = incense.geo.attributes.position.array;
+    const ia = incense.geo.attributes.aAlpha.array;
+    for (let i = 0; i < incense.count; i++) {
+      const m = incense.meta[i];
+      m.age += dt * m.speed;
+      if (m.age > 1) m.age -= 1;
+      const age = m.age;
+      const a = m.phase + age * 5.5;
+      ip[i * 3] = m.src.x + Math.cos(a) * m.drift * age * 3.2 + age * 1.4;
+      ip[i * 3 + 1] = m.src.y + age * 7.5;
+      ip[i * 3 + 2] = m.src.z + Math.sin(a) * m.drift * age * 2.2 + age * 0.7;
+      ia[i] = Math.min(1, age * 7) * (1 - age) * 0.24;
+    }
+    incense.geo.attributes.position.needsUpdate = true;
+    incense.geo.attributes.aAlpha.needsUpdate = true;
+
+    stars.material.uniforms.uTime.value = time;
+    stars.material.uniforms.uOpacity.value = envMix * envMix * 0.95;
     for (let i = 0; i < haze.mats.length; i++) {
       haze.mats[i].opacity = 0.03 + envMix * 0.23;
       haze.mats[i].color.setHex(0xe9a35b).lerp(tmpColor.setHex(0xd9734a), envMix);
     }
   }
 
-  return { group, update, stars, sand, birds, smoke };
+  return { group, update, stars, sand, birds, smoke, caravanDust, incense };
 }
 
 

@@ -1,6 +1,6 @@
 # 3d-world
 
-十六座中国地标的可交互 Three.js 3D 场景。全部资源本地化，无需构建步骤。
+二十座中国地标的可交互 Three.js 3D 场景。全部资源本地化，无需构建步骤。
 
 ## 场景
 
@@ -20,6 +20,10 @@
 - **华山 · 西岳**：长空栈道、鹞子翻身、北峰/西峰与云海。
 - **武夷山 · 九曲溪**：丹霞崖壁、九曲溪、竹筏、玉女峰与茶山。
 - **峨眉山 · 金顶**：十方普贤金像、金顶殿宇、云海、古木与猴群。
+- **凤凰古城**：沱江吊脚楼、虹桥、万名塔、东门城楼与夜色灯影。
+- **宏村 · 月沼南湖**：月沼、南湖、水圳、马头墙与徽州民居。
+- **天山天池**：博格达雪峰、云杉林、高山草甸、毡房与马群。
+- **雁荡山 · 灵峰**：大龙湫瀑布、灵岩、观音洞与夜景。
 
 ## 交互
 
@@ -61,7 +65,7 @@ python3 -m http.server 8123
 
 ```text
 .
-├── index.html                  # 十六场景选择页
+├── index.html                  # 二十场景选择页
 ├── assets/                     # 缩略图
 ├── shared/interactions.js      # 地标索引、巡游、天气、摄影、音景
 ├── forbidden-city-3d/
@@ -79,7 +83,11 @@ python3 -m http.server 8123
 ├── pingyao-old-town/
 ├── huashan/
 ├── wuyishan/
-└── emeishan/
+├── emeishan/
+├── fenghuang-old-town/
+├── hongcun/
+├── tianshan-tianchi/
+└── yandangshan/
 ```
 
 ## 部署

@@ -244,6 +244,8 @@ window.__pingyao.getStats = () => ({
   geometries: renderer.info.memory.geometries,
   textures: renderer.info.memory.textures,
   envMix,
+  gateFlags: world.detailLife ? world.detailLife.flagCount : 0,
+  wellBuckets: world.detailLife ? world.detailLife.bucketCount : 0,
 });
 
 controls.addEventListener('start', () => {

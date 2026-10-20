@@ -203,8 +203,9 @@ export function createCityWall({ halfX = 128, halfZ = 140, height = 10, thicknes
     [-halfX, -70, -Math.PI / 2], [-halfX, 70, -Math.PI / 2],
   ];
   for (const [x, z, rot] of watches) group.add(watchTower({ x, z, wallH: H, rot }));
+  const watchDetails = watches.map(([x, z, rot]) => ({ x, z, rot, wallH: H }));
 
-  return { group, gates };
+  return { group, gates, watches: watchDetails };
 }
 
 export function createMarketTower({ x = 0, z = 52 }) {

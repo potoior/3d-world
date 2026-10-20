@@ -33,6 +33,33 @@ function camelGeo(seed, riderColor) {
     parts.push(box(0.18, 0.1, 0.34, '#5c3b25', s * 0.42, 3.08, 0.5));
     parts.push(cyl(0.055, 0.06, 0.5, 5, '#c5976d', s * 0.38, 3.62, 0.46, 0.5, 0, s * 0.15));
   }
+  parts.push(box(0.82, 0.07, 1.42, r() > 0.5 ? '#3f5f70' : '#7b3d33', 0, 3.0, 0.04));
+  parts.push(box(0.7, 0.06, 1.5, '#c9a24e', 0, 3.04, 0.04));
+  for (let i = 0; i < 7; i++) {
+    const z = -0.55 + i * 0.19;
+    parts.push(box(0.1, 0.2, 0.08, i % 2 ? '#c9a24e' : '#8c3a2e', -0.44, 2.9, z));
+    parts.push(box(0.1, 0.2, 0.08, i % 2 ? '#c9a24e' : '#8c3a2e', 0.44, 2.9, z));
+  }
+  for (const sx of [-1, 1]) {
+    parts.push(beam([sx * 0.3, 3.06, 0.5], [sx * 0.3, 3.06, -0.5], 0.055, '#5a3a24', 5));
+    parts.push(cyl(0.06, 0.06, 0.18, 5, '#6c452b', sx * 0.3, 3.13, 0.56));
+    parts.push(box(0.09, 0.28, 0.09, '#5a3a24', sx * 0.3, 3.2, -0.54));
+  }
+  for (const sx of [-1, 1]) {
+    parts.push(box(0.36, 0.48, 0.68, r() > 0.5 ? '#8d4432' : '#3b5360', sx * 0.84, 2.48, -0.34));
+    parts.push(cyl(0.14, 0.14, 0.66, 6, '#b99258', sx * 0.88, 2.79, -0.34, Math.PI / 2, 0, 0));
+    parts.push(beam([sx * 0.86, 2.7, -0.3], [sx * 0.22, 3.02, 0.1], 0.022, '#5c4630', 4));
+    parts.push(beam([sx * 0.84, 2.34, -0.55], [sx * 0.36, 2.2, 0.1], 0.018, '#6a5237', 4));
+    parts.push(box(0.1, 0.3, 0.05, '#b79255', sx * 0.72, 2.22, -0.62));
+  }
+  parts.push(box(0.84, 0.1, 0.1, '#6a4a2f', 0, 3.12, 0.54));
+  parts.push(beam([0, 3.86, 2.0], [0.32, 3.78, 1.0], 0.018, '#43301f', 4));
+  parts.push(beam([0, 3.86, 2.0], [-0.32, 3.78, 1.0], 0.018, '#43301f', 4));
+  parts.push(box(0.14, 0.12, 0.26, '#4a3024', 0.32, 3.76, 0.96));
+  parts.push(box(0.14, 0.12, 0.26, '#4a3024', -0.32, 3.76, 0.96));
+  parts.push(cyl(0.33, 0.35, 0.06, 7, '#d8c29a', 0, 4.05, 0.3));
+  parts.push(box(0.42, 0.08, 0.2, '#8c5a3a', 0, 3.52, 0.58));
+  parts.push(cone(0.12, 0.34, 5, '#7d4a2c', 0, 2.02, -2.0, Math.PI * 0.15, 0, 0));
   return merge(parts);
 }
 
@@ -51,8 +78,10 @@ function buildCaravan(materials) {
     const y = heightAt(x, z) + 0.04;
     const m = mesh(camelGeo(500 + i * 37, camelColors[i % camelColors.length]), materials.camel, true, true);
     m.position.set(x, y, z);
-    m.rotation.y = Math.atan2(tan.x, tan.z);
+    const yaw = Math.atan2(tan.x, tan.z);
+    m.rotation.y = yaw;
     m.userData.baseY = y;
+    m.userData.baseYaw = yaw;
     m.userData.phase = i * 0.9;
     group.add(m);
     camels.push(m);

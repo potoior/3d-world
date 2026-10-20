@@ -328,6 +328,8 @@ function getStats() {
     trees: world.stats.trees,
     reeds: world.stats.reeds,
     flags: world.stats.flags,
+    caves: world.stats.caves,
+    detailReeds: world.stats.detailReeds,
   };
 }
 

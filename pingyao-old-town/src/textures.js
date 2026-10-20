@@ -476,3 +476,33 @@ export function makeStoneLaneTexture() {
   speckle(ctx, 512, 512, 2400, rand, ['#6e6b62', '#b4b0a4', '#989488'], 0.18);
   return finish(c);
 }
+
+export function makeCoupletAtlas() {
+  const [c, ctx] = makeCanvas(512, 512);
+  const texts = ['汇通天下', '诚信为本', '和气生财', '源远流长'];
+  for (let i = 0; i < 4; i++) {
+    const ox = (i % 2) * 256;
+    const oy = Math.floor(i / 2) * 256;
+    ctx.fillStyle = '#5b241d';
+    ctx.fillRect(ox, oy, 256, 256);
+    const g = ctx.createLinearGradient(ox, oy, ox + 256, oy + 256);
+    g.addColorStop(0, 'rgba(140,58,42,0.5)');
+    g.addColorStop(0.5, 'rgba(40,16,12,0.1)');
+    g.addColorStop(1, 'rgba(30,10,8,0.45)');
+    ctx.fillStyle = g;
+    ctx.fillRect(ox, oy, 256, 256);
+    ctx.strokeStyle = '#c9a24c';
+    ctx.lineWidth = 7;
+    ctx.strokeRect(ox + 10, oy + 10, 236, 236);
+    ctx.strokeStyle = '#8a6a2a';
+    ctx.lineWidth = 2.5;
+    ctx.strokeRect(ox + 22, oy + 22, 212, 212);
+    ctx.fillStyle = '#efc768';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = '700 62px "Noto Serif CJK SC", "Source Han Serif SC", "STSong", "SimSun", serif';
+    const chars = texts[i].split('');
+    chars.forEach((ch, k) => ctx.fillText(ch, ox + 128, oy + 56 + k * 66));
+  }
+  return finish(c, { repeat: false });
+}

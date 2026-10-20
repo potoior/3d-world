@@ -14,6 +14,7 @@ import {
   addTree,
 } from './town.js';
 import { createTownLife } from './townLife.js';
+import { createOldTownDetail } from './oldTownDetail.js';
 
 export const CANALS = [
   { x: 52, z: -7.5, w: 9, d: 315, rot: 0 },
@@ -263,6 +264,14 @@ export function buildLijiangScene() {
     spots.push(...str.spots);
   }
 
+  const detail = createOldTownDetail({
+    canals: CANALS,
+    bridges: BRIDGES,
+    houses: HOUSE_DEFS,
+    lanternSpots: spots,
+  });
+  root.add(detail.staticGroup);
+
   for (let i = 0; i < WILLOWS.length; i++) {
     const [x, z] = WILLOWS[i];
     const scale = 0.88 + (i % 4) * 0.06;
@@ -295,7 +304,13 @@ export function buildLijiangScene() {
   const merged = mergeStaticGroup(root);
   merged.add(wheel.rotating);
   const life = createTownLife({ lanternSpots: spots, waterwheel: wheel.rotating });
+  const baseLifeUpdate = life.update;
+  life.update = (time, dt) => {
+    baseLifeUpdate(time, dt);
+    detail.update(time, dt);
+  };
   merged.add(life.group);
+  merged.add(detail.dynamicGroup);
 
   return {
     group: merged,
