@@ -182,7 +182,7 @@
     }
     .grid {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 20px;
     }
     .card {
@@ -439,6 +439,43 @@
     .card.is-hidden {
       display: none;
     }
+    @media (min-width: 1201px) {
+      .card-body {
+        left: 18px;
+        right: 18px;
+        bottom: 16px;
+      }
+      .card h3 {
+        font-size: 26px;
+      }
+      .card .en {
+        margin-top: 5px;
+        font-size: 7.5px;
+      }
+      .card .desc {
+        max-width: 100%;
+        margin-top: 10px;
+        font-size: 10.5px;
+        line-height: 1.7;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+      .card .tags {
+        margin-top: 10px;
+        flex-wrap: wrap;
+      }
+      .card .tags i {
+        font-size: 7.5px;
+        padding: 3px 6px;
+      }
+    }
+    @media (max-width: 1200px) {
+      .grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
     @media (max-width: 900px) {
       .page {
         width: calc(100% - 32px);
@@ -521,28 +558,28 @@
       </div>
       <div class="topnote">
         <span></span>
-        二十境 · 实时三维 · 本地渲染
+        二十一境 · 实时三维 · 本地渲染
       </div>
     </header>
 
     <section class="hero">
       <div>
         <div class="eyebrow">INTERACTIVE ARCHITECTURE &amp; LANDSCAPE</div>
-        <h2>山河<em>二十境</em></h2>
+        <h2>山河<em>二十一境</em></h2>
       </div>
       <div class="hero-right">
         <div class="mark"></div>
-        <p>宫城、园林、湖山、长城、雪域、漓江、大漠、峰林、古城与岱宗。<br />二十座地标，二十种中国。选择一处，进入可交互的三维场景。</p>
+        <p>宫城、园林、湖山、长城、雪域、漓江、大漠、峰林、古城与岱宗。<br />二十一座地标，二十一种中国。选择一处，进入可交互的三维场景。</p>
         <small>DRAG TO ORBIT · SCROLL TO ZOOM · CLICK TO ENTER</small>
       </div>
     </section>
 
     <div class="filters" id="filters">
       <div class="chips" role="group" aria-label="按类型筛选场景">
-        <button class="chip active" data-filter="all">全部 <b>20</b></button>
+        <button class="chip active" data-filter="all">全部 <b>21</b></button>
         <button class="chip" data-filter="宫城">宫城 <b>2</b></button>
         <button class="chip" data-filter="园林">园林 <b>1</b></button>
-        <button class="chip" data-filter="湖山">湖山 <b>3</b></button>
+        <button class="chip" data-filter="湖山">湖山 <b>4</b></button>
         <button class="chip" data-filter="山岳">山岳 <b>7</b></button>
         <button class="chip" data-filter="古城">古城 <b>3</b></button>
         <button class="chip" data-filter="河山">河山 <b>2</b></button>
@@ -850,6 +887,21 @@
           <p class="en">YANDANG · ZHEJIANG</p>
           <p class="desc">流纹岩峰壁如屏，大龙湫从高崖垂落，灵岩、观音洞与古寺藏于峰谷之间。夜色里峰影与灯火另成一重山水。</p>
           <div class="tags"><i>第一人称漫游</i><i>大龙湫</i><i>灵峰</i><i>夜景</i></div>
+        </div>
+      </a>
+
+      <a class="card" href="qinghai-lake/" data-cat="湖山" style="--accent:#d8c26a">
+        <img src="assets/qinghai.jpg?v=11" alt="青海湖 3D 鸟瞰" />
+        <div class="card-top">
+          <span class="num">21 / PLATEAU LAKE</span>
+          <span class="corner">↗</span>
+        </div>
+        <div class="card-body">
+          <div class="card-kicker"><span></span>高原圣湖</div>
+          <h3>青海湖</h3>
+          <p class="en">QINGHAI LAKE · QINGHAI</p>
+          <p class="desc">雪山环抱的高原大湖，碧蓝水面铺向天际。盛夏油菜花沿湖铺成金带，牦牛、骏马与经幡散落在青绿草场上。</p>
+          <div class="tags"><i>第一人称漫游</i><i>油菜花</i><i>牦牛</i><i>经幡</i></div>
         </div>
       </a>
     </main>

@@ -674,6 +674,9 @@ export function initInteractions(options = {}) {
   let toastEl = null;
   let toastTimer = null;
   let lightTimer = null;
+  let focusTween = null;
+  const raycaster = new THREE.Raycaster();
+  const pointer = new THREE.Vector2();
 
   function el(tag, className, text) {
     const node = document.createElement(tag);
@@ -697,6 +700,44 @@ export function initInteractions(options = {}) {
     return document.getElementById('btn-fp') || document.getElementById('btn-walk') ||
       document.querySelector('[data-first-person]');
   }
+
+  function focusAt(event) {
+    if (!scene || !camera || !controls || isFpActive() || destroyed) return false;
+    const rect = canvas.getBoundingClientRect();
+    if (!rect.width || !rect.height) return false;
+    pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+    pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+    raycaster.setFromCamera(pointer, camera);
+    const hits = raycaster.intersectObjects(scene.children, true);
+    const hit = hits.find((h) => {
+      const o = h.object;
+      if (!o || !o.isMesh || !o.visible) return false;
+      if (o.name && o.name.indexOf('xi-') === 0) return false;
+      if (o.material && o.material.side === THREE.BackSide) return false;
+      return true;
+    });
+    if (!hit) return false;
+    const point = hit.point.clone();
+    const dir = camera.position.clone().sub(point);
+    if (dir.lengthSq() < 0.0001) return false;
+    dir.normalize();
+    const dist = THREE.MathUtils.clamp(camera.position.distanceTo(point) * 0.62, 6, 90);
+    focusTween = {
+      fromP: camera.position.clone(),
+      toP: point.clone().add(dir.multiplyScalar(dist)),
+      fromT: controls.target.clone(),
+      toT: point,
+      t: 0,
+      dur: 0.62,
+    };
+    stopTour();
+    closeCard();
+    toast('聚焦近景 · 拖拽可继续观察');
+    return true;
+  }
+
+  on(canvas, 'dblclick', focusAt);
+  if (controls) on(controls, 'start', () => { focusTween = null; });
 
   function saveVisited() {
     try {
@@ -1356,6 +1397,7 @@ export function initInteractions(options = {}) {
     ['P', '进入 / 退出摄影模式'],
     ['H', '打开 / 关闭本帮助'],
     ['Esc', '关闭面板 / 退出模式'],
+    ['双击场景', '聚焦近景'],
     ['拖拽 / 滚轮', '旋转视角 / 缩放画面'],
   ].forEach(([key, text]) => {
     helpGrid.append(el('b', '', key), el('span', '', text));
@@ -1757,6 +1799,17 @@ export function initInteractions(options = {}) {
 
   function frame(now) {
     if (destroyed) return;
+    if (focusTween) {
+      const dt = focusTween.last == null ? 0.016 : Math.min(0.05, (now - focusTween.last) / 1000);
+      focusTween.last = now;
+      focusTween.t += dt / focusTween.dur;
+      const t = Math.min(1, focusTween.t);
+      const ease = 1 - Math.pow(1 - t, 3);
+      camera.position.lerpVectors(focusTween.fromP, focusTween.toP, ease);
+      controls.target.lerpVectors(focusTween.fromT, focusTween.toT, ease);
+      controls.update();
+      if (t >= 1) focusTween = null;
+    }
     if (moteGroup && camera) {
       moteGroup.position.set(camera.position.x, camera.position.y - 2, camera.position.z);
       moteGroup.rotation.y = now * 0.000018;
@@ -1840,6 +1893,7 @@ export function initInteractions(options = {}) {
     stopSound,
     captureFrame,
     toggleLight,
+    focusAt,
     markVisited,
     openCard,
     closeCard,
