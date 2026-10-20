@@ -383,6 +383,62 @@
         transform: none;
       }
     }
+
+    .filters {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      flex-wrap: wrap;
+      padding: 0 0 24px;
+      opacity: 0;
+      animation: rise 1s ease 0.55s forwards;
+    }
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+    }
+    .chip,
+    .random {
+      appearance: none;
+      border: 1px solid var(--line);
+      background: rgba(19, 17, 13, 0.5);
+      color: rgba(239, 231, 215, 0.72);
+      font-family: inherit;
+      font-size: 11px;
+      letter-spacing: 0.14em;
+      padding: 8px 13px;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s, border-color 0.2s;
+    }
+    .chip b {
+      margin-left: 5px;
+      font-family: "Helvetica Neue", Arial, sans-serif;
+      font-size: 8px;
+      font-weight: 400;
+      color: var(--muted);
+    }
+    .chip:hover,
+    .random:hover {
+      color: var(--paper);
+      border-color: rgba(200, 161, 91, 0.5);
+    }
+    .chip.active {
+      color: #17130d;
+      background: var(--gold);
+      border-color: var(--gold);
+    }
+    .chip.active b {
+      color: rgba(23, 19, 13, 0.6);
+    }
+    .random {
+      color: var(--gold);
+      border-color: rgba(200, 161, 91, 0.34);
+    }
+    .card.is-hidden {
+      display: none;
+    }
     @media (max-width: 900px) {
       .page {
         width: calc(100% - 32px);
@@ -465,25 +521,39 @@
       </div>
       <div class="topnote">
         <span></span>
-        十二境 · 实时三维 · 本地渲染
+        十六境 · 实时三维 · 本地渲染
       </div>
     </header>
 
     <section class="hero">
       <div>
         <div class="eyebrow">INTERACTIVE ARCHITECTURE &amp; LANDSCAPE</div>
-        <h2>山河<em>十二境</em></h2>
+        <h2>山河<em>十六境</em></h2>
       </div>
       <div class="hero-right">
         <div class="mark"></div>
-        <p>宫城、园林、湖山、长城、雪域、漓江、大漠、峰林、古城与岱宗。<br />十二座地标，十二种中国。选择一处，进入可交互的三维场景。</p>
+        <p>宫城、园林、湖山、长城、雪域、漓江、大漠、峰林、古城与岱宗。<br />十六座地标，十六种中国。选择一处，进入可交互的三维场景。</p>
         <small>DRAG TO ORBIT · SCROLL TO ZOOM · CLICK TO ENTER</small>
       </div>
     </section>
 
+    <div class="filters" id="filters">
+      <div class="chips" role="group" aria-label="按类型筛选场景">
+        <button class="chip active" data-filter="all">全部 <b>16</b></button>
+        <button class="chip" data-filter="宫城">宫城 <b>2</b></button>
+        <button class="chip" data-filter="园林">园林 <b>1</b></button>
+        <button class="chip" data-filter="湖山">湖山 <b>2</b></button>
+        <button class="chip" data-filter="山岳">山岳 <b>6</b></button>
+        <button class="chip" data-filter="古城">古城 <b>2</b></button>
+        <button class="chip" data-filter="河山">河山 <b>2</b></button>
+        <button class="chip" data-filter="石窟">石窟 <b>1</b></button>
+      </div>
+      <button class="random" id="random-scene" type="button">随机进入 ↗</button>
+    </div>
+
     <main class="grid">
-      <a class="card" href="forbidden-city-3d/" style="--accent:#d0a14f">
-        <img src="assets/forbidden.jpg?v=7" alt="紫禁城 3D 鸟瞰" />
+      <a class="card" href="forbidden-city-3d/" data-cat="宫城" style="--accent:#d0a14f">
+        <img src="assets/forbidden.jpg?v=8" alt="紫禁城 3D 鸟瞰" />
         <div class="card-top">
           <span class="num">01 / IMPERIAL</span>
           <span class="corner">↗</span>
@@ -497,8 +567,8 @@
         </div>
       </a>
 
-      <a class="card" href="humble-administrators-garden/" style="--accent:#9fb69a">
-        <img src="assets/garden.jpg?v=7" alt="拙政园 3D 鸟瞰" />
+      <a class="card" href="humble-administrators-garden/" data-cat="园林" style="--accent:#9fb69a">
+        <img src="assets/garden.jpg?v=8" alt="拙政园 3D 鸟瞰" />
         <div class="card-top">
           <span class="num">02 / GARDEN</span>
           <span class="corner">↗</span>
@@ -512,8 +582,8 @@
         </div>
       </a>
 
-      <a class="card" href="wuhan-east-lake/" style="--accent:#85b9b1">
-        <img src="assets/lake.jpg?v=7" alt="武汉东湖 3D 鸟瞰" />
+      <a class="card" href="wuhan-east-lake/" data-cat="湖山" style="--accent:#85b9b1">
+        <img src="assets/lake.jpg?v=8" alt="武汉东湖 3D 鸟瞰" />
         <div class="card-top">
           <span class="num">03 / LAKE</span>
           <span class="corner">↗</span>
@@ -527,8 +597,8 @@
         </div>
       </a>
 
-      <a class="card" href="badaling-great-wall/" style="--accent:#b8ad91">
-        <img src="assets/badaling.jpg?v=7" alt="八达岭长城 3D 鸟瞰" />
+      <a class="card" href="badaling-great-wall/" data-cat="山岳" style="--accent:#b8ad91">
+        <img src="assets/badaling.jpg?v=8" alt="八达岭长城 3D 鸟瞰" />
         <div class="card-top">
           <span class="num">04 / MOUNTAIN</span>
           <span class="corner">↗</span>
@@ -542,8 +612,8 @@
         </div>
       </a>
 
-      <a class="card" href="west-lake/" style="--accent:#9fb69a">
-        <img src="assets/westlake.jpg?v=7" alt="杭州西湖 3D 鸟瞰" />
+      <a class="card" href="west-lake/" data-cat="湖山" style="--accent:#9fb69a">
+        <img src="assets/westlake.jpg?v=8" alt="杭州西湖 3D 鸟瞰" />
         <div class="card-top">
           <span class="num">05 / LAKE</span>
           <span class="corner">↗</span>
@@ -557,8 +627,8 @@
         </div>
       </a>
 
-      <a class="card" href="huangshan/" style="--accent:#b7c3c0">
-        <img src="assets/huangshan.jpg?v=7" alt="黄山云海 3D 鸟瞰" />
+      <a class="card" href="huangshan/" data-cat="山岳" style="--accent:#b7c3c0">
+        <img src="assets/huangshan.jpg?v=8" alt="黄山云海 3D 鸟瞰" />
         <div class="card-top">
           <span class="num">06 / MOUNTAIN</span>
           <span class="corner">↗</span>
@@ -572,8 +642,8 @@
         </div>
       </a>
 
-      <a class="card" href="potala-palace/" style="--accent:#d0a14f">
-        <img src="assets/potala.jpg?v=7" alt="布达拉宫 3D 鸟瞰" />
+      <a class="card" href="potala-palace/" data-cat="宫城" style="--accent:#d0a14f">
+        <img src="assets/potala.jpg?v=8" alt="布达拉宫 3D 鸟瞰" />
         <div class="card-top">
           <span class="num">07 / PLATEAU</span>
           <span class="corner">↗</span>
@@ -587,8 +657,8 @@
         </div>
       </a>
 
-      <a class="card" href="guilin-li-river/" style="--accent:#86b8a0">
-        <img src="assets/guilin.jpg?v=7" alt="桂林漓江 3D 鸟瞰" />
+      <a class="card" href="guilin-li-river/" data-cat="河山" style="--accent:#86b8a0">
+        <img src="assets/guilin.jpg?v=8" alt="桂林漓江 3D 鸟瞰" />
         <div class="card-top">
           <span class="num">08 / RIVER</span>
           <span class="corner">↗</span>
@@ -602,8 +672,8 @@
         </div>
       </a>
 
-      <a class="card" href="dunhuang-mogao/" style="--accent:#d7a25c">
-        <img src="assets/dunhuang.jpg?v=7" alt="敦煌鸣沙山月牙泉 3D 鸟瞰" />
+      <a class="card" href="dunhuang-mogao/" data-cat="石窟" style="--accent:#d7a25c">
+        <img src="assets/dunhuang.jpg?v=8" alt="敦煌鸣沙山月牙泉 3D 鸟瞰" />
         <div class="card-top">
           <span class="num">09 / DESERT</span>
           <span class="corner">↗</span>
@@ -617,8 +687,8 @@
         </div>
       </a>
 
-      <a class="card" href="zhangjiajie/" style="--accent:#a8bdb4">
-        <img src="assets/zhangjiajie.jpg?v=7" alt="张家界武陵源 3D 鸟瞰" />
+      <a class="card" href="zhangjiajie/" data-cat="山岳" style="--accent:#a8bdb4">
+        <img src="assets/zhangjiajie.jpg?v=8" alt="张家界武陵源 3D 鸟瞰" />
         <div class="card-top">
           <span class="num">10 / PILLARS</span>
           <span class="corner">↗</span>
@@ -632,8 +702,8 @@
         </div>
       </a>
 
-      <a class="card" href="lijiang-old-town/" style="--accent:#c9a06a">
-        <img src="assets/lijiang.jpg?v=7" alt="丽江古城 3D 鸟瞰" />
+      <a class="card" href="lijiang-old-town/" data-cat="古城" style="--accent:#c9a06a">
+        <img src="assets/lijiang.jpg?v=8" alt="丽江古城 3D 鸟瞰" />
         <div class="card-top">
           <span class="num">11 / TOWN</span>
           <span class="corner">↗</span>
@@ -647,8 +717,8 @@
         </div>
       </a>
 
-      <a class="card" href="mount-tai/" style="--accent:#c7b08a">
-        <img src="assets/mounttai.jpg?v=7" alt="泰山岱宗 3D 鸟瞰" />
+      <a class="card" href="mount-tai/" data-cat="山岳" style="--accent:#c7b08a">
+        <img src="assets/mounttai.jpg?v=8" alt="泰山岱宗 3D 鸟瞰" />
         <div class="card-top">
           <span class="num">12 / SACRED</span>
           <span class="corner">↗</span>
@@ -661,6 +731,66 @@
           <div class="tags"><i>第一人称漫游</i><i>十八盘</i><i>南天门</i><i>日出</i></div>
         </div>
       </a>
+
+      <a class="card" href="pingyao-old-town/" data-cat="古城" style="--accent:#b9a27a">
+        <img src="assets/pingyao.jpg?v=8" alt="平遥古城 3D 鸟瞰" />
+        <div class="card-top">
+          <span class="num">13 / WALLED CITY</span>
+          <span class="corner">↗</span>
+        </div>
+        <div class="card-body">
+          <div class="card-kicker"><span></span>晋商古城</div>
+          <h3>平遥古城</h3>
+          <p class="en">PINGYAO ANCIENT CITY · SHANXI</p>
+          <p class="desc">灰砖城墙环抱十字街巷，日昇昌票号、市楼、镖局与深宅大院层层展开。灯笼与车马声里，是明清晋商的北方城郭。</p>
+          <div class="tags"><i>第一人称漫游</i><i>城墙</i><i>日昇昌</i><i>市楼</i></div>
+        </div>
+      </a>
+
+      <a class="card" href="huashan/" data-cat="山岳" style="--accent:#b9c2c5">
+        <img src="assets/huashan.jpg?v=8" alt="华山 3D 鸟瞰" />
+        <div class="card-top">
+          <span class="num">14 / STEEP</span>
+          <span class="corner">↗</span>
+        </div>
+        <div class="card-body">
+          <div class="card-kicker"><span></span>五岳之险</div>
+          <h3>华山 · 西岳</h3>
+          <p class="en">MOUNT HUA · SHAANXI</p>
+          <p class="desc">白色花岗岩如刀劈斧削，长空栈道贴崖悬空，鹞子翻身铁链垂壁。北峰、西峰与南峰在云海中显出西岳的险绝。</p>
+          <div class="tags"><i>第一人称漫游</i><i>长空栈道</i><i>鹞子翻身</i><i>云海</i></div>
+        </div>
+      </a>
+
+      <a class="card" href="wuyishan/" data-cat="河山" style="--accent:#b77b50">
+        <img src="assets/wuyishan.jpg?v=8" alt="武夷山九曲溪 3D 鸟瞰" />
+        <div class="card-top">
+          <span class="num">15 / TEA RIVER</span>
+          <span class="corner">↗</span>
+        </div>
+        <div class="card-body">
+          <div class="card-kicker"><span></span>丹霞茶山</div>
+          <h3>武夷山 · 九曲溪</h3>
+          <p class="en">MOUNT WUYI · FUJIAN</p>
+          <p class="desc">九曲溪在丹霞崖壁间转折，竹筏顺流而下，玉女峰与大王峰隔水相望。大红袍茶垄沿坡铺展，茶香与雾气一同升起。</p>
+          <div class="tags"><i>第一人称漫游</i><i>九曲溪</i><i>玉女峰</i><i>大红袍</i></div>
+        </div>
+      </a>
+
+      <a class="card" href="emeishan/" data-cat="山岳" style="--accent:#c2a96f">
+        <img src="assets/emeishan.jpg?v=8" alt="峨眉山金顶 3D 鸟瞰" />
+        <div class="card-top">
+          <span class="num">16 / GOLDEN SUMMIT</span>
+          <span class="corner">↗</span>
+        </div>
+        <div class="card-body">
+          <div class="card-kicker"><span></span>金顶佛光</div>
+          <h3>峨眉山 · 金顶</h3>
+          <p class="en">MOUNT EMEI · SICHUAN</p>
+          <p class="desc">十方普贤金像立于云海之上，金顶殿宇映着日出。古木、石阶、猴群与钟声，从山脚一路铺向海拔三千米的佛光。</p>
+          <div class="tags"><i>第一人称漫游</i><i>金顶</i><i>十方普贤</i><i>猴群</i></div>
+        </div>
+      </a>
     </main>
 
     <footer class="footer">
@@ -668,5 +798,24 @@
       <span>THREE.JS REAL-TIME · PROCEDURAL RECONSTRUCTION · LOCAL ASSETS</span>
     </footer>
   </div>
+
+  <script>
+    (() => {
+      const cards = [...document.querySelectorAll('.card')];
+      const chips = [...document.querySelectorAll('.chip')];
+      const random = document.getElementById('random-scene');
+      const apply = (cat) => {
+        cards.forEach((card) => {
+          card.classList.toggle('is-hidden', cat !== 'all' && card.dataset.cat !== cat);
+        });
+        chips.forEach((chip) => chip.classList.toggle('active', chip.dataset.filter === cat));
+      };
+      chips.forEach((chip) => chip.addEventListener('click', () => apply(chip.dataset.filter)));
+      random?.addEventListener('click', () => {
+        const visible = cards.filter((card) => !card.classList.contains('is-hidden'));
+        if (visible.length) location.href = visible[Math.floor(Math.random() * visible.length)].href;
+      });
+    })();
+  </script>
 </body>
 </html>

@@ -148,6 +148,13 @@ const STYLE = `
     background: rgba(216, 180, 106, 0.14);
     border-color: var(--xi-gold-soft);
   }
+  .xi-side-item.visited .xi-side-num::after {
+    content: "✓";
+    display: block;
+    margin-top: 3px;
+    font-size: 8px;
+    color: #a8c293;
+  }
   .xi-side-num {
     font-family: "Helvetica Neue", Arial, sans-serif;
     font-size: 10px;
@@ -172,6 +179,68 @@ const STYLE = `
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
+  }
+  .xi-stamps {
+    padding: 12px 14px 13px;
+    border-bottom: 1px solid var(--xi-gold-faint);
+  }
+  .xi-stamps-text {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 9px;
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-size: 9px;
+    letter-spacing: 0.16em;
+    color: var(--xi-muted);
+  }
+  .xi-stamps-text b {
+    color: var(--xi-gold);
+    font-weight: 500;
+  }
+  .xi-stamps-row {
+    display: flex;
+    gap: 6px;
+  }
+  .xi-stamp {
+    width: 27px;
+    height: 27px;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--xi-gold-faint);
+    border-radius: 2px;
+    color: rgba(216, 180, 106, 0.3);
+    font-size: 11px;
+    line-height: 1;
+    transition: background 0.25s, color 0.25s, border-color 0.25s;
+  }
+  .xi-stamp.on {
+    color: #1a150f;
+    background: var(--xi-gold);
+    border-color: var(--xi-gold);
+  }
+  #xi-toast {
+    position: fixed;
+    left: 50%;
+    bottom: 24px;
+    z-index: 15;
+    transform: translateX(-50%) translateY(8px);
+    padding: 9px 18px;
+    border: 1px solid var(--xi-line);
+    background: var(--xi-panel-solid);
+    color: var(--xi-text);
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.25s, transform 0.25s, visibility 0.25s;
+  }
+  #xi-toast.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%);
   }
   #xi-dock {
     position: fixed;
@@ -567,6 +636,17 @@ export function initInteractions(options = {}) {
   const listeners = [];
   const sidebarItems = new Map();
   const markerEls = new Map();
+  const STAMP_KEY = 'xi-stamps:' + location.pathname;
+  let visited = new Set();
+  try {
+    const saved = JSON.parse(localStorage.getItem(STAMP_KEY) || '[]');
+    if (Array.isArray(saved)) visited = new Set(saved.filter((key) => landmarkKeys.includes(key)));
+  } catch (err) {}
+  let stampText = null;
+  let stampRow = null;
+  let toastEl = null;
+  let toastTimer = null;
+  let lightTimer = null;
 
   function el(tag, className, text) {
     const node = document.createElement(tag);
@@ -589,6 +669,51 @@ export function initInteractions(options = {}) {
   function firstPersonButton() {
     return document.getElementById('btn-fp') || document.getElementById('btn-walk') ||
       document.querySelector('[data-first-person]');
+  }
+
+  function saveVisited() {
+    try {
+      localStorage.setItem(STAMP_KEY, JSON.stringify([...visited]));
+    } catch (err) {}
+  }
+
+  function toast(text) {
+    if (!toastEl) {
+      toastEl = el('div', '', text);
+      toastEl.id = 'xi-toast';
+      document.body.appendChild(toastEl);
+    }
+    toastEl.textContent = text;
+    toastEl.classList.add('show');
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => {
+      toastEl.classList.remove('show');
+      toastTimer = null;
+    }, 2600);
+  }
+
+  function updateStamps() {
+    if (stampText) {
+      stampText.innerHTML = '已探索 <b>' + visited.size + ' / ' + landmarkKeys.length + '</b>';
+    }
+    if (stampRow) {
+      stampRow.querySelectorAll('.xi-stamp').forEach((node) => {
+        node.classList.toggle('on', visited.has(node.dataset.key));
+      });
+    }
+    if (sidebarItems.size) {
+      sidebarItems.forEach((node, key) => node.classList.toggle('visited', visited.has(key)));
+    }
+  }
+
+  function markVisited(key) {
+    if (!landmarkKeys.includes(key) || visited.has(key)) return;
+    visited.add(key);
+    saveVisited();
+    updateStamps();
+    if (visited.size === landmarkKeys.length) {
+      toast('本境地标已全部探索 · 印章集齐');
+    }
   }
 
   function clickFirstPersonButton() {
@@ -638,6 +763,7 @@ export function initInteractions(options = {}) {
       closeCard();
     }
     setActiveKey(key);
+    markVisited(key);
     if (isFpActive()) {
       if (fpRef && typeof fpRef.exit === 'function') {
         try {
@@ -701,6 +827,17 @@ export function initInteractions(options = {}) {
   sideHead.append(sideHeadText, sideClose);
 
   const sideList = el('div', 'xi-side-list');
+  const stampBox = el('div', 'xi-stamps');
+  stampText = el('div', 'xi-stamps-text', '已探索 0 / ' + landmarkKeys.length);
+  stampRow = el('div', 'xi-stamps-row');
+  landmarkKeys.forEach((key) => {
+    const stamp = el('span', 'xi-stamp', '印');
+    stamp.dataset.key = key;
+    stamp.title = noteTitle(key);
+    stampRow.appendChild(stamp);
+  });
+  stampBox.append(stampText, stampRow);
+  sideList.appendChild(stampBox);
   if (landmarkKeys.length) {
     landmarkKeys.forEach((key, i) => {
       const item = el('button', 'xi-side-item');
@@ -811,6 +948,17 @@ export function initInteractions(options = {}) {
   const photoBtn = el('button', 'xi-btn', '摄影');
   photoBtn.id = 'xi-photo-btn';
   photoBtn.type = 'button';
+  const shotBtn = el('button', 'xi-btn', '留影');
+  shotBtn.id = 'xi-shot-btn';
+  shotBtn.type = 'button';
+  shotBtn.setAttribute('aria-label', '下载当前画面');
+  const overviewBtn = el('button', 'xi-btn', '总览');
+  overviewBtn.id = 'xi-overview-btn';
+  overviewBtn.type = 'button';
+  const lightBtn = el('button', 'xi-btn', '光影');
+  lightBtn.id = 'xi-light-btn';
+  lightBtn.type = 'button';
+  lightBtn.setAttribute('aria-label', '自动昼夜光影');
 
   const tourProgress = el('div');
   tourProgress.id = 'xi-tour-progress';
@@ -819,8 +967,55 @@ export function initInteractions(options = {}) {
 
   const dock = el('div');
   dock.id = 'xi-dock';
-  dock.append(tourProgress, tourBtn, weatherBtn, soundBtn, helpBtn, photoBtn);
+  dock.append(tourProgress, tourBtn, weatherBtn, lightBtn, overviewBtn, shotBtn, soundBtn, helpBtn, photoBtn);
   document.body.appendChild(dock);
+
+  function captureFrame() {
+    if (!renderer || !canvas || destroyed) return false;
+    try {
+      renderer.render(scene, camera);
+      const url = canvas.toDataURL('image/png');
+      const link = document.createElement('a');
+      const name = (document.title || 'scene').replace(/[^\w\u4e00-\u9fa5-]+/g, '_').replace(/^_+|_+$/g, '');
+      link.href = url;
+      link.download = (name || 'scene') + '_' + Date.now() + '.png';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      toast('画面已保存');
+      return true;
+    } catch (err) {
+      return false;
+    }
+  }
+
+  function toggleLight() {
+    const duskBtn = document.getElementById('btn-dusk');
+    if (!duskBtn) return false;
+    if (lightTimer) {
+      clearInterval(lightTimer);
+      lightTimer = null;
+      lightBtn.classList.remove('active');
+      lightBtn.textContent = '光影';
+      return false;
+    }
+    lightTimer = setInterval(() => {
+      if (destroyed) {
+        clearInterval(lightTimer);
+        lightTimer = null;
+        return;
+      }
+      duskBtn.click();
+    }, 12000);
+    lightBtn.classList.add('active');
+    lightBtn.textContent = '光影 · 自动';
+    toast('自动光影已开启 · 12 秒切换');
+    return true;
+  }
+
+  on(overviewBtn, 'click', () => go('overview', { user: true }));
+  on(shotBtn, 'click', captureFrame);
+  on(lightBtn, 'click', toggleLight);
 
   function advanceTour() {
     if (!tourKeys.length) return;
@@ -913,6 +1108,7 @@ export function initInteractions(options = {}) {
     if (!sourceViews[key]) return;
     stopTour();
     setActiveKey(key);
+    markVisited(key);
     closeCard();
   }, true);
 
@@ -1127,6 +1323,9 @@ export function initInteractions(options = {}) {
     ['R', '开启 / 关闭环绕'],
     ['N', '切换黄昏 / 日间'],
     ['T', '开始 / 暂停巡游'],
+    ['L', '开启 / 关闭自动光影'],
+    ['O', '返回全景总览'],
+    ['G', '保存当前画面'],
     ['P', '进入 / 退出摄影模式'],
     ['H', '打开 / 关闭本帮助'],
     ['Esc', '关闭面板 / 退出模式'],
@@ -1423,6 +1622,18 @@ export function initInteractions(options = {}) {
         toggleTour();
         event.preventDefault();
         break;
+      case 'KeyL':
+        toggleLight();
+        event.preventDefault();
+        break;
+      case 'KeyO':
+        go('overview', { user: true });
+        event.preventDefault();
+        break;
+      case 'KeyG':
+        captureFrame();
+        event.preventDefault();
+        break;
       case 'KeyP':
         togglePhoto();
         event.preventDefault();
@@ -1486,6 +1697,7 @@ export function initInteractions(options = {}) {
   }
 
   setActiveKey(activeKey);
+  updateStamps();
   updateTourUI();
   updateSoundUI();
   rafId = requestAnimationFrame(frame);
@@ -1495,6 +1707,14 @@ export function initInteractions(options = {}) {
     destroyed = true;
     stopTour();
     stopSound();
+    if (lightTimer) {
+      clearInterval(lightTimer);
+      lightTimer = null;
+    }
+    if (toastTimer) {
+      clearTimeout(toastTimer);
+      toastTimer = null;
+    }
     if (rafId) {
       cancelAnimationFrame(rafId);
       rafId = 0;
@@ -1515,7 +1735,7 @@ export function initInteractions(options = {}) {
       });
       if (scene) scene.remove(weatherGroup);
     }
-    [sidebarToggle, sidebar, markerLayer, card, dock, help, vignette, photoHint].forEach((node) => {
+    [sidebarToggle, sidebar, markerLayer, card, dock, help, vignette, photoHint, toastEl].forEach((node) => {
       if (node && node.parentNode) node.parentNode.removeChild(node);
     });
     document.body.classList.remove('xi-photo');
@@ -1539,6 +1759,9 @@ export function initInteractions(options = {}) {
     toggleSound,
     startSound,
     stopSound,
+    captureFrame,
+    toggleLight,
+    markVisited,
     openCard,
     closeCard,
     getState: () => ({
@@ -1549,6 +1772,9 @@ export function initInteractions(options = {}) {
       photoMode,
       weather: weatherKind,
       soundOn,
+      stamps: [...visited],
+      stampTotal: landmarkKeys.length,
+      lightAuto: !!lightTimer,
       tour: { active: tour.active, paused: tour.paused, index: tour.index, elapsed: tour.elapsed },
     }),
   };
