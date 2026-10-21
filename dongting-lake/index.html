@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>洞庭湖 · 3D 八百里洞庭</title>
+  <link rel="icon" href="data:," />
+  <style>
+    :root {
+      --gold: #c3a86f;
+      --gold-dim: rgba(195, 168, 111, 0.45);
+      --ink: #101510;
+      --paper: #e9e8dd;
+    }
+    * {
+      box-sizing: border-box;
+    }
+    html,
+    body {
+      margin: 0;
+      height: 100%;
+      overflow: hidden;
+      background: #101410;
+      color: var(--paper);
+      font-family: "Noto Serif CJK SC", "Source Han Serif SC", "Songti SC", "STSong", "SimSun", serif;
+    }
+    #scene {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      cursor: grab;
+      outline: none;
+    }
+    #scene:active {
+      cursor: grabbing;
+    }
+    .vignette {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(ellipse at 50% 45%, transparent 56%, rgba(14, 16, 12, 0.18) 100%),
+        linear-gradient(to bottom, rgba(12, 14, 10, 0.14), transparent 16%, transparent 82%, rgba(12, 14, 10, 0.2));
+      z-index: 2;
+    }
+    .brand {
+      position: fixed;
+      top: 30px;
+      left: 34px;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      z-index: 5;
+      opacity: 0;
+      transform: translateY(-8px);
+      transition: opacity 1.1s ease 0.25s, transform 1.1s ease 0.25s;
+    }
+    body.ready .brand {
+      opacity: 1;
+      transform: none;
+    }
+    .seal {
+      width: 46px;
+      height: 46px;
+      border: 1.5px solid rgba(220, 176, 92, 0.9);
+      color: #d6deca;
+      display: grid;
+      place-items: center;
+      font-size: 23px;
+      background: rgba(38, 56, 42, 0.8);
+      box-shadow: 0 0 0 3px rgba(20, 16, 12, 0.35), inset 0 0 18px rgba(0, 0, 0, 0.35);
+      letter-spacing: 0;
+    }
+    h1 {
+      margin: 0;
+      font-size: 27px;
+      font-weight: 600;
+      letter-spacing: 0.34em;
+      color: #f1f0e4;
+      text-shadow: 0 2px 18px rgba(0, 0, 0, 0.55);
+    }
+    .brand p {
+      margin: 5px 0 0;
+      font-family: "Helvetica Neue", Arial, sans-serif;
+      font-size: 9.5px;
+      letter-spacing: 0.24em;
+      color: rgba(227, 230, 214, 0.62);
+    }
+    .toolbar {
+      position: fixed;
+      top: 32px;
+      right: 34px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 5px;
+      z-index: 6;
+      background: rgba(18, 15, 12, 0.5);
+      border: 1px solid rgba(220, 184, 112, 0.24);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-radius: 2px;
+      opacity: 0;
+      transform: translateY(-8px);
+      transition: opacity 1.1s ease 0.4s, transform 1.1s ease 0.4s;
+    }
+    body.ready .toolbar {
+      opacity: 1;
+      transform: none;
+    }
+    .toolbar button {
+      appearance: none;
+      border: 1px solid transparent;
+      background: transparent;
+      color: rgba(240, 228, 207, 0.82);
+      font-family: inherit;
+      font-size: 12.5px;
+      letter-spacing: 0.12em;
+      padding: 8px 12px;
+      cursor: pointer;
+      border-radius: 1px;
+      transition: color 0.25s, background 0.25s, border-color 0.25s;
+    }
+    .toolbar button:hover {
+      color: #f6e9cc;
+      background: rgba(217, 180, 100, 0.12);
+    }
+    .toolbar button.active {
+      color: #1a150f;
+      background: var(--gold);
+    }
+    .divider {
+      width: 1px;
+      height: 18px;
+      margin: 0 4px;
+      background: rgba(217, 180, 100, 0.3);
+    }
+    .caption {
+      position: fixed;
+      left: 36px;
+      bottom: 30px;
+      z-index: 5;
+      max-width: 330px;
+      padding-left: 14px;
+      border-left: 1px solid rgba(217, 180, 100, 0.5);
+      opacity: 0;
+      transition: opacity 1.2s ease 0.7s;
+    }
+    body.ready .caption {
+      opacity: 1;
+    }
+    .caption span {
+      display: block;
+      font-size: 12.5px;
+      letter-spacing: 0.22em;
+      color: #ddbc78;
+      margin-bottom: 5px;
+    }
+    .caption p {
+      margin: 0;
+      font-size: 10.5px;
+      line-height: 1.7;
+      letter-spacing: 0.08em;
+      color: rgba(240, 229, 208, 0.58);
+    }
+    .caption.pulse {
+      animation: captionIn 0.6s ease;
+    }
+    @keyframes captionIn {
+      from {
+        opacity: 0.2;
+        transform: translateY(4px);
+      }
+      to {
+        opacity: 1;
+        transform: none;
+      }
+    }
+    .hint {
+      position: fixed;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 11px;
+      letter-spacing: 0.2em;
+      color: rgba(240, 229, 208, 0.6);
+      z-index: 5;
+      padding: 8px 16px;
+      border-top: 1px solid rgba(217, 180, 100, 0.22);
+      white-space: nowrap;
+      opacity: 0;
+      transition: opacity 1.2s ease 0.9s;
+    }
+    body.ready .hint {
+      opacity: 1;
+    }
+    .legend {
+      position: fixed;
+      right: 36px;
+      bottom: 29px;
+      font-size: 10px;
+      letter-spacing: 0.18em;
+      color: rgba(235, 222, 198, 0.42);
+      z-index: 5;
+      opacity: 0;
+      transition: opacity 1.2s ease 1s;
+    }
+    body.ready .legend {
+      opacity: 1;
+    }
+    #fp-crosshair {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      width: 18px;
+      height: 18px;
+      margin: -9px 0 0 -9px;
+      z-index: 8;
+      pointer-events: none;
+      opacity: 0;
+    }
+    body.fp-active #fp-crosshair {
+      opacity: 1;
+    }
+    #fp-crosshair::before,
+    #fp-crosshair::after {
+      content: "";
+      position: absolute;
+      background: rgba(246, 235, 211, 0.82);
+      box-shadow: 0 0 4px rgba(0, 0, 0, 0.6);
+    }
+    #fp-crosshair::before {
+      left: 8px;
+      top: 0;
+      width: 1px;
+      height: 18px;
+    }
+    #fp-crosshair::after {
+      top: 8px;
+      left: 0;
+      height: 1px;
+      width: 18px;
+    }
+    #fp-crosshair i {
+      position: absolute;
+      inset: 6px;
+      border: 1px solid rgba(246, 235, 211, 0.35);
+      border-radius: 50%;
+    }
+    #fp-hint {
+      position: fixed;
+      bottom: 62px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 8;
+      padding: 7px 17px;
+      font-size: 11px;
+      letter-spacing: 0.14em;
+      color: rgba(247, 238, 218, 0.9);
+      background: rgba(16, 18, 14, 0.58);
+      border: 1px solid rgba(217, 180, 100, 0.24);
+      border-radius: 2px;
+      white-space: nowrap;
+      pointer-events: none;
+      opacity: 0;
+    }
+    body.fp-active #fp-hint {
+      opacity: 1;
+    }
+    body.fp-active #scene {
+      cursor: crosshair;
+    }
+    body.fp-active .hint {
+      opacity: 0;
+    }
+    body.fp-active .caption {
+      opacity: 0.32;
+    }
+    #loader {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      background: #101410;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 22px;
+      transition: opacity 1.2s ease, visibility 1.2s;
+    }
+    #loader.hidden {
+      opacity: 0;
+      visibility: hidden;
+    }
+    .spinner {
+      width: 42px;
+      height: 42px;
+      border: 1px solid rgba(217, 180, 100, 0.22);
+      border-top-color: var(--gold);
+      border-radius: 50%;
+      animation: spin 1.4s linear infinite;
+    }
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+    #loader p {
+      margin: 0;
+      font-size: 13px;
+      letter-spacing: 0.6em;
+      color: rgba(190, 205, 175, 0.85);
+      padding-left: 0.6em;
+    }
+    @media (max-width: 860px) {
+      .brand {
+        top: 18px;
+        left: 18px;
+        gap: 10px;
+      }
+      h1 {
+        font-size: 20px;
+      }
+      .seal {
+        width: 36px;
+        height: 36px;
+        font-size: 18px;
+      }
+      .brand p {
+        font-size: 7.5px;
+      }
+      .toolbar {
+        top: auto;
+        bottom: 62px;
+        right: 50%;
+        transform: translateX(50%);
+        flex-wrap: wrap;
+        justify-content: center;
+        max-width: calc(100vw - 28px);
+      }
+      body.ready .toolbar {
+        transform: translateX(50%);
+      }
+      .toolbar button {
+        padding: 7px 9px;
+        font-size: 11.5px;
+      }
+      .hint {
+        bottom: 18px;
+        font-size: 9.5px;
+        letter-spacing: 0.12em;
+      }
+      .legend {
+        display: none;
+      }
+      .caption {
+        display: none;
+      }
+      #fp-hint {
+        bottom: 116px;
+        font-size: 9.5px;
+        letter-spacing: 0.08em;
+        max-width: calc(100vw - 24px);
+        white-space: normal;
+        text-align: center;
+      }
+    }
+  </style>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "./vendor/three.module.js",
+        "three/addons/": "./vendor/addons/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <canvas id="scene"></canvas>
+  <div class="vignette"></div>
+
+  <header class="brand">
+    <div class="seal">洞</div>
+    <div>
+      <h1>洞庭湖</h1>
+      <p>HUNAN · 湖南·八百里洞庭 · 岳阳楼</p>
+    </div>
+  </header>
+
+  <nav class="toolbar">
+    <button data-view="overview">全景</button>
+    <button data-view="yueyang">岳阳楼</button>
+    <button data-view="junshan">君山岛</button>
+    <button data-view="birds">候鸟</button>
+    <button data-view="dusk">暮色</button>
+    <button id="btn-fp">第一人称漫游</button>
+    <span class="divider"></span>
+    <button id="btn-rotate">环绕</button>
+    <button id="btn-dusk">黄昏</button>
+  </nav>
+
+  <div class="caption" id="caption">
+    <span id="caption-title">洞庭湖</span>
+    <p id="caption-text">八百里洞庭横无际涯，岳阳楼临湖而立，君山浮于潇湘烟水</p>
+  </div>
+
+  <div class="hint">拖拽旋转 · 滚轮缩放 · 右键平移 · 五景巡游</div>
+  <div id="fp-crosshair"><i></i></div>
+  <div id="fp-hint">岳阳门起步 · WASD 移动 · 空格跳跃 · 鼠标环顾 · Shift 加速 · Esc 退出</div>
+  <div class="legend">湖南 · 八百里洞庭</div>
+
+  <div id="loader">
+    <div class="spinner"></div>
+    <p>洞 庭 湖 · 八 百 里 洞 庭</p>
+  </div>
+
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,376 @@
+import * as THREE from 'three';
+import { colliders } from './architectures.js';
+
+const EYE = 1.68;
+const RADIUS = 0.42;
+const WALK = 4.6;
+const SPRINT = 8.2;
+const GRAVITY = -22;
+const JUMP_SPEED = 6.4;
+const MAX_STEP = 0.7;
+
+function insideAABB(x, z, c, pad = RADIUS) {
+  return x > c.minX - pad && x < c.maxX + pad && z > c.minZ - pad && z < c.maxZ + pad;
+}
+
+function clamp(v, min, max) {
+  return Math.min(max, Math.max(min, v));
+}
+
+export function createFirstPerson({
+  camera,
+  controls,
+  canvas,
+  onEnter,
+  onExit,
+  groundAt: groundFn = () => 0,
+  blocked: blockedFn = () => false,
+  start = { x: 0, z: 0, yaw: 0, pitch: 0 },
+  bounds = { minX: -110, maxX: 110, minZ: -150, maxZ: 150 },
+}) {
+  const btn = document.getElementById('btn-walk');
+  const hint = document.querySelector('.fp-hint');
+  const hintDefault = hint ? hint.textContent : '';
+  const keys = new Set();
+  const saved = {
+    pos: new THREE.Vector3(),
+    quat: new THREE.Quaternion(),
+    target: new THREE.Vector3(),
+    autoRotate: false,
+    enabled: true,
+    near: camera.near,
+  };
+  const BOUNDS = bounds;
+  const START = start;
+
+  function hitsCollider(x, z) {
+    for (let i = 0; i < colliders.length; i++) {
+      if (insideAABB(x, z, colliders[i])) return true;
+    }
+    return false;
+  }
+
+  function groundAt(x, z) {
+    return groundFn(x, z);
+  }
+
+  function blockedAt(x, z) {
+    return blockedFn(x, z) || hitsCollider(x, z);
+  }
+
+  function validStart(x, z) {
+    if (x < BOUNDS.minX || x > BOUNDS.maxX || z < BOUNDS.minZ || z > BOUNDS.maxZ) return false;
+    return !blockedAt(x, z);
+  }
+
+  function canStand(x, z, fromGround, grounded) {
+    if (x < BOUNDS.minX || x > BOUNDS.maxX || z < BOUNDS.minZ || z > BOUNDS.maxZ) return false;
+    if (blockedAt(x, z)) return false;
+    const g = groundAt(x, z);
+    if (grounded && g - fromGround > MAX_STEP) return false;
+    return true;
+  }
+
+  function pushOut(x, z) {
+    for (let iter = 0; iter < 4; iter++) {
+      let moved = false;
+      for (let i = 0; i < colliders.length; i++) {
+        const c = colliders[i];
+        if (!insideAABB(x, z, c)) continue;
+        const dl = x - (c.minX - RADIUS);
+        const dr = c.maxX + RADIUS - x;
+        const db = z - (c.minZ - RADIUS);
+        const dt = c.maxZ + RADIUS - z;
+        const m = Math.min(dl, dr, db, dt);
+        if (m === dl) x = c.minX - RADIUS;
+        else if (m === dr) x = c.maxX + RADIUS;
+        else if (m === db) z = c.minZ - RADIUS;
+        else z = c.maxZ + RADIUS;
+        moved = true;
+      }
+      if (!moved) break;
+    }
+    return [x, z];
+  }
+
+  const state = {
+    active: false,
+    x: START.x,
+    z: START.z,
+    y: groundAt(START.x, START.z),
+    ground: groundAt(START.x, START.z),
+    vy: 0,
+    grounded: true,
+    yaw: START.yaw || 0,
+    pitch: START.pitch || 0,
+    dip: 0,
+  };
+  let dragging = false;
+  let lastX = 0;
+  let lastY = 0;
+  let everLocked = false;
+  let jumpQueued = false;
+
+  function applyLook(dx, dy) {
+    state.yaw -= dx * 0.0022;
+    state.pitch = clamp(state.pitch - dy * 0.0022, -1.45, 1.45);
+  }
+
+  function syncCamera() {
+    camera.position.set(state.x, state.y + EYE - state.dip, state.z);
+    camera.rotation.order = 'YXZ';
+    camera.rotation.set(state.pitch, state.yaw, 0);
+  }
+
+  function performMove(dx, dz) {
+    const dist = Math.hypot(dx, dz);
+    if (dist < 1e-8) return;
+    const steps = Math.max(1, Math.ceil(dist / 0.12));
+    const sx = dx / steps;
+    const sz = dz / steps;
+    for (let i = 0; i < steps; i++) {
+      const g0 = groundAt(state.x, state.z);
+      const nx = state.x + sx;
+      if (canStand(nx, state.z, g0, state.grounded)) state.x = nx;
+      const g1 = groundAt(state.x, state.z);
+      const nz = state.z + sz;
+      if (canStand(state.x, nz, g1, state.grounded)) state.z = nz;
+      const [px, pz] = pushOut(state.x, state.z);
+      if (px !== state.x || pz !== state.z) {
+        state.x = px;
+        state.z = pz;
+      }
+    }
+  }
+
+  function findStart() {
+    if (validStart(START.x, START.z)) return [START.x, START.z];
+    for (let r = 2; r <= 70; r += 2) {
+      for (let i = 0; i < 24; i++) {
+        const a = (i / 24) * Math.PI * 2;
+        const x = START.x + Math.cos(a) * r;
+        const z = START.z + Math.sin(a) * r;
+        if (validStart(x, z)) return [x, z];
+      }
+    }
+    return [START.x, START.z];
+  }
+
+  function enter() {
+    if (state.active) return true;
+    if (onEnter) onEnter();
+    saved.pos.copy(camera.position);
+    saved.quat.copy(camera.quaternion);
+    saved.target.copy(controls.target);
+    saved.autoRotate = controls.autoRotate;
+    saved.enabled = controls.enabled;
+    saved.near = camera.near;
+    const [sx, sz] = findStart();
+    state.active = true;
+    state.x = sx;
+    state.z = sz;
+    state.y = groundAt(sx, sz);
+    state.ground = state.y;
+    state.vy = 0;
+    state.grounded = true;
+    state.yaw = START.yaw || 0;
+    state.pitch = START.pitch || 0;
+    state.dip = 0;
+    keys.clear();
+    jumpQueued = false;
+    controls.enabled = false;
+    controls.autoRotate = false;
+    camera.near = 0.08;
+    camera.updateProjectionMatrix();
+    document.body.classList.add('fp-active');
+    if (btn) {
+      btn.classList.add('active');
+      btn.textContent = '退出漫游';
+    }
+    if (hint) hint.textContent = hintDefault;
+    everLocked = false;
+    syncCamera();
+    try {
+      const request = canvas.requestPointerLock && canvas.requestPointerLock();
+      if (request && request.catch) request.catch(() => {});
+    } catch (e) {}
+    return true;
+  }
+
+  function exit() {
+    if (!state.active) return false;
+    state.active = false;
+    keys.clear();
+    jumpQueued = false;
+    dragging = false;
+    document.body.classList.remove('fp-active');
+    if (btn) {
+      btn.classList.remove('active');
+      btn.textContent = '第一人称漫游';
+    }
+    if (hint) hint.textContent = hintDefault;
+    if (document.pointerLockElement === canvas && document.exitPointerLock) {
+      try {
+        document.exitPointerLock();
+      } catch (e) {}
+    }
+    camera.near = saved.near;
+    camera.updateProjectionMatrix();
+    camera.position.copy(saved.pos);
+    camera.quaternion.copy(saved.quat);
+    controls.target.copy(saved.target);
+    controls.enabled = saved.enabled !== false;
+    controls.autoRotate = saved.autoRotate;
+    controls.update();
+    if (onExit) onExit();
+    return true;
+  }
+
+  function jump() {
+    if (!state.active || !state.grounded) return false;
+    state.vy = JUMP_SPEED;
+    state.grounded = false;
+    state.y += 0.015;
+    return true;
+  }
+
+  function update(dt) {
+    if (!state.active) return;
+    const down = (...codes) => codes.some((code) => keys.has(code));
+    const forward = (down('KeyW', 'ArrowUp') ? 1 : 0) - (down('KeyS', 'ArrowDown') ? 1 : 0);
+    const strafe = (down('KeyD', 'ArrowRight') ? 1 : 0) - (down('KeyA', 'ArrowLeft') ? 1 : 0);
+    if (forward || strafe) {
+      let dx = forward * -Math.sin(state.yaw) + strafe * Math.cos(state.yaw);
+      let dz = forward * -Math.cos(state.yaw) - strafe * Math.sin(state.yaw);
+      const length = Math.hypot(dx, dz) || 1;
+      dx /= length;
+      dz /= length;
+      const distance = (down('ShiftLeft', 'ShiftRight') ? SPRINT : WALK) * dt;
+      performMove(dx * distance, dz * distance);
+    }
+    const g = groundAt(state.x, state.z);
+    state.ground = g;
+    if (state.grounded && jumpQueued) jump();
+    jumpQueued = false;
+    if (!state.grounded) {
+      state.vy += GRAVITY * dt;
+      state.y += state.vy * dt;
+      if (state.y <= g) {
+        const impact = Math.max(0, -state.vy);
+        state.y = g;
+        state.vy = 0;
+        state.grounded = true;
+        state.dip = Math.min(0.16, impact * 0.014);
+      }
+    } else if (g > state.y) {
+      state.y = g;
+    } else if (state.y - g <= 0.7) {
+      state.y = g;
+    } else {
+      state.grounded = false;
+      state.vy = 0;
+    }
+    if (state.dip > 0.0005) state.dip *= Math.exp(-dt * 9);
+    else state.dip = 0;
+    syncCamera();
+  }
+
+  if (btn) {
+    btn.addEventListener('click', () => {
+      if (state.active) exit();
+      else enter();
+    });
+  }
+
+  window.addEventListener('keydown', (event) => {
+    if (!state.active) return;
+    if (event.code === 'Escape') {
+      exit();
+      return;
+    }
+    const codes = ['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ShiftLeft', 'ShiftRight', 'Space'];
+    if (codes.includes(event.code)) {
+      event.preventDefault();
+      if (event.code === 'Space') {
+        if (!event.repeat) jumpQueued = true;
+      } else {
+        keys.add(event.code);
+      }
+    }
+  });
+  window.addEventListener('keyup', (event) => keys.delete(event.code));
+  window.addEventListener('blur', () => {
+    keys.clear();
+    jumpQueued = false;
+  });
+  document.addEventListener('mousemove', (event) => {
+    if (!state.active || document.pointerLockElement !== canvas) return;
+    applyLook(event.movementX || 0, event.movementY || 0);
+  });
+  canvas.addEventListener('pointerdown', (event) => {
+    if (!state.active || document.pointerLockElement === canvas) return;
+    event.preventDefault();
+    dragging = true;
+    lastX = event.clientX;
+    lastY = event.clientY;
+    if (canvas.setPointerCapture) canvas.setPointerCapture(event.pointerId);
+  });
+  window.addEventListener('pointermove', (event) => {
+    if (!state.active || !dragging || document.pointerLockElement === canvas) return;
+    applyLook(event.clientX - lastX, event.clientY - lastY);
+    lastX = event.clientX;
+    lastY = event.clientY;
+  });
+  window.addEventListener('pointerup', () => {
+    dragging = false;
+  });
+  document.addEventListener('pointerlockchange', () => {
+    if (document.pointerLockElement === canvas) {
+      everLocked = true;
+    } else if (state.active && everLocked) {
+      everLocked = false;
+      exit();
+    }
+  });
+
+  return {
+    enter,
+    exit,
+    update,
+    isActive: () => state.active,
+    jump,
+    lookAt: (yaw, pitch = 0) => {
+      state.yaw = yaw;
+      state.pitch = clamp(pitch, -1.45, 1.45);
+      if (state.active) syncCamera();
+    },
+    teleport: (x, z) => {
+      state.x = clamp(x, BOUNDS.minX, BOUNDS.maxX);
+      state.z = clamp(z, BOUNDS.minZ, BOUNDS.maxZ);
+      state.y = groundAt(state.x, state.z);
+      state.ground = state.y;
+      state.vy = 0;
+      state.grounded = true;
+      state.dip = 0;
+      if (state.active) syncCamera();
+    },
+    groundAt,
+    blockedAt,
+    getPosition: () => ({
+      x: +state.x.toFixed(3),
+      y: +(state.y + EYE - state.dip).toFixed(3),
+      feet: +state.y.toFixed(3),
+      z: +state.z.toFixed(3),
+      ground: +state.ground.toFixed(3),
+      yaw: +state.yaw.toFixed(3),
+      pitch: +state.pitch.toFixed(3),
+      grounded: state.grounded,
+      active: state.active,
+    }),
+    colliders,
+    bounds: BOUNDS,
+    eyeHeight: EYE,
+    radius: RADIUS,
+    start: { x: START.x, z: START.z, yaw: START.yaw || 0, ground: groundAt(START.x, START.z) },
+  };
+}

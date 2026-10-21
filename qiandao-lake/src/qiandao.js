@@ -53,27 +53,48 @@ export function buildQiandaoScene() {
   islands.forEach(([x, z, r], i) => {
     add(base, new THREE.CylinderGeometry(r * 1.02, r * 1.25, 3.2, 12), earth, x, -0.5, z, R() * 3);
     add(base, new THREE.CylinderGeometry(r, r * 1.03, 1.2, 12), grass, x, 1.15, z, R() * 3);
-    if (i < 14) {
-      const n = Math.max(5, Math.floor(r * 0.7));
-      for (let k = 0; k < n; k++) {
-        const a = R() * Math.PI * 2, rad = Math.sqrt(R()) * r * 0.78;
-        treeSpots.push([x + Math.cos(a) * rad, z + Math.sin(a) * rad, 0.7 + R() * 0.7, i]);
-      }
+    const n = Math.max(6, Math.floor(r * 0.95));
+    for (let k = 0; k < n; k++) {
+      const a = R() * Math.PI * 2, rad = Math.sqrt(R()) * r * 0.8;
+      treeSpots.push([x + Math.cos(a) * rad, z + Math.sin(a) * rad, 0.62 + R() * 0.72, i]);
+    }
+    if (r > 20) {
+      add(base, new THREE.ConeGeometry(r * 0.48, r * 0.55, 8), mat(0x5c7d4c, 1), x, 1.7 + r * 0.27, z, R() * 3);
     }
   });
   const trunkGeo = new THREE.CylinderGeometry(0.22, 0.36, 4.2, 5);
   const crownGeo = new THREE.ConeGeometry(2.5, 8.8, 7);
-  inst(base, trunkGeo, mat(0x5a432c), treeSpots.length, (d, i) => {
+  inst(dynamic, trunkGeo, mat(0x5a432c), treeSpots.length, (d, i) => {
     const [x, z, s] = treeSpots[i]; d.position.set(x, 1.75 * s + 1.1, z); d.scale.setScalar(s);
   });
-  inst(base, crownGeo, mat(0x3d673d, 1), treeSpots.length, (d, i) => {
+  inst(dynamic, crownGeo, mat(0x3d673d, 1), treeSpots.length, (d, i) => {
     const [x, z, s] = treeSpots[i]; d.position.set(x, 6.1 * s + 1.1, z); d.scale.set(s, s * (0.85 + (i % 5) * 0.06), s);
   });
-  inst(base, new THREE.IcosahedronGeometry(1.1, 0), mat(0x6b8a45, 1), 220, (d, i) => {
+  inst(dynamic, new THREE.ConeGeometry(1.8, 5.4, 6), mat(0x4b7544, 1), treeSpots.length, (d, i) => {
+    const [x, z, s] = treeSpots[i]; d.position.set(x, 8.4 * s + 1.1, z); d.scale.set(s, s, s);
+  });
+  inst(dynamic, new THREE.DodecahedronGeometry(1, 0), mat(0x7b7460, 1), 520, (d, i) => {
+    const isl = islands[i % islands.length]; const a = R() * 6.283, rad = isl[2] * (0.82 + R() * 0.24);
+    d.position.set(isl[0] + Math.cos(a) * rad, 0.5 + R() * 0.5, isl[1] + Math.sin(a) * rad);
+    d.scale.set(0.7 + R() * 1.8, 0.5 + R() * 1.1, 0.7 + R() * 1.7); d.rotation.set(R(), R() * 6.28, R());
+  });
+  inst(dynamic, new THREE.IcosahedronGeometry(0.7, 0), mat(0x4f7d3f, 1), 900, (d, i) => {
+    const isl = islands[i % islands.length]; const a = R() * 6.283, rad = Math.sqrt(R()) * isl[2] * 0.7;
+    d.position.set(isl[0] + Math.cos(a) * rad, 1.9, isl[1] + Math.sin(a) * rad); d.scale.set(0.7 + R(), 0.6 + R() * 0.7, 0.7 + R());
+  });
+  inst(dynamic, new THREE.IcosahedronGeometry(1.1, 0), mat(0x6b8a45, 1), 220, (d, i) => {
     const isl = islands[i % islands.length]; const a = R() * 6.283, rad = Math.sqrt(R()) * isl[2] * 0.85;
     d.position.set(isl[0] + Math.cos(a) * rad, 1.8, isl[1] + Math.sin(a) * rad); d.scale.set(0.8 + R(), 0.55 + R() * 0.4, 0.8 + R());
   });
 
+  const peaks = [];
+  for (let i = 0; i < 16; i++) {
+    const a = -Math.PI * 0.9 + i / 15 * Math.PI * 0.8;
+    peaks.push([Math.cos(a) * (520 + R() * 80), -90 + Math.sin(a) * (430 + R() * 70), 80 + R() * 130]);
+  }
+  inst(base, new THREE.ConeGeometry(1, 1, 7), mat(0x66756b, 1), peaks.length, (d, i) => {
+    const [x, z, h] = peaks[i]; d.position.set(x, h * 0.5 - 4, z); d.scale.set(h * 0.7, h, h * 0.7); d.rotation.y = R() * 3;
+  });
   const main = [-90, -95, 44];
   add(base, new THREE.ConeGeometry(36, 30, 9), mat(0x5f7d4f, 1), main[0], 15.5, main[1], 0.4);
   add(base, new THREE.CylinderGeometry(6.5, 7.2, 1.0, 8), mat(0xb7ac95), main[0], 30.4, main[1]);

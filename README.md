@@ -1,6 +1,6 @@
 # 3d-world
 
-六十三座中国地标的可交互 Three.js 3D 场景。全部资源本地化，无需构建步骤。
+六十九座中国地标的可交互 Three.js 3D 场景。全部资源本地化，无需构建步骤。
 
 ## 场景
 
@@ -67,6 +67,12 @@
 - **丹霞山**：阳元石、长老峰、锦江、赤壁丹崖与栈道。
 - **扎尕那**：石城、仙女滩、光盖山、藏寨与青稞架。
 - **火焰山**：赤焰山体、金箍棒、葡萄沟、坎儿井与骆驼。
+- **九寨沟**：五花海、诺日朗瀑布、树正群海、珍珠滩与藏寨。
+- **德天瀑布**：归春河、三级瀑布、竹筏、界碑与喀斯特峰丛。
+- **荔波小七孔**：七孔桥、涵碧潭、拉雅瀑布、水上森林与卧龙潭。
+- **洞庭湖**：岳阳楼、君山岛、芦苇、荷塘、渔舟与候鸟。
+- **天柱山**：天柱峰、神秘谷、飞来石、炼丹湖与三祖寺。
+- **织金洞**：溶洞大厅、石笋石柱、卷曲石、暗河与彩灯。
 
 ## 交互
 
@@ -110,7 +116,7 @@ python3 -m http.server 8123
 
 ```text
 .
-├── index.html                  # 六十三场景选择页
+├── index.html                  # 六十九场景选择页
 ├── assets/                     # 缩略图
 ├── shared/interactions.js      # 地标索引、巡游、天气、摄影、音景
 ├── forbidden-city-3d/
@@ -175,7 +181,13 @@ python3 -m http.server 8123
 ├── yuanyang-terraces/
 ├── danxia-mountain/
 ├── zhagana/
-└── flaming-mountains/
+├── flaming-mountains/
+├── jiuzhaigou/
+├── detian-falls/
+├── libo-xiaoqikong/
+├── dongting-lake/
+├── tianzhu-mountain/
+└── zhijin-cave/
 ```
 
 ## 部署

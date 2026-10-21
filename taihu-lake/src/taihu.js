@@ -759,7 +759,8 @@ export function buildTaihuScene() {
     { cx: -105, cz: 63, rx: 4, rz: 2, phase: 1.7, speed: 0.003, scale: 1.3, sail: 0xe8ddc4 },
   ];
   const boats = boatDefs.map((def) => {
-    const boat = fishingBoat(def.sail);
+    const raw = fishingBoat(def.sail);
+    const boat = mergeStaticGroup(raw);
     boat.scale.setScalar(def.scale);
     boat.userData.def = def;
     dynamic.add(boat);
