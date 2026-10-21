@@ -1,6 +1,6 @@
 # 3d-world
 
-七十五座中国地标的可交互 Three.js 3D 场景。全部资源本地化，无需构建步骤。
+八十五座中国地标的可交互 Three.js 3D 场景。全部资源本地化，无需构建步骤。
 
 ## 场景
 
@@ -79,6 +79,16 @@
 - **呼伦贝尔**：莫日格勒河、蒙古包、马群、羊群与白桦林。
 - **张掖七彩丹霞**：七彩屏、刀山火海、观景台、栈道与热气球。
 - **霞浦滩涂**：潮沟、竹竿阵、紫菜架、渔舟与讨海人。
+- **麦积山石窟**：崖壁洞窟、大佛、凌空栈道、泥塑造像与松林云雾。
+- **老君山**：金顶道观群、十里画屏、玉皇顶、云海与祈福红带。
+- **壶口瀑布**：黄河壶口、龙洞、水雾彩虹与黄土崖。
+- **梅里雪山**：卡瓦格博、十三峰、明永冰川、雨崩村与日照金山。
+- **衡山**：祝融峰、南天门、古寺、石阶与云海。
+- **西江千户苗寨**：吊脚楼、风雨桥、鼓楼、梯田与万家灯火。
+- **禾木村**：尖顶木屋、禾木河、白桦林、马群与晨雾。
+- **四姑娘山**：幺妹峰、双桥沟、冷杉草甸、牦牛与经幡。
+- **普陀山**：南海观音、普济寺、法雨寺、海岸与香火。
+- **镜泊湖**：吊水楼瀑布、地下森林、火山口与朝鲜族村落。
 
 ## 交互
 
@@ -122,7 +132,7 @@ python3 -m http.server 8123
 
 ```text
 .
-├── index.html                  # 七十五场景选择页
+├── index.html                  # 八十五场景选择页
 ├── assets/                     # 缩略图
 ├── shared/interactions.js      # 地标索引、巡游、天气、摄影、音景
 ├── forbidden-city-3d/
@@ -199,7 +209,17 @@ python3 -m http.server 8123
 ├── sayram-lake/
 ├── hulunbuir-grassland/
 ├── zhangye-danxia/
-└── xiapu-mudflats/
+├── xiapu-mudflats/
+├── maijishan-grottoes/
+├── laojun-mountain/
+├── hukou-waterfall/
+├── meili-snow-mountain/
+├── mount-heng/
+├── xijiang-miao-village/
+├── hemu-village/
+├── siguniang-mountain/
+├── putuoshan/
+└── jingpo-lake/
 ```
 
 ## 部署

@@ -1,0 +1,19 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>probe</title><script type="importmap">{"imports":{"three":"./vendor/three.module.js","three/addons/":"./vendor/addons/"}}</script></head><body>
+<script type="module">
+  const t0 = performance.now();
+  try {
+    const { buildMeiliScene } = await import('./src/meili.js');
+    const w = buildMeiliScene();
+    let tris = 0;
+    w.group.traverse(o => { if (o.isMesh && o.geometry) tris += (o.geometry.index ? o.geometry.index.count : o.geometry.attributes.position.count) / 3; });
+    window.__built = { ms: performance.now() - t0, tris, meshCount: 0 };
+    let count = 0; w.group.traverse(o => { if (o.isMesh) count++; }); window.__built.meshCount = count;
+    document.title = 'BUILT ' + Math.round(window.__built.ms) + 'ms tris ' + Math.round(tris);
+    document.body.setAttribute('data-built', '1');
+  } catch (e) {
+    window.__err = String(e && (e.stack || e));
+    document.title = 'ERR ' + e;
+    document.body.setAttribute('data-error', '1');
+  }
+</script>
+</body></html>

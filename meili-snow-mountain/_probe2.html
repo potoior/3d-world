@@ -1,0 +1,40 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>p2</title>
+<script type="importmap">{"imports":{"three":"./vendor/three.module.js","three/addons/":"./vendor/addons/"}}</script>
+</head><body style="margin:0"><canvas id="c"></canvas>
+<script type="module">
+import * as THREE from 'three';
+const q = new URLSearchParams(location.search);
+const step = (s) => { document.title = s; window.__step = s; };
+step('start');
+try {
+  const { buildMeiliScene } = await import('./src/meili.js');
+  step('imported');
+  const t0 = performance.now();
+  const world = buildMeiliScene();
+  step('built ' + Math.round(performance.now()-t0));
+  const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('c'), antialias: false, powerPreference: 'high-performance' });
+  renderer.setPixelRatio(1);
+  renderer.setSize(720, 450);
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.shadowMap.enabled = q.get('shadows') !== '0';
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  const scene = new THREE.Scene();
+  scene.fog = new THREE.Fog(0xd5d2c1, 1450, 4300);
+  const camera = new THREE.PerspectiveCamera(47, 720/450, 0.6, 7200);
+  camera.position.set(0, 330, -980);
+  camera.lookAt(0, 430, 560);
+  scene.add(world.group);
+  const hemi = new THREE.HemisphereLight(0xd3e8f6, 0x6f6a4c, 1.65); scene.add(hemi);
+  const sun = new THREE.DirectionalLight(0xffd2a2, 3.4);
+  sun.position.set(940, 410, 390); sun.castShadow = q.get('shadows') !== '0';
+  sun.shadow.mapSize.set(1024, 1024);
+  sun.shadow.camera.left=-480; sun.shadow.camera.right=480; sun.shadow.camera.top=480; sun.shadow.camera.bottom=-480;
+  sun.shadow.camera.near=20; sun.shadow.camera.far=2400;
+  scene.add(sun); scene.add(sun.target);
+  step('scene ready');
+  renderer.render(scene, camera);
+  step('rendered ' + renderer.info.render.calls + ' calls ' + renderer.info.render.triangles + ' tris');
+  window.__done = true;
+} catch (e) { window.__err = String(e && (e.stack || e)); step('ERR'); }
+</script></body></html>

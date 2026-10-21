@@ -1,0 +1,46 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>p3</title>
+<script type="importmap">{"imports":{"three":"./vendor/three.module.js","three/addons/":"./vendor/addons/"}}</script></head><body style="margin:0"><canvas id="c"></canvas>
+<script type="module">
+import * as THREE from 'three';
+const q = new URLSearchParams(location.search);
+const step = (s) => { document.title = s; window.__step = s; };
+step('start');
+try {
+  const { buildMeiliScene } = await import('./src/meili.js');
+  const world = buildMeiliScene();
+  const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('c'), antialias: false });
+  renderer.setPixelRatio(1); renderer.setSize(480, 300);
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  const scene = new THREE.Scene();
+  scene.fog = new THREE.Fog(0xd5d2c1, 1450, 4300);
+  const camera = new THREE.PerspectiveCamera(47, 480/300, 0.6, 7200);
+  camera.position.set(0, 330, -980); camera.lookAt(0, 430, 560);
+  const hemi = new THREE.HemisphereLight(0xd3e8f6, 0x6f6a4c, 1.65); scene.add(hemi);
+  const sun = new THREE.DirectionalLight(0xffd2a2, 3.4); sun.position.set(940,410,390); scene.add(sun); scene.add(sun.target);
+  const only = q.get('only');
+  if (only === 'none') {
+    scene.add(new THREE.Mesh(new THREE.BoxGeometry(20,20,20), new THREE.MeshStandardMaterial({color:0xff8844})));
+  } else if (only != null) {
+    world.group.children.forEach((c, i) => {
+      if (String(i) === only) {
+        const mode = q.get('mode') || 'orig';
+        if (mode !== 'orig') c.traverse((o) => {
+          if (o.isInstancedMesh && o.name === 'meili-prayer-flags') {
+            if (mode === 'plain') o.material = new THREE.MeshBasicMaterial({ color: 0xff6633, side: THREE.DoubleSide });
+            if (mode === 'nocustom') { o.material = new THREE.MeshStandardMaterial({ color: 0xffffff, side: THREE.DoubleSide }); }
+            if (mode === 'nocolor') { o.material = new THREE.MeshStandardMaterial({ color: 0xffffff, side: THREE.DoubleSide }); o.instanceColor = null; }
+          }
+        });
+        scene.add(c);
+      }
+    });
+  } else {
+    scene.add(world.group);
+  }
+  step('scene ' + (only === undefined ? 'all' : only));
+  renderer.render(scene, camera);
+  step('ok ' + renderer.info.render.calls + ' calls ' + renderer.info.render.triangles + ' tris');
+  window.__done = true;
+} catch(e) { window.__err = String(e && (e.stack||e)); step('ERR'); }
+</script></body></html>
