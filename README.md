@@ -1,6 +1,6 @@
 # 3d-world
 
-五十五座中国地标的可交互 Three.js 3D 场景。全部资源本地化，无需构建步骤。
+六十三座中国地标的可交互 Three.js 3D 场景。全部资源本地化，无需构建步骤。
 
 ## 场景
 
@@ -59,6 +59,14 @@
 - **福建土楼**：田螺坑四菜一汤、承启楼、振成楼与夯土圆楼。
 - **鸣沙山月牙泉**：沙丘、月牙泉、月泉阁、芦苇与骆驼队。
 - **黄龙**：五彩池、钙华梯田、雪宝顶、冷杉与藏寺。
+- **珠穆朗玛峰**：北坡、绒布冰川、大本营、登山者与日照金山。
+- **太湖**：鼋头渚、三山仙岛、拱桥亭台、渔船与樱花。
+- **喀什古城**：艾提尕尔清真寺、高台民居、巴扎、茶馆与驼队。
+- **龙脊梯田**：平安寨、七星伴月、金坑、水田与吊脚楼。
+- **元阳梯田**：多依树、坝达、老虎嘴、哈尼蘑菇房与云海。
+- **丹霞山**：阳元石、长老峰、锦江、赤壁丹崖与栈道。
+- **扎尕那**：石城、仙女滩、光盖山、藏寨与青稞架。
+- **火焰山**：赤焰山体、金箍棒、葡萄沟、坎儿井与骆驼。
 
 ## 交互
 
@@ -102,7 +110,7 @@ python3 -m http.server 8123
 
 ```text
 .
-├── index.html                  # 五十五场景选择页
+├── index.html                  # 六十三场景选择页
 ├── assets/                     # 缩略图
 ├── shared/interactions.js      # 地标索引、巡游、天气、摄影、音景
 ├── forbidden-city-3d/
@@ -159,7 +167,15 @@ python3 -m http.server 8123
 ├── kaiping-diaolou/
 ├── fujian-tulou/
 ├── mingsha-moon-lake/
-└── huanglong/
+├── huanglong/
+├── mount-everest/
+├── taihu-lake/
+├── kashgar-old-town/
+├── longji-terraces/
+├── yuanyang-terraces/
+├── danxia-mountain/
+├── zhagana/
+└── flaming-mountains/
 ```
 
 ## 部署
