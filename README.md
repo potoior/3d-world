@@ -1,6 +1,6 @@
 # 3d-world
 
-六十九座中国地标的可交互 Three.js 3D 场景。全部资源本地化，无需构建步骤。
+七十五座中国地标的可交互 Three.js 3D 场景。全部资源本地化，无需构建步骤。
 
 ## 场景
 
@@ -73,6 +73,12 @@
 - **洞庭湖**：岳阳楼、君山岛、芦苇、荷塘、渔舟与候鸟。
 - **天柱山**：天柱峰、神秘谷、飞来石、炼丹湖与三祖寺。
 - **织金洞**：溶洞大厅、石笋石柱、卷曲石、暗河与彩灯。
+- **黄果树瀑布**：主瀑、犀牛潭、水帘洞、陡坡塘与天星桥。
+- **玉龙雪山**：扇子陡、冰川公园、蓝月谷、甘海子与牦牛。
+- **赛里木湖**：高原蓝湖、雪山倒影、野花草原、天鹅与蒙古包。
+- **呼伦贝尔**：莫日格勒河、蒙古包、马群、羊群与白桦林。
+- **张掖七彩丹霞**：七彩屏、刀山火海、观景台、栈道与热气球。
+- **霞浦滩涂**：潮沟、竹竿阵、紫菜架、渔舟与讨海人。
 
 ## 交互
 
@@ -116,7 +122,7 @@ python3 -m http.server 8123
 
 ```text
 .
-├── index.html                  # 六十九场景选择页
+├── index.html                  # 七十五场景选择页
 ├── assets/                     # 缩略图
 ├── shared/interactions.js      # 地标索引、巡游、天气、摄影、音景
 ├── forbidden-city-3d/
@@ -187,7 +193,13 @@ python3 -m http.server 8123
 ├── libo-xiaoqikong/
 ├── dongting-lake/
 ├── tianzhu-mountain/
-└── zhijin-cave/
+├── zhijin-cave/
+├── huangguoshu-falls/
+├── yulong-snow-mountain/
+├── sayram-lake/
+├── hulunbuir-grassland/
+├── zhangye-danxia/
+└── xiapu-mudflats/
 ```
 
 ## 部署
