@@ -185,6 +185,11 @@
       grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 20px;
     }
+    @media (min-width: 1101px) {
+      .grid > .card:last-child:nth-child(3n + 1) {
+        grid-column: 2;
+      }
+    }
     .card {
       position: relative;
       display: block;
@@ -558,31 +563,31 @@
       </div>
       <div class="topnote">
         <span></span>
-        四十五境 · 实时三维 · 本地渲染
+        五十五境 · 实时三维 · 本地渲染
       </div>
     </header>
 
     <section class="hero">
       <div>
         <div class="eyebrow">INTERACTIVE ARCHITECTURE &amp; LANDSCAPE</div>
-        <h2>山河<em>四十五境</em></h2>
+        <h2>山河<em>五十五境</em></h2>
       </div>
       <div class="hero-right">
         <div class="mark"></div>
-        <p>宫城、园林、湖山、长城、雪域、漓江、大漠、峰林、古城与岱宗。<br />四十五座地标，四十五种中国。选择一处，进入可交互的三维场景。</p>
+        <p>宫城、园林、湖山、长城、雪域、漓江、大漠、峰林、古城与岱宗。<br />五十五座地标，五十五种中国。选择一处，进入可交互的三维场景。</p>
         <small>DRAG TO ORBIT · SCROLL TO ZOOM · CLICK TO ENTER</small>
       </div>
     </section>
 
     <div class="filters" id="filters">
       <div class="chips" role="group" aria-label="按类型筛选场景">
-        <button class="chip active" data-filter="all">全部 <b>45</b></button>
+        <button class="chip active" data-filter="all">全部 <b>55</b></button>
         <button class="chip" data-filter="宫城">宫城 <b>2</b></button>
         <button class="chip" data-filter="园林">园林 <b>3</b></button>
-        <button class="chip" data-filter="湖山">湖山 <b>11</b></button>
-        <button class="chip" data-filter="山岳">山岳 <b>9</b></button>
-        <button class="chip" data-filter="古城">古城 <b>4</b></button>
-        <button class="chip" data-filter="河山">河山 <b>3</b></button>
+        <button class="chip" data-filter="湖山">湖山 <b>13</b></button>
+        <button class="chip" data-filter="山岳">山岳 <b>14</b></button>
+        <button class="chip" data-filter="古城">古城 <b>6</b></button>
+        <button class="chip" data-filter="河山">河山 <b>4</b></button>
         <button class="chip" data-filter="水乡">水乡 <b>3</b></button>
         <button class="chip" data-filter="石窟">石窟 <b>5</b></button>
         <button class="chip" data-filter="关隘">关隘 <b>2</b></button>
@@ -1265,6 +1270,126 @@
           <p class="en">KANAS · XINJIANG</p>
           <p class="desc">阿尔泰山深处的变色湖，喀纳斯河在泰加林间转折。图瓦木屋、马群、白桦与雪峰，把北疆的秋天收进一湖碧水。</p>
           <div class="tags"><i>第一人称漫游</i><i>喀纳斯湖</i><i>月亮湾</i><i>图瓦村</i></div>
+        </div>
+      </a>
+
+      <a class="card" href="daocheng-yading/" data-cat="山岳" style="--accent:#8fb6a6">
+        <img src="assets/daocheng.jpg?v=18" alt="稻城亚丁 3D 鸟瞰" />
+        <div class="card-top"><span class="num">46 / THREE PEAKS</span><span class="corner">↗</span></div>
+        <div class="card-body">
+          <div class="card-kicker"><span></span>最后的香格里拉</div>
+          <h3>稻城亚丁</h3>
+          <p class="en">DAOCHENG YADING · SICHUAN</p>
+          <p class="desc">仙乃日、央迈勇、夏诺多吉三座神山围出高原秘境，牛奶海与五色海嵌在雪线之下。洛绒牛场的草甸、经幡与牦牛延伸向金色落叶松。</p>
+          <div class="tags"><i>第一人称漫游</i><i>仙乃日</i><i>牛奶海</i><i>洛绒牛场</i></div>
+        </div>
+      </a>
+
+      <a class="card" href="enshi-grand-canyon/" data-cat="山岳" style="--accent:#9aaf8a">
+        <img src="assets/enshi.jpg?v=18" alt="恩施大峡谷 3D 鸟瞰" />
+        <div class="card-top"><span class="num">47 / CANYON</span><span class="corner">↗</span></div>
+        <div class="card-body">
+          <div class="card-kicker"><span></span>喀斯特奇观</div>
+          <h3>恩施大峡谷</h3>
+          <p class="en">ENSHI GRAND CANYON · HUBEI</p>
+          <p class="desc">七星寨绝壁如屏，一炷香孤峰从谷底拔起。栈道贴崖而行，云龙地缝瀑布落入深谷，索道与云海在层叠石灰岩之间穿行。</p>
+          <div class="tags"><i>第一人称漫游</i><i>一炷香</i><i>绝壁栈道</i><i>云龙地缝</i></div>
+        </div>
+      </a>
+
+      <a class="card" href="fanjingshan/" data-cat="山岳" style="--accent:#a9b7a2">
+        <img src="assets/fanjingshan.jpg?v=18" alt="梵净山 3D 鸟瞰" />
+        <div class="card-top"><span class="num">48 / SKY TEMPLE</span><span class="corner">↗</span></div>
+        <div class="card-body">
+          <div class="card-kicker"><span></span>天空之城</div>
+          <h3>梵净山</h3>
+          <p class="en">FANJINGSHAN · GUIZHOU</p>
+          <p class="desc">红云金顶被裂隙一分为二，释迦殿与弥勒殿由石桥相连。蘑菇石、万卷书岩层、贴壁石阶与云海，托起黔东的佛教名山。</p>
+          <div class="tags"><i>第一人称漫游</i><i>红云金顶</i><i>蘑菇石</i><i>万卷书</i></div>
+        </div>
+      </a>
+
+      <a class="card" href="laoshan/" data-cat="山岳" style="--accent:#8fa9b0">
+        <img src="assets/laoshan.jpg?v=18" alt="崂山 3D 鸟瞰" />
+        <div class="card-top"><span class="num">49 / SEA MOUNTAIN</span><span class="corner">↗</span></div>
+        <div class="card-body">
+          <div class="card-kicker"><span></span>海上第一名山</div>
+          <h3>崂山</h3>
+          <p class="en">LAOSHAN · SHANDONG</p>
+          <p class="desc">花岗岩峰峦直抵黄海，太清宫藏在松林与海雾之间。巨峰、海岸礁石、渔舟与晨间云海，构成山海相依的道教名山。</p>
+          <div class="tags"><i>第一人称漫游</i><i>巨峰</i><i>太清宫</i><i>海岸</i></div>
+        </div>
+      </a>
+
+      <a class="card" href="shennongjia/" data-cat="山岳" style="--accent:#7f9664">
+        <img src="assets/shennongjia.jpg?v=18" alt="神农架 3D 鸟瞰" />
+        <div class="card-top"><span class="num">50 / PRIMEVAL</span><span class="corner">↗</span></div>
+        <div class="card-body">
+          <div class="card-kicker"><span></span>华中屋脊</div>
+          <h3>神农架</h3>
+          <p class="en">SHENNONGJIA · HUBEI</p>
+          <p class="desc">神农顶撑起华中高地，原始森林与高山湿地相连。大九湖的草甸池塘、板壁岩的石板、金丝猴与云雾，保存着古老的野性。</p>
+          <div class="tags"><i>第一人称漫游</i><i>神农顶</i><i>大九湖</i><i>金丝猴</i></div>
+        </div>
+      </a>
+
+      <a class="card" href="qiandao-lake/" data-cat="湖山" style="--accent:#6fa9a2">
+        <img src="assets/qiandao.jpg?v=18" alt="千岛湖 3D 鸟瞰" />
+        <div class="card-top"><span class="num">51 / THOUSAND ISLES</span><span class="corner">↗</span></div>
+        <div class="card-body">
+          <div class="card-kicker"><span></span>天下第一秀水</div>
+          <h3>千岛湖</h3>
+          <p class="en">QIANDAO LAKE · ZHEJIANG</p>
+          <p class="desc">新安江水库蓄出一湖碧水，上千座青翠岛屿散落其间。梅峰观岛、环湖大桥、茶园与游船，在白鹭掠过水面时展开。</p>
+          <div class="tags"><i>第一人称漫游</i><i>梅峰观岛</i><i>群岛</i><i>游船</i></div>
+        </div>
+      </a>
+
+      <a class="card" href="kaiping-diaolou/" data-cat="古城" style="--accent:#b59b72">
+        <img src="assets/kaiping.jpg?v=18" alt="开平碉楼 3D 鸟瞰" />
+        <div class="card-top"><span class="num">52 / WATCHTOWERS</span><span class="corner">↗</span></div>
+        <div class="card-body">
+          <div class="card-kicker"><span></span>侨乡碉楼</div>
+          <h3>开平碉楼</h3>
+          <p class="en">KAIPING DIAOLOU · GUANGDONG</p>
+          <p class="desc">自力村的碉楼群把罗马柱、巴洛克山花与岭南灰塑叠在一起。瑞石楼高耸于稻田与榕树之间，骑楼街与池塘保留着侨乡日常。</p>
+          <div class="tags"><i>第一人称漫游</i><i>瑞石楼</i><i>自力村</i><i>骑楼</i></div>
+        </div>
+      </a>
+
+      <a class="card" href="fujian-tulou/" data-cat="古城" style="--accent:#b58b65">
+        <img src="assets/tulou.jpg?v=18" alt="福建土楼 3D 鸟瞰" />
+        <div class="card-top"><span class="num">53 / EARTHEN RINGS</span><span class="corner">↗</span></div>
+        <div class="card-body">
+          <div class="card-kicker"><span></span>客家土楼</div>
+          <h3>福建土楼</h3>
+          <p class="en">FUJIAN TULOU · FUJIAN</p>
+          <p class="desc">田螺坑“四菜一汤”环抱山谷，承启楼与振成楼以夯土墙围出同心圆。木廊、天井、茶园与稻田，把宗族生活收进巨大的土环。</p>
+          <div class="tags"><i>第一人称漫游</i><i>田螺坑</i><i>承启楼</i><i>振成楼</i></div>
+        </div>
+      </a>
+
+      <a class="card" href="mingsha-moon-lake/" data-cat="河山" style="--accent:#c9a36a">
+        <img src="assets/mingsha.jpg?v=18" alt="鸣沙山月牙泉 3D 鸟瞰" />
+        <div class="card-top"><span class="num">54 / CRESCENT OASIS</span><span class="corner">↗</span></div>
+        <div class="card-body">
+          <div class="card-kicker"><span></span>沙漠第一泉</div>
+          <h3>鸣沙山月牙泉</h3>
+          <p class="en">MINGSHA &amp; CRESCENT LAKE · GANSU</p>
+          <p class="desc">沙丘在敦煌城南起伏，月牙泉以一弯碧水嵌在沙谷。月泉阁、芦苇、驼队与落日，让流沙与清泉相守千年。</p>
+          <div class="tags"><i>第一人称漫游</i><i>月牙泉</i><i>鸣沙山</i><i>骆驼队</i></div>
+        </div>
+      </a>
+
+      <a class="card" href="huanglong/" data-cat="湖山" style="--accent:#78b6a8">
+        <img src="assets/huanglong.jpg?v=18" alt="黄龙 3D 鸟瞰" />
+        <div class="card-top"><span class="num">55 / TRAVERTINE</span><span class="corner">↗</span></div>
+        <div class="card-body">
+          <div class="card-kicker"><span></span>人间瑶池</div>
+          <h3>黄龙</h3>
+          <p class="en">HUANGLONG · SICHUAN</p>
+          <p class="desc">钙华滩流沿山谷层层跌落，五彩池在雪宝顶下铺开蓝绿。杜鹃、冷杉、经幡与藏寺，围住这条高原上的金色巨龙。</p>
+          <div class="tags"><i>第一人称漫游</i><i>五彩池</i><i>钙华梯田</i><i>雪宝顶</i></div>
         </div>
       </a>
     </main>
